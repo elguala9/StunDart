@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:stundart/stundart.dart';
+import 'package:stun/stundart.dart';
 import 'package:test/test.dart';
 
 

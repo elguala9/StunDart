@@ -8,8 +8,8 @@ environment:
   sdk: '^3.9.4'
 
 dependencies:
-  stundart:
-    path: ../StunDart
+  stun:
+    path: ../Stun
 
 dev_dependencies:
   lints: ^3.0.0

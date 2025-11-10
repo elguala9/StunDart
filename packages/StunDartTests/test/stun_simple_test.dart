@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:test/test.dart';
-import 'package:stundart/stundart.dart';
+import 'package:stun/stundart.dart';
 
 void main() {
   test('Simple STUN request', () async {

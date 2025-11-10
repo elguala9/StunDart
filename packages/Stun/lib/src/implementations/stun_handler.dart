@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:stundart/src/implementations/stun_config.dart';
-import 'package:stundart/src/implementations/stun_message.dart';
-import 'package:stundart/stundart.dart';
+import '/src/implementations/stun_config.dart';
+import '/src/implementations/stun_message.dart';
+import '/stundart.dart';
 
 
 
