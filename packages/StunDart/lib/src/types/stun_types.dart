@@ -1,0 +1,52 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+/// IP version type
+enum IpVersion {
+  v4('IPv4'),
+  v6('IPv6');
+
+  final String value;
+  const IpVersion(this.value);
+}
+
+/// STUN response containing public IP, port, and transaction information
+/// 
+/// Example:
+/// ```dart
+/// final response = (
+///   publicIp: "203.0.113.42",
+///   publicPort: 54723,
+///   ipVersion: IpVersion.v4,
+///   transactionId: Uint8List(12),
+///   raw: Uint8List.fromList([...]),
+///   attrs: {"key": "value"}
+/// );
+/// ```
+typedef StunResponse = ({
+  String publicIp,           // Es: "203.0.113.42" o "2001:db8::1"
+  int publicPort,            // Es: 54723
+  IpVersion ipVersion,       // IpVersion.v4 o IpVersion.v6
+  Uint8List transactionId,   // Transaction ID della richiesta STUN (12 byte)
+  Uint8List raw,             // Il pacchetto STUN ricevuto (binario)
+  Map<String, dynamic>? attrs, // Eventuali altri attributi STUN
+});
+
+/// Local network information
+/// 
+/// Example:
+/// ```dart
+/// final info = (localIp: "192.168.1.2", localPort: 12345);
+/// ```
+typedef LocalInfo = ({
+  String localIp,    // Es: "192.168.1.2"
+  int localPort,     // Es: 12345
+});
+
+
+/// Input parameters for StunHandler constructor
+typedef StunHandlerInput = ({
+  String? address, // stun server address
+  int? port, // stun server port
+  RawDatagramSocket socket,
+});

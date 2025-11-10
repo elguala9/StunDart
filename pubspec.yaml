@@ -1,0 +1,11 @@
+name: stundart_workspace
+description: A Dart monorepo workspace for StunDart packages
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '^3.9.4'
+
+workspace:
+  - packages/StunDart
+  - packages/StunDartTests
