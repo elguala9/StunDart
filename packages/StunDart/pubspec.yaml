@@ -1,0 +1,15 @@
+name: stundart
+description: A STUN (Session Traversal Utilities for NAT) protocol implementation in Dart
+version: 1.0.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '^3.9.4'
+
+dependencies:
+  # Add your dependencies here
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0
