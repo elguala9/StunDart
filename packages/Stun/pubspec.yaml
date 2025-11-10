@@ -1,4 +1,4 @@
-name: stundart
+name: stun
 description: A complete STUN (Session Traversal Utilities for NAT) protocol implementation for NAT traversal and public IP discovery with IPv4/IPv6 dual-stack support.
 version: 1.0.0
 repository: https://github.com/elguala9/StunDart

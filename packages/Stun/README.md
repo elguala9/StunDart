@@ -48,7 +48,7 @@ dart pub get
 
 ```dart
 import 'dart:io';
-import 'package:stundart/stundart.dart';
+import 'package:stun/stundart.dart';
 
 void main() async {
   // Create a UDP socket
@@ -234,7 +234,7 @@ You can use these public STUN servers for testing:
 
 ```dart
 import 'dart:io';
-import 'package:stundart/stundart.dart';
+import 'package:stun/stundart.dart';
 
 Future<void> dualStackExample() async {
   // Test IPv4

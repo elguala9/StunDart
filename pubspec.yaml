@@ -7,5 +7,5 @@ environment:
   sdk: '^3.9.4'
 
 workspace:
-  - packages/StunDart
+  - packages/Stun
   - packages/StunDartTests
