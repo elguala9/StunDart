@@ -33,8 +33,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  stundart:
-    path: ../StunDart
+  stundart: ^1.0.0
 ```
 
 Then run:
