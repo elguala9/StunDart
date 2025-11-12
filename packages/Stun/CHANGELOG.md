@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1
+
+- Fix: Complete LGPL v3 license text
+- Fix: Code formatting issues
+- Add: Comprehensive example in example/example.dart
+- Fix: Rename library from stundart to stun for consistency
+- Improve: Better import paths in implementation files
+
 ## 1.0.0
 
 - Initial release
