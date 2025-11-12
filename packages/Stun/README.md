@@ -33,7 +33,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  stundart: ^1.0.0
+  stun: ^1.0.1
 ```
 
 Then run:
@@ -331,7 +331,7 @@ Contributions are welcome! Please ensure:
 
 ## License
 
-[Your License Here]
+This project is licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0) - see the [LICENSE](LICENSE) file for details.
 
 ## References
 
