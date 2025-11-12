@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:stun/stundart.dart';
+import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 import 'test_constants.dart';
 

@@ -3,26 +3,25 @@ import 'dart:async';
 
 import '/src/implementations/stun_config.dart';
 import '/src/implementations/stun_message.dart';
-import '/stundart.dart';
-
-
+import '../types/stun_types.dart';
+import '../interfaces/i_stun_handler.dart';
 
 /// STUN handler implementation
 class StunHandler implements IStunHandler {
   /// STUN server address
   String _stunAddress = defaultStunConfig.address;
-  
+
   /// STUN server port
   int _stunPort = defaultStunConfig.port;
-  
+
   /// UDP socket for communication
   final RawDatagramSocket _socket;
 
   /// Creates a STUN handler with the provided configuration
   StunHandler(StunHandlerInput input)
-      : _socket = input.socket,
-        _stunAddress = input.address ?? defaultStunConfig.address,
-        _stunPort = input.port ?? defaultStunConfig.port;
+    : _socket = input.socket,
+      _stunAddress = input.address ?? defaultStunConfig.address,
+      _stunPort = input.port ?? defaultStunConfig.port;
 
   /// Performs a local network request to get local IP and port
   @override
@@ -44,7 +43,9 @@ class StunHandler implements IStunHandler {
   /// Updates the STUN server address and port
   @override
   void setStunServer(String address, int port) {
-    _stunAddress = address.trim().isNotEmpty ? address : defaultStunConfig.address;
+    _stunAddress = address.trim().isNotEmpty
+        ? address
+        : defaultStunConfig.address;
     _stunPort = (port > 0 && port < 65536) ? port : defaultStunConfig.port;
   }
 
@@ -54,13 +55,13 @@ class StunHandler implements IStunHandler {
     // Create STUN binding request message
     final request = StunMessage.createBindingRequest();
     final requestBytes = request.toBytes();
-    
+
     // Determine IP version from socket
     final isIPv6Socket = _socket.address.type == InternetAddressType.IPv6;
-    
+
     // Log local socket info
     print('[StunHandler] Local socket: ${_socket.address}:${_socket.port}');
-    
+
     // Send request to STUN server
     final stunServerAddr = await InternetAddress.lookup(
       _stunAddress,
@@ -69,25 +70,25 @@ class StunHandler implements IStunHandler {
     if (stunServerAddr.isEmpty) {
       throw StateError('Could not resolve STUN server address: $_stunAddress');
     }
-    
+
     final targetAddr = stunServerAddr.first;
     print('[StunHandler] Sending STUN request to $targetAddr:$_stunPort');
-    
+
     _socket.send(requestBytes, targetAddr, _stunPort);
-    
+
     final completer = Completer<StunResponse>();
-    
+
     // Listen for response from STUN server
     StreamSubscription<RawSocketEvent>? subscription;
     subscription = _socket.listen((event) {
       if (event == RawSocketEvent.read) {
         final datagram = _socket.receive();
         if (datagram == null) return;
-        
+
         // Parse STUN response
         final stunResponse = StunMessage.fromBytes(datagram.data);
         final xorMappedAddr = stunResponse.getXorMappedAddress();
-        
+
         // Extract public IP and port from XOR-MAPPED-ADDRESS
         if (xorMappedAddr != null && !completer.isCompleted) {
           final ipVersion = isIPv6Socket ? IpVersion.v6 : IpVersion.v4;
@@ -99,21 +100,25 @@ class StunHandler implements IStunHandler {
             raw: datagram.data,
             attrs: {'transactionId': stunResponse.transactionId},
           );
-          
+
           // Format address correctly based on IP version
-          final addressDisplay = ipVersion == IpVersion.v6 
+          final addressDisplay = ipVersion == IpVersion.v6
               ? '[${response.publicIp}]:${response.publicPort}'
               : '${response.publicIp}:${response.publicPort}';
-          
-          print('[StunHandler] STUN response: $addressDisplay (${response.ipVersion.value})');
-          print('[StunHandler] Port mapping: Local ${_socket.port} -> Public ${response.publicPort}');
-          
+
+          print(
+            '[StunHandler] STUN response: $addressDisplay (${response.ipVersion.value})',
+          );
+          print(
+            '[StunHandler] Port mapping: Local ${_socket.port} -> Public ${response.publicPort}',
+          );
+
           subscription?.cancel();
           completer.complete(response);
         }
       }
     });
-    
+
     // Timeout after 5 seconds if no response
     return completer.future.timeout(
       const Duration(seconds: 5),
@@ -137,7 +142,7 @@ class StunHandler implements IStunHandler {
       includeLinkLocal: false,
       type: InternetAddressType.IPv4,
     );
-    
+
     // Find first non-loopback IPv4 address
     for (final interface in interfaces) {
       for (final addr in interface.addresses) {
@@ -146,7 +151,7 @@ class StunHandler implements IStunHandler {
         }
       }
     }
-    
+
     // Fallback to loopback if no other address found
     return InternetAddress.loopbackIPv4.address;
   }
