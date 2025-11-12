@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:stun/stundart.dart';
 import 'package:test/test.dart';
+import 'test_constants.dart';
 
 
 void main() {
@@ -21,8 +22,8 @@ void main() {
       
       // Use Google's IPv6 STUN server
       final input = (
-        address: 'stun.l.google.com', // Google STUN supports both IPv4 and IPv6
-        port: 19302,
+        address: StunServers.googleStun, // Google STUN supports both IPv4 and IPv6
+        port: StunServers.defaultPort,
         socket: socket,
       );
 
@@ -69,7 +70,7 @@ void main() {
     String? ipv4Address;
     try {
       final socket4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      final input4 = (address: 'stun.l.google.com', port: 19302, socket: socket4);
+      final input4 = (address: StunServers.googleStun, port: StunServers.defaultPort, socket: socket4);
       final handler4 = StunHandler(input4);
       
       final response4 = await handler4.performStunRequest();
@@ -85,7 +86,7 @@ void main() {
     String? ipv6Address;
     try {
       final socket6 = await RawDatagramSocket.bind(InternetAddress.anyIPv6, 0);
-      final input6 = (address: 'stun.l.google.com', port: 19302, socket: socket6);
+      final input6 = (address: StunServers.googleStun, port: StunServers.defaultPort, socket: socket6);
       final handler6 = StunHandler(input6);
       
       final response6 = await handler6.performStunRequest();

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:stun/stundart.dart';
 import 'package:test/test.dart';
+import 'test_constants.dart';
 
 
 void main() {
@@ -9,9 +10,9 @@ void main() {
     test('Query multiple STUN servers and compare public IPs', () async {
       // List of STUN servers to query
       final stunServers = [
-        (address: 'stun.l.google.com', port: 19302),
-        (address: 'stun1.l.google.com', port: 19302),
-        (address: 'stun.stunprotocol.org', port: 3478),
+        (address: StunServers.googleStun, port: StunServers.defaultPort),
+        (address: StunServers.googleStun1, port: StunServers.defaultPort),
+        (address: StunServers.stunProtocol, port: StunServers.alternativePort),
       ];
 
       final publicIps = <String>[];
@@ -93,8 +94,8 @@ void main() {
       );
 
       final input = (
-        address: 'stun.l.google.com',
-        port: 19302,
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
         socket: socket,
       );
 
@@ -115,8 +116,8 @@ void main() {
       );
 
       final input = (
-        address: 'stun.l.google.com',
-        port: 19302,
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
         socket: socket,
       );
 
@@ -141,15 +142,15 @@ void main() {
       );
 
       final input = (
-        address: 'stun.l.google.com',
-        port: 19302,
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
         socket: socket,
       );
 
       final handler = StunHandler(input);
 
       // Change to a different STUN server (use Google stun1)
-      handler.setStunServer('stun1.l.google.com', 19302);
+      handler.setStunServer(StunServers.googleStun1, StunServers.defaultPort);
 
       final response = await handler.performStunRequest();
 
@@ -166,8 +167,8 @@ void main() {
       );
 
       final input = (
-        address: '192.0.2.1', // TEST-NET-1, should not respond
-        port: 19302,
+        address: StunServers.testNet1, // TEST-NET-1, should not respond
+        port: StunServers.defaultPort,
         socket: socket,
       );
 
@@ -180,7 +181,7 @@ void main() {
       );
 
       handler.close();
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    }, timeout: const Timeout(TestTimeouts.medium));
 
     test('Query STUN server with IPv6', () async {
       try {
@@ -192,8 +193,8 @@ void main() {
         );
 
         final input = (
-          address: 'stun.l.google.com',
-          port: 19302,
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
           socket: socket,
         );
 
@@ -222,6 +223,61 @@ void main() {
         print('IPv6 socket binding failed (IPv6 not available): $e');
         // IPv6 not available on this system, skip test
       }
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    }, timeout: const Timeout(TestTimeouts.long));
+
+    test('getSocket returns the underlying socket', () async {
+      final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+      final originalPort = socket.port;
+      
+      final input = (
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+        socket: socket,
+      );
+
+      final handler = StunHandler(input);
+      final returnedSocket = handler.getSocket();
+
+      // Verify it returns the same socket
+      expect(returnedSocket.port, equals(originalPort));
+      expect(returnedSocket.address, equals(socket.address));
+      expect(identical(returnedSocket, socket), isTrue, 
+          reason: 'Should return the exact same socket instance');
+
+      handler.close();
+    });
+
+    test('close releases socket resources', () async {
+      final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+      final port = socket.port;
+      
+      final input = (
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+        socket: socket,
+      );
+
+      final handler = StunHandler(input);
+      
+      // Verify socket is usable before close
+      expect(handler.getSocket().port, equals(port));
+      
+      // Close the handler
+      handler.close();
+      
+      // After close, trying to use the socket should fail or show it's closed
+      // We can't directly test socket.isClosed in Dart, but we can verify
+      // that operations fail or handler behaves appropriately
+      expect(() => handler.getSocket().port, returnsNormally);
+      
+      // Verify we can bind to the same port again (socket was released)
+      final newSocket = await RawDatagramSocket.bind(
+        InternetAddress.anyIPv4, 
+        port,
+        reuseAddress: true,
+      );
+      expect(newSocket.port, equals(port));
+      newSocket.close();
+    });
   });
 }
