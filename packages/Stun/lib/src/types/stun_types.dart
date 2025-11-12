@@ -11,7 +11,7 @@ enum IpVersion {
 }
 
 /// STUN response containing public IP, port, and transaction information
-/// 
+///
 /// Example:
 /// ```dart
 /// final response = (
@@ -24,25 +24,24 @@ enum IpVersion {
 /// );
 /// ```
 typedef StunResponse = ({
-  String publicIp,           // Es: "203.0.113.42" o "2001:db8::1"
-  int publicPort,            // Es: 54723
-  IpVersion ipVersion,       // IpVersion.v4 o IpVersion.v6
-  Uint8List transactionId,   // Transaction ID della richiesta STUN (12 byte)
-  Uint8List raw,             // Il pacchetto STUN ricevuto (binario)
+  String publicIp, // Es: "203.0.113.42" o "2001:db8::1"
+  int publicPort, // Es: 54723
+  IpVersion ipVersion, // IpVersion.v4 o IpVersion.v6
+  Uint8List transactionId, // Transaction ID della richiesta STUN (12 byte)
+  Uint8List raw, // Il pacchetto STUN ricevuto (binario)
   Map<String, dynamic>? attrs, // Eventuali altri attributi STUN
 });
 
 /// Local network information
-/// 
+///
 /// Example:
 /// ```dart
 /// final info = (localIp: "192.168.1.2", localPort: 12345);
 /// ```
 typedef LocalInfo = ({
-  String localIp,    // Es: "192.168.1.2"
-  int localPort,     // Es: 12345
+  String localIp, // Es: "192.168.1.2"
+  int localPort, // Es: 12345
 });
-
 
 /// Input parameters for StunHandler constructor
 typedef StunHandlerInput = ({

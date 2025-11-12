@@ -1,7 +1,6 @@
 import 'dart:io';
 import '../types/stun_types.dart';
 
-
 /// Interface for STUN handler
 abstract class IStunHandler {
   /// Performs a STUN request and returns the public (IP, port) inferred by the server
