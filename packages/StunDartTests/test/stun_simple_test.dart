@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:stun/stundart.dart';
+import 'test_constants.dart';
 
 void main() {
   test('Simple STUN request', () async {
@@ -10,8 +11,8 @@ void main() {
     print('Socket address: ${socket.address}');
     
     final input = (
-      address: 'stun.l.google.com',
-      port: 19302,
+      address: StunServers.googleStun,
+      port: StunServers.defaultPort,
       socket: socket,
     );
 
@@ -34,5 +35,5 @@ void main() {
     } finally {
       handler.close();
     }
-  }, timeout: const Timeout(Duration(seconds: 15)));
+  }, timeout: Timeout(TestTimeouts.long));
 }
