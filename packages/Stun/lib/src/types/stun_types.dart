@@ -49,3 +49,60 @@ typedef StunHandlerInput = ({
   int? port, // stun server port
   RawDatagramSocket socket,
 });
+
+/// NAT type classifications per RFC 5780 and RFC 3489
+enum NATType {
+  openInternet('Open Internet'),
+  fullCone('Full Cone NAT'),
+  restrictedCone('Restricted Cone NAT'),
+  portRestrictedCone('Port Restricted Cone NAT'),
+  symmetric('Symmetric NAT'),
+  symmetricFirewall('Symmetric UDP Firewall'),
+  udpBlocked('UDP Blocked');
+
+  const NATType(this.displayName);
+  final String displayName;
+}
+
+/// NAT filtering behavior (endpoint-independent vs endpoint-dependent)
+enum NATFilteringBehavior {
+  endpointIndependent('Endpoint-Independent Filtering'),
+  addressDependent('Address-Dependent Filtering'),
+  addressAndPortDependent('Address and Port-Dependent Filtering'),
+  unknown('Unknown');
+
+  const NATFilteringBehavior(this.displayName);
+  final String displayName;
+}
+
+/// NAT mapping behavior
+enum NATMappingBehavior {
+  endpointIndependent('Endpoint-Independent Mapping'),
+  addressDependent('Address-Dependent Mapping'),
+  addressAndPortDependent('Address and Port-Dependent Mapping'),
+  unknown('Unknown');
+
+  const NATMappingBehavior(this.displayName);
+  final String displayName;
+}
+
+/// Result of NAT type detection
+///
+/// Example:
+/// ```dart
+/// final result = await detector.detectNATType();
+/// print('NAT Type: ${result.natType.displayName}');
+/// print('Public IP: ${result.publicIp}:${result.publicPort}');
+/// ```
+typedef NATDetectionResult = ({
+  NATType natType,
+  NATFilteringBehavior filteringBehavior,
+  NATMappingBehavior mappingBehavior,
+  String? publicIp,
+  int? publicPort,
+  String? alternateIp,
+  int? alternatePort,
+  bool rfc5780Supported,
+  Duration detectionTime,
+  Map<String, dynamic> diagnostics,
+});
