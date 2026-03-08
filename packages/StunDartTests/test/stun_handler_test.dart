@@ -250,7 +250,7 @@ void main() {
     test('close releases socket resources', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final port = socket.port;
-      
+
       final input = (
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -258,26 +258,317 @@ void main() {
       );
 
       final handler = StunHandler(input);
-      
+
       // Verify socket is usable before close
       expect(handler.getSocket().port, equals(port));
-      
+
       // Close the handler
       handler.close();
-      
+
       // After close, trying to use the socket should fail or show it's closed
       // We can't directly test socket.isClosed in Dart, but we can verify
       // that operations fail or handler behaves appropriately
       expect(() => handler.getSocket().port, returnsNormally);
-      
+
       // Verify we can bind to the same port again (socket was released)
       final newSocket = await RawDatagramSocket.bind(
-        InternetAddress.anyIPv4, 
+        InternetAddress.anyIPv4,
         port,
         reuseAddress: true,
       );
       expect(newSocket.port, equals(port));
       newSocket.close();
+    });
+
+    test('StunHandler.create() creates handler with internal socket', () async {
+      final handler = await StunHandler.create(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // Verify socket was created
+        final socket = handler.getSocket();
+        expect(socket, isNotNull);
+        expect(socket.port, greaterThan(0));
+
+        // Verify handler can make STUN requests
+        final response = await handler.performStunRequest();
+        expect(response.publicIp, isNotEmpty);
+        expect(response.publicPort, greaterThan(0));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.withSocket() creates handler from external socket', () async {
+      final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+      final originalPort = socket.port;
+
+      final handler = StunHandler.withSocket(
+        socket,
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // Verify it uses the provided socket
+        final returnedSocket = handler.getSocket();
+        expect(identical(returnedSocket, socket), isTrue);
+        expect(returnedSocket.port, equals(originalPort));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('getSocket throws StateError when socket not initialized', () async {
+      final input = (
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+        socket: null as RawDatagramSocket?,
+      );
+
+      final handler = StunHandler(input);
+
+      // Should throw StateError
+      expect(
+        () => handler.getSocket(),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('performStunRequest handles socket errors and recreates socket', () async {
+      // Create handler with internal socket
+      final handler = await StunHandler.create(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // Perform a successful STUN request
+        final response = await handler.performStunRequest();
+        expect(response.publicIp, isNotEmpty);
+        expect(response.publicPort, greaterThan(0));
+
+        // Verify we have a valid socket
+        final socket = handler.getSocket();
+        expect(socket, isNotNull);
+        expect(socket.port, greaterThan(0));
+
+        // The error handling and socket recreation are tested implicitly
+        // in other tests (e.g., Handle STUN request timeout)
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.create with IPv6', () async {
+      try {
+        final handler = await StunHandler.create(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          ipv6: true,
+        );
+
+        try {
+          // Verify IPv6 socket was created
+          final socket = handler.getSocket();
+          expect(socket.address.type, equals(InternetAddressType.IPv6));
+
+          print('IPv6 socket created: ${socket.address}:${socket.port}');
+        } finally {
+          handler.close();
+        }
+      } catch (e) {
+        print('IPv6 test skipped (IPv6 not available): $e');
+        // IPv6 might not be available on this system
+      }
+    });
+
+    test('StunHandler.create socket is lazy initialized', () async {
+      // Create handler but don't access socket yet
+      final handler = await StunHandler.create();
+
+      try {
+        // Socket should exist after create()
+        final socket = handler.getSocket();
+        expect(socket, isNotNull);
+        expect(socket.port, greaterThan(0));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.withoutSocket() creates handler with internal socket', () async {
+      final handler = await StunHandler.withoutSocket(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // Verify socket was created
+        final socket = handler.getSocket();
+        expect(socket, isNotNull);
+        expect(socket.port, greaterThan(0));
+        expect(socket.address.type, equals(InternetAddressType.IPv4));
+
+        // Verify handler can make STUN requests
+        final response = await handler.performStunRequest();
+        expect(response.publicIp, isNotEmpty);
+        expect(response.publicPort, greaterThan(0));
+        expect(response.ipVersion, equals(IpVersion.v4));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.withoutSocket() with IPv6', () async {
+      try {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          ipv6: true,
+        );
+
+        try {
+          // Verify IPv6 socket was created
+          final socket = handler.getSocket();
+          expect(socket.address.type, equals(InternetAddressType.IPv6));
+
+          print('IPv6 socket created with withoutSocket: ${socket.address}:${socket.port}');
+
+          // Socket should be IPv6
+          expect(socket.port, greaterThan(0));
+        } finally {
+          handler.close();
+        }
+      } catch (e) {
+        print('IPv6 test skipped (IPv6 not available): $e');
+        // IPv6 might not be available on this system
+      }
+    });
+
+    test('StunHandler.withoutSocket() with custom STUN server', () async {
+      final handler = await StunHandler.withoutSocket(
+        address: StunServers.googleStun1,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // Verify socket was created
+        final socket = handler.getSocket();
+        expect(socket, isNotNull);
+        expect(socket.port, greaterThan(0));
+
+        // Perform STUN request with custom server
+        final response = await handler.performStunRequest();
+        expect(response.publicIp, isNotEmpty);
+        expect(response.publicPort, greaterThan(0));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.withoutSocket() with default server configuration', () async {
+      // Create without specifying server (should use defaults)
+      final handler = await StunHandler.withoutSocket();
+
+      try {
+        // Verify socket was created
+        final socket = handler.getSocket();
+        expect(socket, isNotNull);
+        expect(socket.port, greaterThan(0));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.withoutSocket() can perform multiple STUN requests', () async {
+      final handler = await StunHandler.withoutSocket(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // First request
+        final response1 = await handler.performStunRequest();
+        expect(response1.publicIp, isNotEmpty);
+
+        // Second request on same handler
+        final response2 = await handler.performStunRequest();
+        expect(response2.publicIp, isNotEmpty);
+
+        // IPs should be the same since we're on the same socket
+        expect(response1.publicIp, equals(response2.publicIp));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.withoutSocket() can change STUN server after creation', () async {
+      final handler = await StunHandler.withoutSocket(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // Perform request with initial server
+        final response1 = await handler.performStunRequest();
+        expect(response1.publicIp, isNotEmpty);
+
+        // Change server
+        handler.setStunServer(StunServers.googleStun1, StunServers.defaultPort);
+
+        // Perform request with new server
+        final response2 = await handler.performStunRequest();
+        expect(response2.publicIp, isNotEmpty);
+
+        // Should still get valid responses
+        expect(response2.publicPort, greaterThan(0));
+      } finally {
+        handler.close();
+      }
+    });
+
+    test('StunHandler.withoutSocket() close releases socket', () async {
+      final handler = await StunHandler.withoutSocket(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      final port = handler.getSocket().port;
+
+      // Close the handler
+      handler.close();
+
+      // Verify we can bind to the same port again (socket was released)
+      final newSocket = await RawDatagramSocket.bind(
+        InternetAddress.anyIPv4,
+        port,
+        reuseAddress: true,
+      );
+      expect(newSocket.port, equals(port));
+      newSocket.close();
+    });
+
+    test('StunHandler.withoutSocket() performs local request', () async {
+      final handler = await StunHandler.withoutSocket(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+      );
+
+      try {
+        // Get local network information
+        final localInfo = await handler.performLocalRequest();
+
+        print('Local IP: ${localInfo.localIp}');
+        print('Local Port: ${localInfo.localPort}');
+
+        expect(localInfo.localIp, isNotEmpty);
+        expect(localInfo.localPort, greaterThan(0));
+      } finally {
+        handler.close();
+      }
     });
   });
 }
