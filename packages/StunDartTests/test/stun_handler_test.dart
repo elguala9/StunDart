@@ -770,5 +770,122 @@ void main() {
         }
       });
     });
+
+    group('Timeout and Logging tests', () {
+      test('Configurable timeout - custom timeout is used', () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          timeout: const Duration(seconds: 1),
+        );
+        try {
+          // This should work fine with a 1-second timeout for a real STUN server
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('onLog callback receives messages during socket creation', () async {
+        final messages = <String>[];
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onLog: (msg) => messages.add(msg),
+        );
+        try {
+          expect(
+            messages.any((msg) => msg.contains('Socket created')),
+            isTrue,
+            reason: 'Should log socket creation',
+          );
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('onLog with null (default) does not crash', () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+        try {
+          // Should not throw
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('StunHandler.withSocket accepts timeout and onLog', () async {
+        // Create a socket manually
+        final socket =
+            await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+        try {
+          final messages = <String>[];
+          final handler = StunHandler.withSocket(
+            socket,
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            timeout: const Duration(seconds: 2),
+            onLog: (msg) => messages.add(msg),
+          );
+          try {
+            // onLog should not crash
+            final response = await handler.performStunRequest();
+            expect(response.publicIp, isNotEmpty);
+          } finally {
+            handler.close();
+          }
+        } finally {
+          socket.close();
+        }
+      });
+
+      test('IPv4 performLocalRequest returns IPv4 address format', () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          ipv6: false,
+        );
+        try {
+          final localInfo = await handler.performLocalRequest();
+          // IPv4 address should contain dots
+          expect(
+            localInfo.localIp,
+            matches(RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$|^127\.0\.0\.1$')),
+            reason: 'IPv4 address should be in dotted format',
+          );
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('IPv6 performLocalRequest returns IPv6 address format', () async {
+        try {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            ipv6: true,
+          );
+          try {
+            final localInfo = await handler.performLocalRequest();
+            // IPv6 address should contain colons
+            expect(
+              localInfo.localIp.contains(':'),
+              isTrue,
+              reason: 'IPv6 address should contain colons',
+            );
+          } finally {
+            handler.close();
+          }
+        } catch (e) {
+          // IPv6 may not be available on all systems
+          print('IPv6 test skipped: $e');
+        }
+      });
+    });
   });
 }

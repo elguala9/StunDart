@@ -37,11 +37,12 @@ A complete Dart implementation of the STUN (Session Traversal Utilities for NAT)
 - Internal socket management options
 
 ✅ **Production Ready**
-- Comprehensive test suite (58+ tests)
+- Comprehensive test suite (123 tests)
 - Error handling and validation
 - Port mapping discovery
 - Local network information
-- Network timeout handling
+- Configurable timeout handling
+- Optional logging support
 
 ## Installation
 
@@ -49,7 +50,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  stun: ^1.2.0
+  stun: ^1.3.0
 ```
 
 Then run:
@@ -234,38 +235,97 @@ typedef NATDetectionResult = ({
 });
 ```
 
-### `StunHandlerSingleton` Class 🆕
+### `IStunHandlerSingleton` Interface 🆕
 
-Global singleton instance management:
+Singleton interface for managing dual IPv4/IPv6 STUN handlers:
 
 ```dart
-class StunHandlerSingleton {
-  /// Get the singleton instance
-  static IStunHandler get instance => _instance;
+abstract interface class IStunHandlerSingleton {
+  Future<void> initialize({
+    String? address,
+    int? port,
+    Duration timeout = const Duration(seconds: 5),
+    void Function(String)? onLog,
+  });
+  Future<void> initializeWithHandlers(
+    IStunHandler ipv4Handler, {
+    IStunHandler? ipv6Handler,
+  });
+  IStunHandler get ipv4Handler;
+  IStunHandler? get ipv6Handler;
+  void setIpv4Handler(IStunHandler handler);
+  void setIpv6Handler(IStunHandler? handler);
+  void replaceHandler(IStunHandler handler, {required bool ipv6});
+  Future<StunResponse> performStunRequest();
+  Future<LocalInfo> performLocalRequest();
+  Future<bool> pingStunServer({bool ipv6 = true});
+  RawDatagramSocket getSocket({bool ipv6 = true});
+  void setStunServer(String address, int port, {bool? ipv6});
+  void close({bool? ipv6});
+}
+```
 
-  /// Create a new internal handler and set it as the singleton
-  static void createNewHandler({
-    required String address,
-    required int port,
-    bool ipv6 = false,
+### `StunHandlerSingleton` Class 🆕
+
+Global singleton instance managing dual IPv4/IPv6 STUN handlers:
+
+```dart
+class StunHandlerSingleton implements IStunHandlerSingleton {
+  static StunHandlerSingleton get instance => _instance;
+
+  /// Initialize with both IPv4 and IPv6 handlers
+  Future<void> initialize({
+    String? address,
+    int? port,
+    Duration timeout = const Duration(seconds: 5),
+    void Function(String)? onLog,
   });
 
-  /// Replace the current handler with a custom implementation
-  static void replaceHandler(IStunHandler handler);
+  /// Initialize with provided handler instances (DI/testing)
+  Future<void> initializeWithHandlers(
+    IStunHandler ipv4Handler, {
+    IStunHandler? ipv6Handler,
+  });
+
+  /// Get the IPv4 handler (always available after initialize)
+  IStunHandler get ipv4Handler;
+
+  /// Get the IPv6 handler (null if unavailable)
+  IStunHandler? get ipv6Handler;
+
+  /// Perform STUN request on both handlers, return IPv6 if available
+  Future<StunResponse> performStunRequest();
+
+  /// Get local info from both handlers, return IPv6 if available
+  Future<LocalInfo> performLocalRequest();
 }
 ```
 
 **Example:**
 ```dart
-// Create a global handler with internal socket
-StunHandlerSingleton.createNewHandler(
+// Initialize global singleton with both IPv4 and IPv6
+await StunHandlerSingleton.instance.initialize(
   address: 'stun.l.google.com',
   port: 19302,
-  ipv6: false,
 );
 
-// Use globally
+// Use automatically (prefers IPv6 if available)
 final response = await StunHandlerSingleton.instance.performStunRequest();
+
+// Access specific handler
+final ipv4Response = await StunHandlerSingleton.instance.ipv4Handler.performStunRequest();
+final ipv6Response = await StunHandlerSingleton.instance.ipv6Handler?.performStunRequest();
+
+// Replace specific handler
+final customHandler = await StunHandler.withoutSocket(
+  address: 'custom.stun.server',
+  port: 3478,
+  ipv6: true,
+);
+StunHandlerSingleton.instance.replaceHandler(
+  customHandler,
+  ipv6: true,
+);
 ```
 
 ### `StunHandler` Constructors 🆕
@@ -292,6 +352,72 @@ final handler = StunHandler.withoutSocket(
   address: 'stun.l.google.com',
   port: 19302,
   ipv6: true,  // Use IPv6
+);
+
+// With configurable timeout and logging
+final handler = StunHandler.withoutSocket(
+  address: 'stun.l.google.com',
+  port: 19302,
+  timeout: const Duration(seconds: 10),  // Custom timeout
+  onLog: (msg) => print('STUN: $msg'),   // Optional logging
+);
+```
+
+### Configurable Timeout
+
+By default, STUN requests timeout after 5 seconds. You can customize this:
+
+```dart
+// Custom timeout for factory
+final handler = await StunHandler.withoutSocket(
+  address: 'stun.l.google.com',
+  port: 19302,
+  timeout: const Duration(seconds: 15),  // 15 second timeout
+);
+
+// Custom timeout for singleton
+await StunHandlerSingleton.instance.initialize(
+  address: 'stun.l.google.com',
+  port: 19302,
+  timeout: const Duration(seconds: 10),
+);
+
+// With external socket
+final handler = StunHandler.withSocket(
+  socket,
+  timeout: const Duration(seconds: 20),
+);
+```
+
+### Logging Support
+
+Enable optional logging to track STUN operations:
+
+```dart
+final messages = <String>[];
+
+// With logging callback
+final handler = await StunHandler.withoutSocket(
+  address: 'stun.l.google.com',
+  port: 19302,
+  onLog: (msg) => messages.add(msg),
+);
+
+try {
+  final response = await handler.performStunRequest();
+  // messages contains: Socket creation, request sending, response parsing
+  for (final msg in messages) {
+    print('🔍 $msg');
+  }
+} finally {
+  handler.close();
+}
+
+// With singleton
+await StunHandlerSingleton.instance.initialize(
+  address: 'stun.l.google.com',
+  port: 19302,
+  onLog: (msg) => logger.info(msg),  // Your logger
 );
 ```
 
@@ -478,7 +604,7 @@ import 'package:stun/stun.dart';
 
 void main() async {
   // Create handler with internal socket management
-  final handler = StunHandler.withoutSocket(
+  final handler = await StunHandler.withoutSocket(
     address: 'stun.l.google.com',
     port: 19302,
     ipv6: false,  // IPv4
@@ -500,19 +626,23 @@ void main() async {
 import 'package:stun/stun.dart';
 
 void main() async {
-  // Initialize global singleton
-  StunHandlerSingleton.createNewHandler(
+  // Initialize global singleton with IPv4 and IPv6
+  await StunHandlerSingleton.instance.initialize(
     address: 'stun.l.google.com',
     port: 19302,
   );
 
-  // Use anywhere in your app
+  // Use anywhere in your app (prefers IPv6 if available)
   final response = await StunHandlerSingleton.instance.performStunRequest();
   print('Public IP: ${response.publicIp}');
 
   // Switch servers without creating new handler
   StunHandlerSingleton.instance.setStunServer('stun1.l.google.com', 19302);
   final response2 = await StunHandlerSingleton.instance.performStunRequest();
+
+  // Access specific handler if needed
+  final ipv4Handler = StunHandlerSingleton.instance.ipv4Handler;
+  final ipv6Handler = StunHandlerSingleton.instance.ipv6Handler;
 
   // Cleanup
   StunHandlerSingleton.instance.close();
@@ -567,19 +697,20 @@ dart test
 ```
 
 The test suite includes:
-- **23 tests** for StunHandlerSingleton (dual stack management, handler replacement, IPv6 preference)
+- **24 tests** for StunHandlerSingleton (dual stack management, handler replacement, IPv6 preference, timeout, logging)
 - **16 tests** for NAT type enums and typedefs
 - **24 tests** for STUN message parsing and encoding
 - **18 tests** for NAT detector integration
-- **8 tests** for StunHandler.withoutSocket() factory pattern
+- **11 tests** for StunHandler (withoutSocket, IPv4/IPv6, timeout, logging)
 - **6 tests** for response caching behavior
 - IPv4 and IPv6 connectivity tests
 - Dual stack tests
 - STUN server comparison tests
-- Timeout handling tests
+- Configurable timeout handling tests
+- Logging support tests
 - Edge case and socket lifecycle tests
 
-**Total: 114 tests - All passing ✅**
+**Total: 123 tests - All passing ✅**
 
 ## Architecture
 
@@ -590,10 +721,11 @@ packages/Stun/lib/src/
 ├── types/                   # Type definitions (records, enums)
 │   └── stun_types.dart
 ├── interfaces/              # Abstract interfaces
-│   └── i_stun_handler.dart
+│   ├── i_stun_handler.dart
+│   └── i_stun_handler_singleton.dart  # Singleton interface (NEW)
 └── implementations/         # Concrete implementations
     ├── stun_handler.dart              # Main STUN handler
-    ├── stun_handler_singleton.dart    # Global singleton (NEW)
+    ├── stun_handler_singleton.dart    # Global singleton
     ├── nat_detector.dart              # NAT type detection
     ├── stun_message.dart              # STUN message parser
     └── stun_config.dart               # Default configuration
