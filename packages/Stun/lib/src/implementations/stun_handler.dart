@@ -66,7 +66,7 @@ class StunHandler implements IStunHandler {
   static Future<StunHandler> withoutSocket({
     String? address,
     int? port,
-    bool ipv6 = false,
+    bool ipv6 = true,
   }) async {
     final handler = StunHandler._internal(
       stunAddress: address,

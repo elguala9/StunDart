@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-09
+
+### Added 🎉
+- **Enhanced StunHandlerSingleton**: Improved dual IPv4/IPv6 stack support
+  - Parallel execution of STUN requests on both IPv4 and IPv6 handlers
+  - Intelligent IPv6 preference in responses when available
+  - New methods: `setIpv4Handler()`, `setIpv6Handler()`, `replaceHandler()`, `initializeWithHandlers()`
+  - Graceful IPv6 fallback for systems without IPv6 support
+  - Selective handler closure with `close()` parameters
+
+- **Enhanced Test Coverage**:
+  - 9 additional tests for improved StunHandlerSingleton functionality
+  - Total test count: 114 passing tests (was 105)
+  - Complete coverage of dual-stack operations and handler management
+
+### Changed
+- Improved architecture for concurrent handler management
+- Better error handling for IPv6 unavailable scenarios
+- Performance optimizations for multi-handler operations
+
 ## [1.1.0] - 2025-03-09
 
 ### Added 🎉
@@ -135,6 +155,7 @@ print('Public IP: ${result.publicIp}');
 - STUN server ping functionality
 - Example implementations
 
+[1.2.0]: https://github.com/elguala9/StunDart/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/elguala9/StunDart/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/elguala9/StunDart/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/elguala9/StunDart/compare/v1.0.0...v1.0.1

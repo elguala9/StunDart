@@ -49,7 +49,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  stun: ^1.1.0
+  stun: ^1.2.0
 ```
 
 Then run:
@@ -567,17 +567,19 @@ dart test
 ```
 
 The test suite includes:
+- **23 tests** for StunHandlerSingleton (dual stack management, handler replacement, IPv6 preference)
 - **16 tests** for NAT type enums and typedefs
 - **24 tests** for STUN message parsing and encoding
 - **18 tests** for NAT detector integration
-- **8 tests** for StunHandler.withoutSocket() and singleton pattern
+- **8 tests** for StunHandler.withoutSocket() factory pattern
+- **6 tests** for response caching behavior
 - IPv4 and IPv6 connectivity tests
 - Dual stack tests
 - STUN server comparison tests
 - Timeout handling tests
 - Edge case and socket lifecycle tests
 
-**Total: 66+ tests - All passing ✅**
+**Total: 114 tests - All passing ✅**
 
 ## Architecture
 

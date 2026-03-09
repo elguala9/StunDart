@@ -403,6 +403,7 @@ void main() {
       final handler = await StunHandler.withoutSocket(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
+        ipv6: false,
       );
 
       try {
