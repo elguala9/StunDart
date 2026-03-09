@@ -21,6 +21,13 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   /// Helper method to log messages
   void _log(String message) => _onLog?.call(message);
 
+  /// Helper to get the later of two timestamps
+  static DateTime? _laterOf(DateTime? a, DateTime? b) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return a.isAfter(b) ? a : b;
+  }
+
   /// Get the singleton instance
   static StunHandlerSingleton get instance => _instance;
 
@@ -32,10 +39,23 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
+    SingletonCallbackHandler? onSocketRefresh,
   }) async {
     _onLog = onLog;
-    _ipv4Handler = await _createIpv4Handler(address, port, timeout, onLog);
-    _ipv6Handler = await _createIpv6HandlerSafe(address, port, timeout, onLog);
+
+    // Create closure wrappers to convert SingletonCallbackHandler to CallbackHandler
+    final CallbackHandler? ipv4Callback = onSocketRefresh == null
+        ? null
+        : (newRes, oldRes) => onSocketRefresh(newRes, oldRes, ipv6: false);
+
+    final CallbackHandler? ipv6Callback = onSocketRefresh == null
+        ? null
+        : (newRes, oldRes) => onSocketRefresh(newRes, oldRes, ipv6: true);
+
+    _ipv4Handler =
+        await _createIpv4Handler(address, port, timeout, onLog, ipv4Callback);
+    _ipv6Handler = await _createIpv6HandlerSafe(
+        address, port, timeout, onLog, ipv6Callback);
   }
 
   /// Initializes the singleton with provided handler instances
@@ -55,6 +75,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     int? port,
     Duration timeout,
     void Function(String)? onLog,
+    CallbackHandler? onSocketRefresh,
   ) =>
       StunHandler.withoutSocket(
         address: address,
@@ -62,6 +83,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
         ipv6: false,
         timeout: timeout,
         onLog: onLog,
+        onSocketRefresh: onSocketRefresh,
       );
 
   /// Creates IPv6 handler without socket (returns null if unavailable)
@@ -70,6 +92,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     int? port,
     Duration timeout,
     void Function(String)? onLog,
+    CallbackHandler? onSocketRefresh,
   ) async {
     try {
       return await StunHandler.withoutSocket(
@@ -78,6 +101,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
         ipv6: true,
         timeout: timeout,
         onLog: onLog,
+        onSocketRefresh: onSocketRefresh,
       );
     } catch (e) {
       _log('IPv6 handler initialization failed: $e');
@@ -223,4 +247,28 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
       _ipv6Handler = null;
     }
   }
+
+  /// Timestamp of the last successful STUN request on IPv4 handler
+  @override
+  DateTime? get ipv4LastStunUpdated => _ipv4Handler?.lastStunUpdated;
+
+  /// Timestamp of the last successful STUN request on IPv6 handler
+  @override
+  DateTime? get ipv6LastStunUpdated => _ipv6Handler?.lastStunUpdated;
+
+  /// Timestamp of the last successful local request on IPv4 handler
+  @override
+  DateTime? get ipv4LastLocalUpdated => _ipv4Handler?.lastLocalUpdated;
+
+  /// Timestamp of the last successful local request on IPv6 handler
+  @override
+  DateTime? get ipv6LastLocalUpdated => _ipv6Handler?.lastLocalUpdated;
+
+  /// Timestamp of the most recent STUN request (IPv6 if available, else IPv4)
+  @override
+  DateTime? get lastStunUpdated => _laterOf(ipv4LastStunUpdated, ipv6LastStunUpdated);
+
+  /// Timestamp of the most recent local request (IPv6 if available, else IPv4)
+  @override
+  DateTime? get lastLocalUpdated => _laterOf(ipv4LastLocalUpdated, ipv6LastLocalUpdated);
 }

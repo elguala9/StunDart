@@ -8,6 +8,7 @@ abstract interface class IStunHandlerSingleton {
     int? port,
     Duration timeout,
     void Function(String)? onLog,
+    SingletonCallbackHandler? onSocketRefresh,
   });
   Future<void> initializeWithHandlers(
     IStunHandler ipv4Handler, {
@@ -24,4 +25,22 @@ abstract interface class IStunHandlerSingleton {
   RawDatagramSocket getSocket({bool ipv6 = true});
   void setStunServer(String address, int port, {bool? ipv6});
   void close({bool? ipv6});
+
+  /// Timestamp of the last successful STUN request on IPv4 handler
+  DateTime? get ipv4LastStunUpdated;
+
+  /// Timestamp of the last successful STUN request on IPv6 handler
+  DateTime? get ipv6LastStunUpdated;
+
+  /// Timestamp of the last successful local request on IPv4 handler
+  DateTime? get ipv4LastLocalUpdated;
+
+  /// Timestamp of the last successful local request on IPv6 handler
+  DateTime? get ipv6LastLocalUpdated;
+
+  /// Timestamp of the most recent STUN request (IPv6 if available, else IPv4)
+  DateTime? get lastStunUpdated;
+
+  /// Timestamp of the most recent local request (IPv6 if available, else IPv4)
+  DateTime? get lastLocalUpdated;
 }
