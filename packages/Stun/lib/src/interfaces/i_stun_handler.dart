@@ -20,4 +20,10 @@ abstract class IStunHandler {
 
   /// Closes the socket and releases resources held by the STUN handler
   void close();
+
+  /// Timestamp of the last successful STUN request (null if never performed)
+  DateTime? get lastStunUpdated;
+
+  /// Timestamp of the last successful local request (null if never performed)
+  DateTime? get lastLocalUpdated;
 }

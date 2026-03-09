@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:async';
 
+import 'package:callback_handler/callback_handler.dart';
+
 import '/src/implementations/stun_config.dart';
 import '/src/implementations/stun_message.dart';
 import '../types/stun_types.dart';
@@ -12,15 +14,20 @@ class StunHandler implements IStunHandler {
   /// If socket is provided, it will be used; otherwise, socket must be created via factory
   StunHandler(
     StunHandlerInput input, {
-    CallbackHandler? onSocketRefresh,
+    OnSocketRefresh? onSocketRefresh,
   })  : _socket = input.socket,
         _stunAddress = input.address ?? defaultStunConfig.address,
         _stunPort = input.port ?? defaultStunConfig.port,
         _bindType = input.socket?.address.type ?? InternetAddressType.IPv4,
         _bindPort = null,
         _timeout = const Duration(seconds: 5),
-        _onLog = null,
-        _onSocketRefresh = onSocketRefresh;
+        _onLog = null {
+    if (onSocketRefresh != null) {
+      _socketRefreshHandler.register((data) {
+        onSocketRefresh(data.$1, data.$2);
+      });
+    }
+  }
 
   /// Named constructor for explicit socket ownership
   /// Creates a handler that manages an externally-provided socket
@@ -30,15 +37,20 @@ class StunHandler implements IStunHandler {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    CallbackHandler? onSocketRefresh,
+    OnSocketRefresh? onSocketRefresh,
   })  : _socket = socket,
         _stunAddress = address ?? defaultStunConfig.address,
         _stunPort = port ?? defaultStunConfig.port,
         _bindType = socket.address.type,
         _bindPort = null,
         _timeout = timeout,
-        _onLog = onLog,
-        _onSocketRefresh = onSocketRefresh;
+        _onLog = onLog {
+    if (onSocketRefresh != null) {
+      _socketRefreshHandler.register((data) {
+        onSocketRefresh(data.$1, data.$2);
+      });
+    }
+  }
 
   /// Private constructor for factory use
   StunHandler._internal({
@@ -47,15 +59,20 @@ class StunHandler implements IStunHandler {
     required InternetAddressType bindType,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    CallbackHandler? onSocketRefresh,
+    OnSocketRefresh? onSocketRefresh,
   })  : _stunAddress = stunAddress ?? defaultStunConfig.address,
         _stunPort = stunPort ?? defaultStunConfig.port,
         _socket = null,
         _bindType = bindType,
         _bindPort = 0,
         _timeout = timeout,
-        _onLog = onLog,
-        _onSocketRefresh = onSocketRefresh;
+        _onLog = onLog {
+    if (onSocketRefresh != null) {
+      _socketRefreshHandler.register((data) {
+        onSocketRefresh(data.$1, data.$2);
+      });
+    }
+  }
 
   /// STUN server address
   String _stunAddress = defaultStunConfig.address;
@@ -90,15 +107,17 @@ class StunHandler implements IStunHandler {
   /// Optional logging callback
   final void Function(String)? _onLog;
 
-  /// Optional socket refresh callback
-  final CallbackHandler? _onSocketRefresh;
+  /// Socket refresh callback handler using callback_handler library
+  final CallbackHandler<(StunResponse, StunResponse?), void> _socketRefreshHandler =
+      CallbackHandler();
 
   /// Helper method to log messages
   void _log(String message) => _onLog?.call(message);
 
   /// Helper method to fire socket refresh callback
-  void _fireSocketRefresh(StunResponse newResponse, StunResponse? oldResponse) =>
-      _onSocketRefresh?.call(newResponse, oldResponse);
+  void _fireSocketRefresh(StunResponse newResponse, StunResponse? oldResponse) {
+    _socketRefreshHandler.invoke((newResponse, oldResponse));
+  }
 
   /// Timestamp of the last successful STUN request
   @override
@@ -116,7 +135,7 @@ class StunHandler implements IStunHandler {
     bool ipv6 = true,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    CallbackHandler? onSocketRefresh,
+    OnSocketRefresh? onSocketRefresh,
   }) async {
     final handler = StunHandler._internal(
       stunAddress: address,

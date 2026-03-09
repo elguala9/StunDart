@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:callback_handler/callback_handler.dart';
 
 /// IP version type
 enum IpVersion {
@@ -50,17 +51,19 @@ typedef StunHandlerInput = ({
   RawDatagramSocket? socket, // optional socket; if null, will be created internally
 });
 
+/// Socket refresh callback handler using callback_handler library
 /// Fired when StunHandler recreates its socket after a network error.
 /// [newResponse] is the first successful result on the new socket.
 /// [oldResponse] is the cached result before the error (null if cache was empty).
-typedef CallbackHandler = void Function(
+typedef OnSocketRefresh = void Function(
   StunResponse newResponse,
   StunResponse? oldResponse,
 );
 
-/// Fired by StunHandlerSingleton when one of its handlers recreates its socket.
+/// Socket refresh callback handler for StunHandlerSingleton
+/// Fired when one of its handlers recreates its socket.
 /// [ipv6] identifies which handler (false = IPv4, true = IPv6).
-typedef SingletonCallbackHandler = void Function(
+typedef OnSingletonSocketRefresh = void Function(
   StunResponse newResponse,
   StunResponse? oldResponse, {
   required bool ipv6,
