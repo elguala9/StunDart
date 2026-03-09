@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:callback_handler/callback_handler.dart';
 
 /// IP version type
 enum IpVersion {

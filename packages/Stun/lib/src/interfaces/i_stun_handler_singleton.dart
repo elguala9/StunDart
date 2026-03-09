@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:callback_handler/callback_handler.dart';
 
 import '../types/stun_types.dart';
 import 'i_stun_handler.dart';
@@ -45,4 +44,10 @@ abstract interface class IStunHandlerSingleton {
 
   /// Timestamp of the most recent local request (IPv6 if available, else IPv4)
   DateTime? get lastLocalUpdated;
+
+  /// Registers a callback to be fired when either handler's socket is recreated after network error
+  void addOnSocketRefresh(OnSingletonSocketRefresh callback);
+
+  /// Unregisters a previously added socket refresh callback
+  void removeOnSocketRefresh(OnSingletonSocketRefresh callback);
 }

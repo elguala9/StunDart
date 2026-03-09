@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:async';
 
-import '/src/implementations/stun_message.dart';
-import '/src/types/stun_types.dart';
+import '../request/stun_message.dart';
+import '../../types/stun_types.dart';
 
 /// NAT Type Detector implementing RFC 5780 NAT Behavior Discovery
 ///
