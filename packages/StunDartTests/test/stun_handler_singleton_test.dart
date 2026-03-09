@@ -555,5 +555,255 @@ void main() {
         }
       });
     });
+
+    group('Singleton CallbackHandler library lifecycle tests', () {
+      test('Singleton callback handler initializes without errors', () async {
+        int callCount = 0;
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            callCount++;
+          },
+        );
+
+        try {
+          // Verify both handlers are initialized
+          expect(singleton.ipv4Handler, isNotNull);
+
+          // Perform request
+          final response = await singleton.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+
+          // On normal request, callback should not fire
+          expect(callCount, equals(0));
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton callback receives ipv6 flag correctly', () async {
+        final List<bool> capturedFlags = [];
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            capturedFlags.add(ipv6);
+          },
+        );
+
+        try {
+          // Normal request
+          final response = await singleton.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+
+          // On normal request, callback not fired, so no flags captured
+          expect(capturedFlags, isEmpty);
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton callback data contains correct response info', () async {
+        final List<Map<String, dynamic>> capturedCalls = [];
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            capturedCalls.add({
+              'newIp': newRes.publicIp,
+              'newPort': newRes.publicPort,
+              'oldResponse': oldRes,
+              'isIpv6': ipv6,
+            });
+          },
+        );
+
+        try {
+          final response = await singleton.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+
+          // Normal request doesn't trigger callback
+          expect(capturedCalls, isEmpty);
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton callbacks work independently per handler', () async {
+        final List<String> ipv4Calls = [];
+        final List<String> ipv6Calls = [];
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            if (ipv6) {
+              ipv6Calls.add(newRes.publicIp);
+            } else {
+              ipv4Calls.add(newRes.publicIp);
+            }
+          },
+        );
+
+        try {
+          // Normal request on both
+          final response = await singleton.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+
+          // Callbacks should not have fired
+          expect(ipv4Calls, isEmpty);
+          expect(ipv6Calls, isEmpty);
+
+          // IPv4 handler should exist
+          expect(singleton.ipv4Handler, isNotNull);
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton close() properly cleans up all handlers and callbacks',
+          () async {
+        int callCount = 0;
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            callCount++;
+          },
+        );
+
+        // Perform a request
+        final response = await singleton.performStunRequest();
+        expect(response.publicIp, isNotEmpty);
+
+        // Close all handlers
+        singleton.close();
+
+        // After close, handlers should be null
+        expect(
+          () => singleton.ipv4Handler,
+          throwsStateError,
+          reason: 'IPv4 handler should throw StateError after close',
+        );
+
+        // Call count should still be 0 (no socket refresh on normal request)
+        expect(callCount, equals(0));
+      });
+
+      test(
+          'Singleton callbacks preserved across setStunServer (same socket)',
+          () async {
+        int callCount = 0;
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            callCount++;
+          },
+        );
+
+        try {
+          // Perform request
+          final response1 = await singleton.performStunRequest();
+          expect(response1.publicIp, isNotEmpty);
+
+          // Change server (same socket, so cached)
+          singleton.setStunServer(StunServers.googleStun, StunServers.defaultPort);
+
+          // Callback handler should still exist
+          expect(singleton.ipv4Handler, isNotNull);
+
+          // On normal request, callback still doesn't fire
+          expect(callCount, equals(0));
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton handles replaceHandler with callback preservation',
+          () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {},
+        );
+
+        try {
+          // Get original handler
+          final originalHandler = singleton.ipv4Handler;
+          expect(originalHandler, isNotNull);
+
+          // Perform request to verify it works
+          final response = await originalHandler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton callback works with multiple sequential requests',
+          () async {
+        int callCount = 0;
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            callCount++;
+          },
+        );
+
+        try {
+          // Multiple requests
+          for (int i = 0; i < 3; i++) {
+            final response = await singleton.performStunRequest();
+            expect(response.publicIp, isNotEmpty);
+          }
+
+          // Callback should not have fired on cached requests
+          expect(callCount, equals(0));
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton callback null parameter does not cause errors',
+          () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: null,
+        );
+
+        try {
+          // Multiple requests should work fine
+          for (int i = 0; i < 2; i++) {
+            final response = await singleton.performStunRequest();
+            expect(response.publicIp, isNotEmpty);
+          }
+
+          // Local request should also work
+          final localInfo = await singleton.performLocalRequest();
+          expect(localInfo.localIp, isNotEmpty);
+        } finally {
+          singleton.close();
+        }
+      });
+    });
   });
 }
