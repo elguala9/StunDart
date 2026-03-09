@@ -640,7 +640,6 @@ void main() {
           final response1 = await handler.performStunRequest();
           expect(response1.publicIp, isNotEmpty);
           final cachedIp = response1.publicIp;
-          final originalSocketPort = handler.getSocket().port;
 
           // Verify second request returns cached response
           final response1b = await handler.performStunRequest();
