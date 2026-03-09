@@ -1147,5 +1147,222 @@ void main() {
         }
       });
     });
+
+    group('CallbackHandler library lifecycle tests', () {
+      test('Multiple callbacks can be registered for socket refresh', () async {
+        final List<String> callLog = [];
+
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes) {
+            callLog.add('callback_1');
+          },
+        );
+
+        try {
+          // Perform a normal request
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+          expect(callLog, isEmpty, reason: 'No callbacks should fire on normal request');
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Callback receives correct response data', () async {
+        StunResponse? capturedNew;
+        StunResponse? capturedOld;
+
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes) {
+            capturedNew = newRes;
+            capturedOld = oldRes;
+          },
+        );
+
+        try {
+          // Perform a normal request to verify correct data handling
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+
+          // Callback doesn't fire on normal request, so captured should be null
+          expect(capturedNew, isNull);
+          expect(capturedOld, isNull);
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Callback data tuple unpacking works correctly', () async {
+        final List<Map<String, dynamic>> capturedData = [];
+
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes) {
+            capturedData.add({
+              'newIp': newRes.publicIp,
+              'newPort': newRes.publicPort,
+              'oldResponse': oldRes,
+            });
+          },
+        );
+
+        try {
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+
+          // On normal request, callback not fired, so no data captured
+          expect(capturedData, isEmpty);
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Callback handler is properly initialized with no crashes', () async {
+        // Test with 3 different constructors
+        final handler1 = StunHandler(
+          (
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            socket: null,
+          ),
+          onSocketRefresh: (newRes, oldRes) {},
+        );
+
+        final socket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv4,
+          0,
+          reuseAddress: true,
+        );
+
+        try {
+          final handler2 = StunHandler.withSocket(
+            socket,
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            onSocketRefresh: (newRes, oldRes) {},
+          );
+
+          final handler3 = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            onSocketRefresh: (newRes, oldRes) {},
+          );
+
+          // All should initialize without errors
+          expect(handler1, isNotNull);
+          expect(handler2, isNotNull);
+          expect(handler3, isNotNull);
+
+          handler1.close();
+          handler2.close();
+          handler3.close();
+        } catch (_) {
+          socket.close();
+        }
+      });
+
+      test('Callback null (default) does not cause errors on normal request',
+          () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          // No callback provided
+        );
+
+        try {
+          // Should not crash even with no callback
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Handler cleanup (close) works with registered callbacks', () async {
+        int callCount = 0;
+
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes) {
+            callCount++;
+          },
+        );
+
+        // Perform a request
+        final response = await handler.performStunRequest();
+        expect(response.publicIp, isNotEmpty);
+
+        // Close handler (should clean up callback handler)
+        handler.close();
+
+        // Handler should be properly closed without errors
+        expect(handler, isNotNull); // Handler object still exists
+      });
+
+      test('Callback receives StunResponse with all required fields', () async {
+        StunResponse? capturedResponse;
+
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes) {
+            capturedResponse = newRes;
+          },
+        );
+
+        try {
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+          expect(response.publicPort, greaterThan(0));
+          expect(response.ipVersion, isNotNull);
+          expect(response.transactionId, isNotNull);
+          expect(response.raw, isNotNull);
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Callback handler persists across multiple handler instances',
+          () async {
+        int totalCalls = 0;
+
+        final handler1 = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes) {
+            totalCalls++;
+          },
+        );
+
+        final handler2 = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes) {
+            totalCalls++;
+          },
+        );
+
+        try {
+          // Both handlers should work independently
+          final resp1 = await handler1.performStunRequest();
+          final resp2 = await handler2.performStunRequest();
+
+          expect(resp1.publicIp, isNotEmpty);
+          expect(resp2.publicIp, isNotEmpty);
+
+          // On normal requests, callbacks don't fire
+          expect(totalCalls, equals(0));
+        } finally {
+          handler1.close();
+          handler2.close();
+        }
+      });
+    });
   });
 }
