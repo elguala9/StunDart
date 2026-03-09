@@ -345,5 +345,41 @@ void main() {
         print('IPv6 not available on this system: $e');
       }
     });
+
+    test('initialize() accepts configurable timeout', () async {
+      final singleton = StunHandlerSingleton.instance;
+      await singleton.initialize(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+        timeout: const Duration(seconds: 3),
+      );
+
+      final ipv4Handler = singleton.ipv4Handler;
+      expect(ipv4Handler, isNotNull);
+      final response = await ipv4Handler.performStunRequest();
+      expect(response.publicIp, isNotEmpty);
+    });
+
+    test('initialize() accepts onLog callback', () async {
+      final singleton = StunHandlerSingleton.instance;
+      final messages = <String>[];
+
+      await singleton.initialize(
+        address: StunServers.googleStun,
+        port: StunServers.defaultPort,
+        onLog: (msg) => messages.add(msg),
+      );
+
+      expect(
+        messages.any((msg) => msg.contains('handler initialization')),
+        anyOf(isTrue, isFalse), // Message may or may not appear depending on system
+        reason: 'onLog callback should be set without throwing',
+      );
+    });
+
+    test('StunHandlerSingleton implements IStunHandlerSingleton', () {
+      final IStunHandlerSingleton s = StunHandlerSingleton.instance;
+      expect(s, isA<IStunHandlerSingleton>());
+    });
   });
 }

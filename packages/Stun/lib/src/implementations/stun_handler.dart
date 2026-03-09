@@ -15,7 +15,9 @@ class StunHandler implements IStunHandler {
         _stunAddress = input.address ?? defaultStunConfig.address,
         _stunPort = input.port ?? defaultStunConfig.port,
         _bindType = input.socket?.address.type ?? InternetAddressType.IPv4,
-        _bindPort = null;
+        _bindPort = null,
+        _timeout = const Duration(seconds: 5),
+        _onLog = null;
 
   /// Named constructor for explicit socket ownership
   /// Creates a handler that manages an externally-provided socket
@@ -23,22 +25,30 @@ class StunHandler implements IStunHandler {
     RawDatagramSocket socket, {
     String? address,
     int? port,
+    Duration timeout = const Duration(seconds: 5),
+    void Function(String)? onLog,
   })  : _socket = socket,
         _stunAddress = address ?? defaultStunConfig.address,
         _stunPort = port ?? defaultStunConfig.port,
         _bindType = socket.address.type,
-        _bindPort = null;
+        _bindPort = null,
+        _timeout = timeout,
+        _onLog = onLog;
 
   /// Private constructor for factory use
   StunHandler._internal({
     String? stunAddress,
     int? stunPort,
     required InternetAddressType bindType,
+    Duration timeout = const Duration(seconds: 5),
+    void Function(String)? onLog,
   })  : _stunAddress = stunAddress ?? defaultStunConfig.address,
         _stunPort = stunPort ?? defaultStunConfig.port,
         _socket = null,
         _bindType = bindType,
-        _bindPort = 0;
+        _bindPort = 0,
+        _timeout = timeout,
+        _onLog = onLog;
 
   /// STUN server address
   String _stunAddress = defaultStunConfig.address;
@@ -61,17 +71,30 @@ class StunHandler implements IStunHandler {
   /// Cached local info (local IP and port)
   LocalInfo? _cachedLocalInfo;
 
+  /// Timeout for STUN requests
+  final Duration _timeout;
+
+  /// Optional logging callback
+  final void Function(String)? _onLog;
+
+  /// Helper method to log messages
+  void _log(String message) => _onLog?.call(message);
+
   /// Static factory to create StunHandler without an external socket
   /// Creates a new socket immediately during initialization
   static Future<StunHandler> withoutSocket({
     String? address,
     int? port,
     bool ipv6 = true,
+    Duration timeout = const Duration(seconds: 5),
+    void Function(String)? onLog,
   }) async {
     final handler = StunHandler._internal(
       stunAddress: address,
       stunPort: port,
       bindType: ipv6 ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
+      timeout: timeout,
+      onLog: onLog,
     );
     // Create the socket immediately
     await handler._getSocket();
@@ -130,19 +153,19 @@ class StunHandler implements IStunHandler {
       _cachedStunResponse = await _doStunRequest();
       return _cachedStunResponse!;
     } on SocketException catch (e) {
-      print('[StunHandler] Socket error (${e.message}), attempting recreation...');
+      _log('[StunHandler] Socket error (${e.message}), attempting recreation...');
       await _recreateSocket();
       _cachedStunResponse = await _doStunRequest();
       return _cachedStunResponse!;
     } on OSError catch (e) {
-      print('[StunHandler] OS error (${e.message}), attempting recreation...');
+      _log('[StunHandler] OS error (${e.message}), attempting recreation...');
       await _recreateSocket();
       _cachedStunResponse = await _doStunRequest();
       return _cachedStunResponse!;
     } on StateError catch (e) {
       // Handle "Stream has already been listened to" error
       if (e.message.contains('already been listened to')) {
-        print('[StunHandler] Stream error (socket already in use), attempting recreation...');
+        _log('[StunHandler] Stream error (socket already in use), attempting recreation...');
         await _recreateSocket();
         _cachedStunResponse = await _doStunRequest();
         return _cachedStunResponse!;
@@ -170,7 +193,7 @@ class StunHandler implements IStunHandler {
         : InternetAddress.anyIPv4;
 
     _socket = await RawDatagramSocket.bind(bindAddr, _bindPort ?? 0, reuseAddress: true);
-    print('[StunHandler] Socket created: ${_socket!.address}:${_socket!.port}');
+    _log('[StunHandler] Socket created: ${_socket!.address}:${_socket!.port}');
     return _socket!;
   }
 
@@ -186,7 +209,7 @@ class StunHandler implements IStunHandler {
     _socket?.close();
     _socket = null;
     await _getSocket();
-    print('[StunHandler] Socket recreated with new port');
+    _log('[StunHandler] Socket recreated with new port');
   }
 
   /// Core STUN request logic (extracted from performStunRequest for reusability)
@@ -201,7 +224,7 @@ class StunHandler implements IStunHandler {
     final isIPv6Socket = socket.address.type == InternetAddressType.IPv6;
 
     // Log local socket info
-    print('[StunHandler] Local socket: ${socket.address}:${socket.port}');
+    _log('[StunHandler] Local socket: ${socket.address}:${socket.port}');
 
     // Send request to STUN server
     final stunServerAddr = await InternetAddress.lookup(
@@ -213,7 +236,7 @@ class StunHandler implements IStunHandler {
     }
 
     final targetAddr = stunServerAddr.first;
-    print('[StunHandler] Sending STUN request to $targetAddr:$_stunPort');
+    _log('[StunHandler] Sending STUN request to $targetAddr:$_stunPort');
 
     socket.send(requestBytes, targetAddr, _stunPort);
 
@@ -247,10 +270,10 @@ class StunHandler implements IStunHandler {
               ? '[${response.publicIp}]:${response.publicPort}'
               : '${response.publicIp}:${response.publicPort}';
 
-          print(
+          _log(
             '[StunHandler] STUN response: $addressDisplay (${response.ipVersion.value})',
           );
-          print(
+          _log(
             '[StunHandler] Port mapping: Local ${socket.port} -> Public ${response.publicPort}',
           );
 
@@ -260,12 +283,13 @@ class StunHandler implements IStunHandler {
       }
     });
 
-    // Timeout after 5 seconds if no response
+    // Timeout after configured duration if no response
     return completer.future.timeout(
-      const Duration(seconds: 5),
+      _timeout,
       onTimeout: () {
         subscription?.cancel();
-        throw TimeoutException('[StunHandler] STUN request timed out');
+        throw TimeoutException(
+          '[StunHandler] STUN request timed out after ${_timeout.inSeconds}s');
       },
     );
   }
@@ -274,10 +298,10 @@ class StunHandler implements IStunHandler {
   Future<String> _getLocalIp() async {
     final interfaces = await NetworkInterface.list(
       includeLinkLocal: false,
-      type: InternetAddressType.IPv4,
+      type: _bindType,
     );
 
-    // Find first non-loopback IPv4 address
+    // Find first non-loopback address
     for (final interface in interfaces) {
       for (final addr in interface.addresses) {
         if (!addr.isLoopback) {
@@ -287,6 +311,8 @@ class StunHandler implements IStunHandler {
     }
 
     // Fallback to loopback if no other address found
-    return InternetAddress.loopbackIPv4.address;
+    return _bindType == InternetAddressType.IPv6
+        ? InternetAddress.loopbackIPv6.address
+        : InternetAddress.loopbackIPv4.address;
   }
 }
