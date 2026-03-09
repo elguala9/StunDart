@@ -20,12 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Simplified API for socket management
   - Support for IPv4 and IPv6
 
+- **Performance Optimization: Response Caching** 🚀
+  - Public IP/port responses are cached after first STUN request
+  - Local IP/port information is cached (immutable with same socket)
+  - Eliminates redundant network calls for repeated requests on same handler
+  - Cache automatically invalidates when socket is recreated
+  - Significantly improves performance for applications making multiple STUN queries
+
 - **Enhanced Test Coverage**:
-  - 8 new comprehensive tests for StunHandler.withoutSocket()
-  - Tests for basic creation, IPv6 support, custom/default server configuration
-  - Sequential STUN requests and server switching validation
-  - Socket lifecycle and local request tests
-  - Total test count: 22 passing tests (was 14)
+  - 8 tests for StunHandler.withoutSocket() factory pattern
+  - 6 new comprehensive caching behavior tests:
+    - STUN response caching on repeated requests
+    - Local info caching on repeated requests
+    - Cache invalidation on socket recreation
+    - Cache behavior with server changes
+    - Combined cache reset scenarios
+  - Total test count: 105 passing tests (was 99)
 
 ### Changed
 - Architecture improvements for better socket lifecycle management

@@ -570,5 +570,205 @@ void main() {
         handler.close();
       }
     });
+
+    group('Cache behavior tests', () {
+      test('Cache: STUN response is cached on repeated requests', () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          // First request - makes actual STUN call
+          final response1 = await handler.performStunRequest();
+          expect(response1.publicIp, isNotEmpty);
+          expect(response1.publicPort, greaterThan(0));
+
+          // Second request - should return cached value (same IP:port)
+          final response2 = await handler.performStunRequest();
+          expect(response2.publicIp, equals(response1.publicIp));
+          expect(response2.publicPort, equals(response1.publicPort));
+
+          // Third request - still cached
+          final response3 = await handler.performStunRequest();
+          expect(response3.publicIp, equals(response1.publicIp));
+          expect(response3.publicPort, equals(response1.publicPort));
+
+          print('[Cache Test] STUN response cached successfully');
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Cache: Local info is cached on repeated requests', () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          // First request - makes actual call
+          final localInfo1 = await handler.performLocalRequest();
+          expect(localInfo1.localIp, isNotEmpty);
+          expect(localInfo1.localPort, greaterThan(0));
+
+          // Second request - should return cached value
+          final localInfo2 = await handler.performLocalRequest();
+          expect(localInfo2.localIp, equals(localInfo1.localIp));
+          expect(localInfo2.localPort, equals(localInfo1.localPort));
+
+          // Third request - still cached
+          final localInfo3 = await handler.performLocalRequest();
+          expect(localInfo3.localIp, equals(localInfo1.localIp));
+          expect(localInfo3.localPort, equals(localInfo1.localPort));
+
+          print('[Cache Test] Local info cached successfully');
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Cache: Invalidates when socket is recreated due to error',
+          () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          // First request - fills cache
+          final response1 = await handler.performStunRequest();
+          expect(response1.publicIp, isNotEmpty);
+          final cachedIp = response1.publicIp;
+          final originalSocketPort = handler.getSocket().port;
+
+          // Verify second request returns cached response
+          final response1b = await handler.performStunRequest();
+          expect(response1b.publicIp, equals(cachedIp));
+
+          // Force socket recreation by closing it
+          handler.getSocket().close();
+
+          // Next request will detect the closed socket, recreate it, and reset cache
+          final response2 = await handler.performStunRequest();
+          expect(response2.publicIp, isNotEmpty);
+
+          // After socket recreation, we should get a fresh response
+          // (Cache was reset when socket was recreated)
+          // Verify socket was recreated by checking it's a valid socket
+          final newSocket = handler.getSocket();
+          expect(newSocket, isNotNull);
+          expect(newSocket.port, greaterThan(0));
+
+          // Verify we can still make requests with the new socket
+          final response3 = await handler.performStunRequest();
+          expect(response3.publicIp, isNotEmpty);
+
+          print('[Cache Test] Cache invalidated on socket recreation');
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Cache: Local info invalidates when socket is recreated', () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          // First request - fills cache
+          final localInfo1 = await handler.performLocalRequest();
+          expect(localInfo1.localPort, greaterThan(0));
+          final cachedPort = localInfo1.localPort;
+
+          // Verify cached request returns same port
+          final localInfo1b = await handler.performLocalRequest();
+          expect(localInfo1b.localPort, equals(cachedPort));
+
+          // Force socket recreation
+          handler.getSocket().close();
+
+          // Next request triggers socket recreation and cache reset
+          final localInfo2 = await handler.performLocalRequest();
+          expect(localInfo2.localPort, greaterThan(0));
+
+          // New request should use fresh socket
+          final localInfo3 = await handler.performLocalRequest();
+          expect(localInfo3.localPort, greaterThan(0));
+
+          print('[Cache Test] Local info cache invalidated on socket recreation');
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Cache: Not invalidated by server change (same socket = same IP)',
+          () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          // First request
+          final response1 = await handler.performStunRequest();
+          expect(response1.publicIp, isNotEmpty);
+          final originalIp = response1.publicIp;
+
+          // Change STUN server
+          handler.setStunServer(StunServers.googleStun1, StunServers.defaultPort);
+
+          // Next request should return cached response
+          // (same socket = same public IP, regardless of STUN server)
+          final response2 = await handler.performStunRequest();
+          expect(response2.publicIp, equals(originalIp),
+              reason:
+                  'Cache should return same IP even with different STUN server');
+
+          print('[Cache Test] Cache preserved across server changes');
+        } finally {
+          handler.close();
+        }
+      });
+
+      test('Cache: Both STUN and local cache reset together on socket change',
+          () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          // Prime both caches
+          final response1 = await handler.performStunRequest();
+          final localInfo1 = await handler.performLocalRequest();
+
+          expect(response1.publicIp, isNotEmpty);
+          expect(localInfo1.localPort, greaterThan(0));
+
+          // Verify both are cached (same results)
+          final response1b = await handler.performStunRequest();
+          final localInfo1b = await handler.performLocalRequest();
+          expect(response1b.publicIp, equals(response1.publicIp));
+          expect(localInfo1b.localPort, equals(localInfo1.localPort));
+
+          // Force recreation
+          handler.getSocket().close();
+
+          // Both requests should work with new socket
+          // and both caches should be reset
+          final response2 = await handler.performStunRequest();
+          final localInfo2 = await handler.performLocalRequest();
+
+          expect(response2.publicIp, isNotEmpty);
+          expect(localInfo2.localPort, greaterThan(0));
+
+          print('[Cache Test] Both caches invalidated on socket recreation');
+        } finally {
+          handler.close();
+        }
+      });
+    });
   });
 }

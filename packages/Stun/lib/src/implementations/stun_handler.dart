@@ -55,6 +55,12 @@ class StunHandler implements IStunHandler {
   /// Local port to bind to (for internal socket creation)
   final int? _bindPort;
 
+  /// Cached STUN response (public IP and port)
+  StunResponse? _cachedStunResponse;
+
+  /// Cached local info (local IP and port)
+  LocalInfo? _cachedLocalInfo;
+
   /// Static factory to create StunHandler without an external socket
   /// Creates a new socket immediately during initialization
   static Future<StunHandler> withoutSocket({
@@ -73,11 +79,17 @@ class StunHandler implements IStunHandler {
   }
 
   /// Performs a local network request to get local IP and port
+  /// Returns cached result if available (doesn't change for same socket)
   @override
   Future<LocalInfo> performLocalRequest() async {
+    if (_cachedLocalInfo != null) {
+      return _cachedLocalInfo!;
+    }
+
     final socket = await _getSocket();
     final localIp = await _getLocalIp();
-    return (localIp: localIp, localPort: socket.port);
+    _cachedLocalInfo = (localIp: localIp, localPort: socket.port);
+    return _cachedLocalInfo!;
   }
 
   /// Returns the underlying UDP socket
@@ -106,25 +118,34 @@ class StunHandler implements IStunHandler {
   }
 
   /// Performs a STUN binding request to discover the public IP and port
+  /// Returns cached result if available (doesn't change for same socket)
   /// Automatically handles socket recreation on network errors
   @override
   Future<StunResponse> performStunRequest() async {
+    if (_cachedStunResponse != null) {
+      return _cachedStunResponse!;
+    }
+
     try {
-      return await _doStunRequest();
+      _cachedStunResponse = await _doStunRequest();
+      return _cachedStunResponse!;
     } on SocketException catch (e) {
       print('[StunHandler] Socket error (${e.message}), attempting recreation...');
       await _recreateSocket();
-      return _doStunRequest();
+      _cachedStunResponse = await _doStunRequest();
+      return _cachedStunResponse!;
     } on OSError catch (e) {
       print('[StunHandler] OS error (${e.message}), attempting recreation...');
       await _recreateSocket();
-      return _doStunRequest();
+      _cachedStunResponse = await _doStunRequest();
+      return _cachedStunResponse!;
     } on StateError catch (e) {
       // Handle "Stream has already been listened to" error
       if (e.message.contains('already been listened to')) {
         print('[StunHandler] Stream error (socket already in use), attempting recreation...');
         await _recreateSocket();
-        return _doStunRequest();
+        _cachedStunResponse = await _doStunRequest();
+        return _cachedStunResponse!;
       }
       rethrow;
     }
@@ -153,8 +174,15 @@ class StunHandler implements IStunHandler {
     return _socket!;
   }
 
+  /// Resets cached values when socket changes
+  void _resetCache() {
+    _cachedStunResponse = null;
+    _cachedLocalInfo = null;
+  }
+
   /// Recreates the socket (closes old, creates new)
   Future<void> _recreateSocket() async {
+    _resetCache();
     _socket?.close();
     _socket = null;
     await _getSocket();
