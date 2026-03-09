@@ -1385,9 +1385,9 @@ void main() {
         );
 
         try {
-          final callback = (StunResponse newRes, StunResponse? oldRes) {
+          void callback(StunResponse newRes, StunResponse? oldRes) {
             callCount++;
-          };
+          }
 
           handler.addOnSocketRefresh(callback);
           handler.addOnSocketRefresh(callback); // Add same reference again
@@ -1407,9 +1407,9 @@ void main() {
         );
 
         try {
-          final callback = (StunResponse newRes, StunResponse? oldRes) {
+          void callback(StunResponse newRes, StunResponse? oldRes) {
             callCount++;
-          };
+          }
 
           handler.addOnSocketRefresh(callback);
           handler.removeOnSocketRefresh(callback); // Remove the callback
@@ -1429,7 +1429,7 @@ void main() {
         );
 
         try {
-          final unregisteredCallback = (StunResponse newRes, StunResponse? oldRes) {};
+          void unregisteredCallback(StunResponse newRes, StunResponse? oldRes) {}
           handler.removeOnSocketRefresh(unregisteredCallback); // No-op, should not crash
           expect(true, isTrue); // If we reach here, no exception was thrown
         } finally {
@@ -1470,12 +1470,12 @@ void main() {
         );
 
         try {
-          final callback1 = (StunResponse newRes, StunResponse? oldRes) {
+          void callback1(StunResponse newRes, StunResponse? oldRes) {
             callCounts[0]++;
-          };
-          final callback2 = (StunResponse newRes, StunResponse? oldRes) {
+          }
+          void callback2(StunResponse newRes, StunResponse? oldRes) {
             callCounts[1]++;
-          };
+          }
 
           handler.addOnSocketRefresh(callback1);
           handler.addOnSocketRefresh(callback2);
