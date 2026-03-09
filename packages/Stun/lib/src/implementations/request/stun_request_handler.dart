@@ -1,23 +1,22 @@
 import 'dart:io';
 import 'dart:async';
 
-import '../config/stun_config.dart';
 import './stun_message.dart';
 import '../../types/stun_types.dart';
 
 /// Handles core STUN request/response logic
 class StunRequestHandler {
-  final String stunAddress;
-  final int stunPort;
-  final Duration timeout;
-  final void Function(String)? onLog;
-
   StunRequestHandler({
     required this.stunAddress,
     required this.stunPort,
     required this.timeout,
     this.onLog,
   });
+
+  final String stunAddress;
+  final int stunPort;
+  final Duration timeout;
+  final void Function(String)? onLog;
 
   /// Helper to log messages
   void _log(String message) => onLog?.call(message);

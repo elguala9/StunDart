@@ -4,9 +4,9 @@ import '../handlers/stun_handler.dart';
 
 /// Factory for creating singleton handler instances (IPv4 and IPv6)
 class SingletonHandlerFactory {
-  final void Function(String)? onLog;
-
   SingletonHandlerFactory({this.onLog});
+
+  final void Function(String)? onLog;
 
   void _log(String message) => onLog?.call(message);
 
