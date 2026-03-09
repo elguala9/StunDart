@@ -15,10 +15,6 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   static final StunHandlerSingleton _instance = StunHandlerSingleton._internal();
 
   final _state = SingletonHandlerState();
-  void Function(String)? _onLog;
-  SingletonHandlerFactory? _handlerFactory;
-
-  void _log(String message) => _onLog?.call(message);
 
   (OnSocketRefresh?, OnSocketRefresh?) _createSingletonWrappers(OnSingletonSocketRefresh? callback) {
     if (callback == null) return (null, null);
@@ -38,9 +34,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     void Function(String)? onLog,
     OnSingletonSocketRefresh? onSocketRefresh,
   }) async {
-    _onLog = onLog;
     final factory = SingletonHandlerFactory(onLog: onLog);
-    _handlerFactory = factory;
 
     final (ipv4Callback, ipv6Callback) = _createSingletonWrappers(onSocketRefresh);
 
@@ -152,9 +146,6 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   @override
   void close({bool? ipv6}) {
     _state.close(ipv6: ipv6);
-    if (ipv6 == null) {
-      _handlerFactory = null;
-    }
   }
 
   @override
