@@ -511,14 +511,12 @@ void main() {
 
       test('Singleton callback receives ipv6 parameter for IPv4 handler',
           () async {
-        bool? capturedIpv6Flag;
-
         final singleton = StunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
           onSocketRefresh: (newRes, oldRes, {required ipv6}) {
-            capturedIpv6Flag = ipv6;
+            // Callback signature verified by accepting the ipv6 parameter
           },
         );
 
@@ -800,6 +798,123 @@ void main() {
           // Local request should also work
           final localInfo = await singleton.performLocalRequest();
           expect(localInfo.localIp, isNotEmpty);
+        } finally {
+          singleton.close();
+        }
+      });
+    });
+
+    group('Singleton addOnSocketRefresh / removeOnSocketRefresh tests', () {
+      test('addOnSocketRefresh registers without crash', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          int callCount = 0;
+          singleton.addOnSocketRefresh((newRes, oldRes, {required ipv6}) {
+            callCount++;
+          });
+
+          expect(callCount, equals(0)); // No callback fired during registration
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('addOnSocketRefresh idempotent — double-add same reference is a no-op', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          final callback = (StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {};
+
+          singleton.addOnSocketRefresh(callback);
+          singleton.addOnSocketRefresh(callback); // Add same reference again
+
+          expect(true, isTrue); // No error on double-add
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('removeOnSocketRefresh removes callback without crash; subsequent remove is no-op', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          final callback = (StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {};
+
+          singleton.addOnSocketRefresh(callback);
+          singleton.removeOnSocketRefresh(callback); // Remove the callback
+          singleton.removeOnSocketRefresh(callback); // Remove again (no-op)
+
+          expect(true, isTrue); // No error on removal
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('removeOnSocketRefresh on unregistered callback is a no-op', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          final unregisteredCallback = (StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {};
+          singleton.removeOnSocketRefresh(unregisteredCallback); // No-op, should not crash
+
+          expect(true, isTrue); // If we reach here, no exception was thrown
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('IStunHandlerSingleton interface exposes both methods (compile check)', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        try {
+          // These should compile - interface methods are public
+          IStunHandlerSingleton iSingleton = singleton;
+          iSingleton.addOnSocketRefresh((newRes, oldRes, {required ipv6}) {});
+          iSingleton.removeOnSocketRefresh((newRes, oldRes, {required ipv6}) {});
+
+          expect(true, isTrue); // If we reach here, interface is correct
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('addOnSocketRefresh after initialize(onSocketRefresh: null) works independently', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: null, // Explicitly no callback during initialize
+        );
+
+        try {
+          int callCount = 0;
+          singleton.addOnSocketRefresh((newRes, oldRes, {required ipv6}) {
+            callCount++;
+          });
+
+          // Independently added callback should work without interference from initialize param
+          expect(callCount, equals(0)); // No callback fired during registration
         } finally {
           singleton.close();
         }

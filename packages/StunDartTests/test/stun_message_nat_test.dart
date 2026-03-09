@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:stun/src/implementations/stun_message.dart';
+import 'package:stun/src/implementations/request/stun_message.dart';
 import 'package:test/test.dart';
 
 /// Test suite for new STUN message NAT detection features

@@ -26,4 +26,10 @@ abstract class IStunHandler {
 
   /// Timestamp of the last successful local request (null if never performed)
   DateTime? get lastLocalUpdated;
+
+  /// Registers a callback to be fired when socket is recreated after network error
+  void addOnSocketRefresh(OnSocketRefresh callback);
+
+  /// Unregisters a previously added socket refresh callback
+  void removeOnSocketRefresh(OnSocketRefresh callback);
 }
