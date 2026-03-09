@@ -832,7 +832,7 @@ void main() {
         );
 
         try {
-          final callback = (StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {};
+          void callback(StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {}
 
           singleton.addOnSocketRefresh(callback);
           singleton.addOnSocketRefresh(callback); // Add same reference again
@@ -851,7 +851,7 @@ void main() {
         );
 
         try {
-          final callback = (StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {};
+          void callback(StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {}
 
           singleton.addOnSocketRefresh(callback);
           singleton.removeOnSocketRefresh(callback); // Remove the callback
@@ -871,7 +871,7 @@ void main() {
         );
 
         try {
-          final unregisteredCallback = (StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {};
+          void unregisteredCallback(StunResponse newRes, StunResponse? oldRes, {required bool ipv6}) {}
           singleton.removeOnSocketRefresh(unregisteredCallback); // No-op, should not crash
 
           expect(true, isTrue); // If we reach here, no exception was thrown
