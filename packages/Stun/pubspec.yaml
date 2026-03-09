@@ -13,8 +13,6 @@ topics:
   - stun
   - webrtc
   - p2p
-  - nat-traversal
-  - connectivity
 
 platforms:
   android:
