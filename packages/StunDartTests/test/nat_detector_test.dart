@@ -81,7 +81,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
 
     test('should provide valid public IP and port', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -119,7 +119,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
 
     test('should include filtering and mapping behavior', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -152,7 +152,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
   });
 
   group('NATDetector - Multiple Servers', () {
@@ -187,7 +187,7 @@ void main() {
         }
 
         // Small delay between servers
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future<void>.delayed(const Duration(milliseconds: 500));
       }
 
       // All servers should detect the same NAT type
@@ -195,7 +195,7 @@ void main() {
         expect(results[0], equals(results[1]),
             reason: 'Different servers should detect the same NAT type');
       }
-    }, timeout: Timeout(TestTimeouts.dualStack));
+    }, timeout: const Timeout(TestTimeouts.dualStack));
 
     test('should maintain consistent results on repeated calls', () async {
       final results = <NATType>[];
@@ -223,13 +223,13 @@ void main() {
         }
 
         // Small delay between attempts
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future<void>.delayed(const Duration(milliseconds: 500));
       }
 
       // Results should be consistent
       expect(results[0], equals(results[1]),
           reason: 'NAT type should be consistent across calls');
-    }, timeout: Timeout(TestTimeouts.dualStack));
+    }, timeout: const Timeout(TestTimeouts.dualStack));
   });
 
   group('NATDetector - Diagnostics', () {
@@ -265,7 +265,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
 
     test('should track RFC 5780 support', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -293,7 +293,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
   });
 
   group('NATDetector - Edge Cases', () {
@@ -316,7 +316,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.medium));
+    }, timeout: const Timeout(TestTimeouts.medium));
 
     test('should handle unreachable server (TEST-NET-1)', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -338,7 +338,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.medium));
+    }, timeout: const Timeout(TestTimeouts.medium));
 
     test('should respect timeout settings', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -365,7 +365,7 @@ void main() {
         lessThan(5),
         reason: 'Detection should respect timeout',
       );
-    }, timeout: Timeout(TestTimeouts.medium));
+    }, timeout: const Timeout(TestTimeouts.medium));
   });
 
   group('NATDetector - Detection Time', () {
@@ -403,7 +403,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
   });
 
   group('NATDetector - Socket Management', () {
@@ -426,7 +426,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
 
     test('should work with socket on specific interface', () async {
       // Bind to loopback for testing
@@ -448,7 +448,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
   });
 
   group('NATDetector - Result Validation', () {
@@ -486,7 +486,7 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
 
     test('should have consistent NAT type and behaviors', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -552,6 +552,6 @@ void main() {
       } finally {
         socket.close();
       }
-    }, timeout: Timeout(TestTimeouts.extraLong));
+    }, timeout: const Timeout(TestTimeouts.extraLong));
   });
 }

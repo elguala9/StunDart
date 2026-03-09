@@ -137,7 +137,7 @@ void main() {
         alternateIp: '203.0.113.43',
         alternatePort: 3478,
         rfc5780Supported: true,
-        detectionTime: Duration(milliseconds: 1500),
+        detectionTime: const Duration(milliseconds: 1500),
         diagnostics: {'test1': 'success'},
       );
 
@@ -169,7 +169,7 @@ void main() {
         alternateIp: null,
         alternatePort: null,
         rfc5780Supported: false,
-        detectionTime: Duration(milliseconds: 5000),
+        detectionTime: const Duration(milliseconds: 5000),
         diagnostics: <String, dynamic>{},
       );
 
@@ -191,7 +191,7 @@ void main() {
         alternateIp: '198.51.100.2',
         alternatePort: 19302,
         rfc5780Supported: true,
-        detectionTime: Duration(milliseconds: 3500),
+        detectionTime: const Duration(milliseconds: 3500),
         diagnostics: {
           'test1': {'success': true, 'port': 12345},
           'test2': {'success': false},
@@ -221,7 +221,7 @@ void main() {
         alternateIp: null,
         alternatePort: null,
         rfc5780Supported: false,
-        detectionTime: Duration(seconds: 2),
+        detectionTime: const Duration(seconds: 2),
         diagnostics: {
           'test1': {
             'success': true,

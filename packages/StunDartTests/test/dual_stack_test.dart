@@ -57,7 +57,7 @@ void main() {
     }
     
     fail('Could not get IPv6 address from any STUN server');
-  }, timeout: Timeout(TestTimeouts.extraLong));
+  }, timeout: const Timeout(TestTimeouts.extraLong));
 
   test('Verify both IPv4 and IPv6 across multiple STUN servers', () async {
     print('\n=== Dual Stack Test (IPv4 + IPv6) ===\n');
@@ -120,5 +120,5 @@ void main() {
       expect(ipv6Addresses.toSet().length, equals(1), 
           reason: 'All STUN servers should report the same IPv6 address');
     }
-  }, timeout: Timeout(TestTimeouts.dualStack));
+  }, timeout: const Timeout(TestTimeouts.dualStack));
 }

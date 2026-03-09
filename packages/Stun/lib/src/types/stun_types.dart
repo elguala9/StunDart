@@ -6,8 +6,8 @@ enum IpVersion {
   v4('IPv4'),
   v6('IPv6');
 
-  final String value;
   const IpVersion(this.value);
+  final String value;
 }
 
 /// STUN response containing public IP, port, and transaction information
@@ -47,7 +47,7 @@ typedef LocalInfo = ({
 typedef StunHandlerInput = ({
   String? address, // stun server address
   int? port, // stun server port
-  RawDatagramSocket socket,
+  RawDatagramSocket? socket, // optional socket; if null, will be created internally
 });
 
 /// NAT type classifications per RFC 5780 and RFC 3489

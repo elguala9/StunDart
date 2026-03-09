@@ -23,19 +23,6 @@ import '/src/types/stun_types.dart';
 /// socket.close();
 /// ```
 class NATDetector {
-  final String _primaryServer;
-  final int _primaryPort;
-  final RawDatagramSocket _socket;
-  final Duration _timeout;
-  late final Stream<RawSocketEvent> _socketStream;
-
-  // Test results storage
-  String? _publicIp1;
-  int? _publicPort1;
-  String? _alternateIp;
-  int? _alternatePort;
-  bool _rfc5780Supported = false;
-
   /// Creates a NAT detector
   ///
   /// - [primaryServer]: STUN server hostname or IP address
@@ -54,6 +41,19 @@ class NATDetector {
     // Convert to broadcast stream to allow multiple listeners
     _socketStream = _socket.asBroadcastStream();
   }
+
+  final String _primaryServer;
+  final int _primaryPort;
+  final RawDatagramSocket _socket;
+  final Duration _timeout;
+  late final Stream<RawSocketEvent> _socketStream;
+
+  // Test results storage
+  String? _publicIp1;
+  int? _publicPort1;
+  String? _alternateIp;
+  int? _alternatePort;
+  bool _rfc5780Supported = false;
 
   /// Perform full RFC 5780 NAT type detection
   ///
@@ -412,13 +412,6 @@ class NATDetector {
 
 /// Internal test result
 class _TestResult {
-  final bool success;
-  final String? publicIp;
-  final int? publicPort;
-  final String? alternateIp;
-  final int? alternatePort;
-  final String? error;
-
   _TestResult({
     required this.success,
     this.publicIp,
@@ -427,6 +420,13 @@ class _TestResult {
     this.alternatePort,
     this.error,
   });
+
+  final bool success;
+  final String? publicIp;
+  final int? publicPort;
+  final String? alternateIp;
+  final int? alternatePort;
+  final String? error;
 
   Map<String, dynamic> toMap() {
     return {

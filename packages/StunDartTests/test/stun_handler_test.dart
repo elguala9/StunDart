@@ -280,8 +280,8 @@ void main() {
       newSocket.close();
     });
 
-    test('StunHandler.create() creates handler with internal socket', () async {
-      final handler = await StunHandler.create(
+    test('StunHandler.withoutSocket() creates handler with internal socket', () async {
+      final handler = await StunHandler.withoutSocket(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
       );
@@ -339,7 +339,7 @@ void main() {
 
     test('performStunRequest handles socket errors and recreates socket', () async {
       // Create handler with internal socket
-      final handler = await StunHandler.create(
+      final handler = await StunHandler.withoutSocket(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
       );
@@ -362,9 +362,9 @@ void main() {
       }
     });
 
-    test('StunHandler.create with IPv6', () async {
+    test('StunHandler.withoutSocket with IPv6', () async {
       try {
-        final handler = await StunHandler.create(
+        final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
           ipv6: true,
@@ -385,9 +385,9 @@ void main() {
       }
     });
 
-    test('StunHandler.create socket is lazy initialized', () async {
-      // Create handler but don't access socket yet
-      final handler = await StunHandler.create();
+    test('StunHandler.withoutSocket socket is eagerly initialized', () async {
+      // Create handler - socket is created immediately
+      final handler = await StunHandler.withoutSocket();
 
       try {
         // Socket should exist after create()

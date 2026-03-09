@@ -25,10 +25,6 @@ const int stunMagicCookie = 0x2112A442;
 
 /// STUN Message class for encoding/decoding STUN packets
 class StunMessage {
-  final int messageType;
-  final Uint8List transactionId;
-  final List<StunAttribute> attributes;
-
   StunMessage({
     required this.messageType,
     required this.transactionId,
@@ -79,55 +75,6 @@ class StunMessage {
         ),
       ],
     );
-  }
-
-  /// Generate random 96-bit (12 bytes) transaction ID
-  static Uint8List _generateTransactionId() {
-    final random = Random.secure();
-    final bytes = Uint8List(12);
-    for (var i = 0; i < 12; i++) {
-      bytes[i] = random.nextInt(256);
-    }
-    return bytes;
-  }
-
-  /// Encode STUN message to bytes
-  Uint8List toBytes() {
-    final buffer = BytesBuilder();
-
-    // Message Type (2 bytes)
-    buffer.add([messageType >> 8, messageType & 0xFF]);
-
-    // Message Length (2 bytes) - will be updated after adding attributes
-    buffer.add([0, 0]);
-
-    // Magic Cookie (4 bytes)
-    buffer.add([
-      (stunMagicCookie >> 24) & 0xFF,
-      (stunMagicCookie >> 16) & 0xFF,
-      (stunMagicCookie >> 8) & 0xFF,
-      stunMagicCookie & 0xFF,
-    ]);
-
-    // Transaction ID (12 bytes)
-    buffer.add(transactionId);
-
-    // Attributes
-    final attributesBytes = BytesBuilder();
-    for (final attr in attributes) {
-      attributesBytes.add(attr.toBytes());
-    }
-
-    final attrData = attributesBytes.toBytes();
-    buffer.add(attrData);
-
-    // Update message length
-    final result = buffer.toBytes();
-    final length = attrData.length;
-    result[2] = (length >> 8) & 0xFF;
-    result[3] = length & 0xFF;
-
-    return result;
   }
 
   /// Decode STUN message from bytes
@@ -181,6 +128,59 @@ class StunMessage {
       transactionId: transactionId,
       attributes: attributes,
     );
+  }
+
+  final int messageType;
+  final Uint8List transactionId;
+  final List<StunAttribute> attributes;
+
+  /// Generate random 96-bit (12 bytes) transaction ID
+  static Uint8List _generateTransactionId() {
+    final random = Random.secure();
+    final bytes = Uint8List(12);
+    for (var i = 0; i < 12; i++) {
+      bytes[i] = random.nextInt(256);
+    }
+    return bytes;
+  }
+
+  /// Encode STUN message to bytes
+  Uint8List toBytes() {
+    final buffer = BytesBuilder();
+
+    // Message Type (2 bytes)
+    buffer.add([messageType >> 8, messageType & 0xFF]);
+
+    // Message Length (2 bytes) - will be updated after adding attributes
+    buffer.add([0, 0]);
+
+    // Magic Cookie (4 bytes)
+    buffer.add([
+      (stunMagicCookie >> 24) & 0xFF,
+      (stunMagicCookie >> 16) & 0xFF,
+      (stunMagicCookie >> 8) & 0xFF,
+      stunMagicCookie & 0xFF,
+    ]);
+
+    // Transaction ID (12 bytes)
+    buffer.add(transactionId);
+
+    // Attributes
+    final attributesBytes = BytesBuilder();
+    for (final attr in attributes) {
+      attributesBytes.add(attr.toBytes());
+    }
+
+    final attrData = attributesBytes.toBytes();
+    buffer.add(attrData);
+
+    // Update message length
+    final result = buffer.toBytes();
+    final length = attrData.length;
+    result[2] = (length >> 8) & 0xFF;
+    result[3] = length & 0xFF;
+
+    return result;
   }
 
   /// Get attribute by type
@@ -324,10 +324,10 @@ class StunMessage {
 
 /// STUN Attribute
 class StunAttribute {
+  StunAttribute({required this.type, required this.value});
+
   final int type;
   final Uint8List value;
-
-  StunAttribute({required this.type, required this.value});
 
   Uint8List toBytes() {
     final buffer = BytesBuilder();
