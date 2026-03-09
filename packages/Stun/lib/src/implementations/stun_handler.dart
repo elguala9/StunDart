@@ -10,14 +10,17 @@ import '../interfaces/i_stun_handler.dart';
 class StunHandler implements IStunHandler {
   /// Creates a STUN handler with the provided configuration (backward compatible)
   /// If socket is provided, it will be used; otherwise, socket must be created via factory
-  StunHandler(StunHandlerInput input)
-      : _socket = input.socket,
+  StunHandler(
+    StunHandlerInput input, {
+    CallbackHandler? onSocketRefresh,
+  })  : _socket = input.socket,
         _stunAddress = input.address ?? defaultStunConfig.address,
         _stunPort = input.port ?? defaultStunConfig.port,
         _bindType = input.socket?.address.type ?? InternetAddressType.IPv4,
         _bindPort = null,
         _timeout = const Duration(seconds: 5),
-        _onLog = null;
+        _onLog = null,
+        _onSocketRefresh = onSocketRefresh;
 
   /// Named constructor for explicit socket ownership
   /// Creates a handler that manages an externally-provided socket
@@ -27,13 +30,15 @@ class StunHandler implements IStunHandler {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
+    CallbackHandler? onSocketRefresh,
   })  : _socket = socket,
         _stunAddress = address ?? defaultStunConfig.address,
         _stunPort = port ?? defaultStunConfig.port,
         _bindType = socket.address.type,
         _bindPort = null,
         _timeout = timeout,
-        _onLog = onLog;
+        _onLog = onLog,
+        _onSocketRefresh = onSocketRefresh;
 
   /// Private constructor for factory use
   StunHandler._internal({
@@ -42,13 +47,15 @@ class StunHandler implements IStunHandler {
     required InternetAddressType bindType,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
+    CallbackHandler? onSocketRefresh,
   })  : _stunAddress = stunAddress ?? defaultStunConfig.address,
         _stunPort = stunPort ?? defaultStunConfig.port,
         _socket = null,
         _bindType = bindType,
         _bindPort = 0,
         _timeout = timeout,
-        _onLog = onLog;
+        _onLog = onLog,
+        _onSocketRefresh = onSocketRefresh;
 
   /// STUN server address
   String _stunAddress = defaultStunConfig.address;
@@ -71,14 +78,35 @@ class StunHandler implements IStunHandler {
   /// Cached local info (local IP and port)
   LocalInfo? _cachedLocalInfo;
 
+  /// Timestamp of the last successful STUN request
+  DateTime? _lastStunUpdated;
+
+  /// Timestamp of the last successful local request
+  DateTime? _lastLocalUpdated;
+
   /// Timeout for STUN requests
   final Duration _timeout;
 
   /// Optional logging callback
   final void Function(String)? _onLog;
 
+  /// Optional socket refresh callback
+  final CallbackHandler? _onSocketRefresh;
+
   /// Helper method to log messages
   void _log(String message) => _onLog?.call(message);
+
+  /// Helper method to fire socket refresh callback
+  void _fireSocketRefresh(StunResponse newResponse, StunResponse? oldResponse) =>
+      _onSocketRefresh?.call(newResponse, oldResponse);
+
+  /// Timestamp of the last successful STUN request
+  @override
+  DateTime? get lastStunUpdated => _lastStunUpdated;
+
+  /// Timestamp of the last successful local request
+  @override
+  DateTime? get lastLocalUpdated => _lastLocalUpdated;
 
   /// Static factory to create StunHandler without an external socket
   /// Creates a new socket immediately during initialization
@@ -88,6 +116,7 @@ class StunHandler implements IStunHandler {
     bool ipv6 = true,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
+    CallbackHandler? onSocketRefresh,
   }) async {
     final handler = StunHandler._internal(
       stunAddress: address,
@@ -95,6 +124,7 @@ class StunHandler implements IStunHandler {
       bindType: ipv6 ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
       timeout: timeout,
       onLog: onLog,
+      onSocketRefresh: onSocketRefresh,
     );
     // Create the socket immediately
     await handler._getSocket();
@@ -112,6 +142,7 @@ class StunHandler implements IStunHandler {
     final socket = await _getSocket();
     final localIp = await _getLocalIp();
     _cachedLocalInfo = (localIp: localIp, localPort: socket.port);
+    _lastLocalUpdated = DateTime.now();
     return _cachedLocalInfo!;
   }
 
@@ -151,23 +182,33 @@ class StunHandler implements IStunHandler {
 
     try {
       _cachedStunResponse = await _doStunRequest();
+      _lastStunUpdated = DateTime.now();
       return _cachedStunResponse!;
     } on SocketException catch (e) {
       _log('[StunHandler] Socket error (${e.message}), attempting recreation...');
+      final oldResponse = _cachedStunResponse;
       await _recreateSocket();
       _cachedStunResponse = await _doStunRequest();
+      _lastStunUpdated = DateTime.now();
+      _fireSocketRefresh(_cachedStunResponse!, oldResponse);
       return _cachedStunResponse!;
     } on OSError catch (e) {
       _log('[StunHandler] OS error (${e.message}), attempting recreation...');
+      final oldResponse = _cachedStunResponse;
       await _recreateSocket();
       _cachedStunResponse = await _doStunRequest();
+      _lastStunUpdated = DateTime.now();
+      _fireSocketRefresh(_cachedStunResponse!, oldResponse);
       return _cachedStunResponse!;
     } on StateError catch (e) {
       // Handle "Stream has already been listened to" error
       if (e.message.contains('already been listened to')) {
         _log('[StunHandler] Stream error (socket already in use), attempting recreation...');
+        final oldResponse = _cachedStunResponse;
         await _recreateSocket();
         _cachedStunResponse = await _doStunRequest();
+        _lastStunUpdated = DateTime.now();
+        _fireSocketRefresh(_cachedStunResponse!, oldResponse);
         return _cachedStunResponse!;
       }
       rethrow;
@@ -201,6 +242,8 @@ class StunHandler implements IStunHandler {
   void _resetCache() {
     _cachedStunResponse = null;
     _cachedLocalInfo = null;
+    _lastStunUpdated = null;
+    _lastLocalUpdated = null;
   }
 
   /// Recreates the socket (closes old, creates new)

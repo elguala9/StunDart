@@ -50,6 +50,22 @@ typedef StunHandlerInput = ({
   RawDatagramSocket? socket, // optional socket; if null, will be created internally
 });
 
+/// Fired when StunHandler recreates its socket after a network error.
+/// [newResponse] is the first successful result on the new socket.
+/// [oldResponse] is the cached result before the error (null if cache was empty).
+typedef CallbackHandler = void Function(
+  StunResponse newResponse,
+  StunResponse? oldResponse,
+);
+
+/// Fired by StunHandlerSingleton when one of its handlers recreates its socket.
+/// [ipv6] identifies which handler (false = IPv4, true = IPv6).
+typedef SingletonCallbackHandler = void Function(
+  StunResponse newResponse,
+  StunResponse? oldResponse, {
+  required bool ipv6,
+});
+
 /// NAT type classifications per RFC 5780 and RFC 3489
 enum NATType {
   openInternet('Open Internet'),

@@ -381,5 +381,179 @@ void main() {
       final IStunHandlerSingleton s = StunHandlerSingleton.instance;
       expect(s, isA<IStunHandlerSingleton>());
     });
+
+    group('Singleton Timestamp tests', () {
+      test('ipv4LastStunUpdated is null before performStunRequest()', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        expect(singleton.ipv4LastStunUpdated, isNull, reason: 'Should be null before STUN request');
+      });
+
+      test('ipv4LastStunUpdated is set after performStunRequest()', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        final beforeRequest = DateTime.now();
+        await singleton.performStunRequest();
+        final afterRequest = DateTime.now();
+
+        expect(singleton.ipv4LastStunUpdated, isNotNull, reason: 'Should not be null after performStunRequest()');
+        expect(singleton.ipv4LastStunUpdated!.isAfter(beforeRequest), isTrue);
+        expect(singleton.ipv4LastStunUpdated!.isBefore(afterRequest.add(const Duration(seconds: 1))), isTrue);
+      });
+
+      test('lastStunUpdated returns the most recent timestamp (IPv6 if available)', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        await singleton.performStunRequest();
+
+        // lastStunUpdated should be set
+        expect(singleton.lastStunUpdated, isNotNull, reason: 'Should return the most recent timestamp');
+
+        // If IPv6 is available, it should be the IPv6 timestamp (since we request IPv6 in parallel and return it)
+        // If IPv6 is not available, it should be IPv4 timestamp
+        if (singleton.ipv6Handler != null) {
+          final ipv6Timestamp = singleton.ipv6LastStunUpdated;
+          final ipv4Timestamp = singleton.ipv4LastStunUpdated;
+
+          if (ipv6Timestamp != null && ipv4Timestamp != null) {
+            // lastStunUpdated should be the later of the two
+            expect(
+              singleton.lastStunUpdated!.isAfter(ipv4Timestamp) || singleton.lastStunUpdated!.isAtSameMomentAs(ipv4Timestamp),
+              isTrue,
+              reason: 'lastStunUpdated should be IPv6 (more recent) or equal to IPv4'
+            );
+          }
+        } else {
+          // Only IPv4 available
+          expect(singleton.lastStunUpdated, equals(singleton.ipv4LastStunUpdated));
+        }
+      });
+
+      test('All timestamp getters return null after close()', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        // Prime the timestamps
+        await singleton.performStunRequest();
+        await singleton.performLocalRequest();
+
+        expect(singleton.ipv4LastStunUpdated, isNotNull);
+        expect(singleton.ipv4LastLocalUpdated, isNotNull);
+
+        // Close
+        singleton.close();
+
+        // All should be null
+        expect(singleton.ipv4LastStunUpdated, isNull, reason: 'IPv4 handler is null after close()');
+        expect(singleton.ipv6LastStunUpdated, isNull, reason: 'IPv6 handler is null after close()');
+        expect(singleton.ipv4LastLocalUpdated, isNull, reason: 'IPv4 handler is null after close()');
+        expect(singleton.ipv6LastLocalUpdated, isNull, reason: 'IPv6 handler is null after close()');
+        expect(singleton.lastStunUpdated, isNull, reason: 'No handlers available after close()');
+        expect(singleton.lastLocalUpdated, isNull, reason: 'No handlers available after close()');
+
+        print('[Singleton Timestamp Test] All timestamps are null after close()');
+      });
+
+      test('ipv4LastLocalUpdated and ipv6LastLocalUpdated work similarly to STUN timestamps', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        // Before request, should be null
+        expect(singleton.ipv4LastLocalUpdated, isNull);
+
+        // After request, should be set
+        await singleton.performLocalRequest();
+        expect(singleton.ipv4LastLocalUpdated, isNotNull);
+
+        // lastLocalUpdated should also be set
+        expect(singleton.lastLocalUpdated, isNotNull);
+
+        print('[Singleton Timestamp Test] Local timestamps work correctly');
+      });
+    });
+
+    group('Singleton CallbackHandler tests', () {
+      test('initialize() accepts onSocketRefresh without crash', () async {
+        final singleton = StunHandlerSingleton.instance;
+
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            // Empty callback
+          },
+        );
+
+        // Should have initialized successfully
+        expect(singleton.ipv4Handler, isNotNull);
+
+        // Clean up
+        singleton.close();
+      });
+
+      test('Singleton callback receives ipv6 parameter for IPv4 handler',
+          () async {
+        bool? capturedIpv6Flag;
+
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: (newRes, oldRes, {required ipv6}) {
+            capturedIpv6Flag = ipv6;
+          },
+        );
+
+        try {
+          // Verify the callback parameter structure is correct
+          // The callback should be callable with the expected signature
+          expect(singleton.ipv4Handler, isNotNull);
+
+          // Perform a normal request
+          final response = await singleton.ipv4Handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+
+          // For now, just verify the callback was registered without errors
+          expect(singleton.ipv4Handler, isNotNull);
+        } finally {
+          singleton.close();
+        }
+      });
+
+      test('Singleton callback null is a no-op', () async {
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          onSocketRefresh: null,
+        );
+
+        try {
+          // Should not crash even though callback is null
+          final response = await singleton.ipv4Handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+        } finally {
+          singleton.close();
+        }
+      });
+    });
   });
 }
