@@ -35,5 +35,5 @@ void main() {
     } finally {
       handler.close();
     }
-  }, timeout: Timeout(TestTimeouts.long));
+  }, timeout: const Timeout(TestTimeouts.long));
 }
