@@ -994,7 +994,7 @@ void main() {
       });
     });
 
-    group('CallbackHandler tests', () {
+    group('OnSocketRefresh tests', () {
       test('No crash with null callback (default)', () async {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,

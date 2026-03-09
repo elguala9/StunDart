@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:callback_handler/callback_handler.dart';
+
 import '../types/stun_types.dart';
 import 'i_stun_handler.dart';
 
@@ -8,7 +10,7 @@ abstract interface class IStunHandlerSingleton {
     int? port,
     Duration timeout,
     void Function(String)? onLog,
-    SingletonCallbackHandler? onSocketRefresh,
+    OnSingletonSocketRefresh? onSocketRefresh,
   });
   Future<void> initializeWithHandlers(
     IStunHandler ipv4Handler, {

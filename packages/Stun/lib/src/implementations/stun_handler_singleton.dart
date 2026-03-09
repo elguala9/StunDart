@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:callback_handler/callback_handler.dart';
+
 import '../types/stun_types.dart';
 import '../interfaces/i_stun_handler.dart';
 import '../interfaces/i_stun_handler_singleton.dart';
@@ -17,6 +19,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   IStunHandler? _ipv4Handler; // Non-null after initialize(), null after close()
   IStunHandler? _ipv6Handler; // May be null if IPv6 not supported or after close()
   void Function(String)? _onLog; // Optional logging callback
+  late final CallbackHandler<(StunResponse, StunResponse?, bool), void> _socketRefreshHandler = CallbackHandler(); // Socket refresh handler
 
   /// Helper method to log messages
   void _log(String message) => _onLog?.call(message);
@@ -39,16 +42,16 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    SingletonCallbackHandler? onSocketRefresh,
+    OnSingletonSocketRefresh? onSocketRefresh,
   }) async {
     _onLog = onLog;
 
-    // Create closure wrappers to convert SingletonCallbackHandler to CallbackHandler
-    final CallbackHandler? ipv4Callback = onSocketRefresh == null
+    // Create closure wrappers to convert OnSingletonSocketRefresh to OnSocketRefresh
+    final OnSocketRefresh? ipv4Callback = onSocketRefresh == null
         ? null
         : (newRes, oldRes) => onSocketRefresh(newRes, oldRes, ipv6: false);
 
-    final CallbackHandler? ipv6Callback = onSocketRefresh == null
+    final OnSocketRefresh? ipv6Callback = onSocketRefresh == null
         ? null
         : (newRes, oldRes) => onSocketRefresh(newRes, oldRes, ipv6: true);
 
@@ -75,7 +78,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     int? port,
     Duration timeout,
     void Function(String)? onLog,
-    CallbackHandler? onSocketRefresh,
+    OnSocketRefresh? onSocketRefresh,
   ) =>
       StunHandler.withoutSocket(
         address: address,
@@ -92,7 +95,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     int? port,
     Duration timeout,
     void Function(String)? onLog,
-    CallbackHandler? onSocketRefresh,
+    OnSocketRefresh? onSocketRefresh,
   ) async {
     try {
       return await StunHandler.withoutSocket(
