@@ -3,9 +3,9 @@ import 'dart:io';
 import '../../types/stun_types.dart';
 import '../../interfaces/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_singleton.dart';
-import '../singleton/singleton_handler_factory.dart';
-import '../singleton/singleton_dual_request.dart';
-import '../singleton/singleton_handler_state.dart';
+import 'singleton_handler_factory.dart';
+import 'singleton_dual_request.dart';
+import 'singleton_handler_state.dart';
 
 /// Singleton wrapper for managing dual IPv4 and IPv6 STUN handlers
 class StunHandlerSingleton implements IStunHandlerSingleton {
@@ -15,6 +15,8 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   static final StunHandlerSingleton _instance = StunHandlerSingleton._internal();
 
   final _state = SingletonHandlerState();
+  OnSocketRefreshIpv4? _onSocketRefreshIpv4;
+  OnSocketRefreshIpv6? _onSocketRefreshIpv6;
 
   (OnSocketRefresh?, OnSocketRefresh?) _createSingletonWrappers(OnSingletonSocketRefresh? callback) {
     if (callback == null) return (null, null);
@@ -187,4 +189,65 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
 
   @override
   DateTime? get lastLocalUpdated => _state.lastLocalUpdated;
+
+  @override
+  void setOnSocketRefreshIpv4(OnSocketRefreshIpv4 callback) {
+    final handler = _state.ipv4Handler;
+    if (handler == null) {
+      throw StateError('StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.');
+    }
+
+    // Validate socket type matches IPv4
+    final socket = handler.getSocket();
+    if (socket.address.type != InternetAddressType.IPv4) {
+      throw ArgumentError(
+        'Socket type mismatch: expected IPv4, got ${socket.address.type}. '
+        'Ensure the handler has an IPv4 socket.',
+      );
+    }
+
+    _onSocketRefreshIpv4 = callback;
+    handler.addOnSocketRefresh((newRes, oldRes) => callback(newRes, oldRes));
+  }
+
+  @override
+  void setOnSocketRefreshIpv6(OnSocketRefreshIpv6 callback) {
+    final handler = _state.ipv6Handler;
+    if (handler == null) {
+      throw StateError(
+        'StunHandlerSingleton: IPv6 handler not initialized or not available. '
+        'Call initialize() first and ensure IPv6 is available on this system.',
+      );
+    }
+
+    // Validate socket type matches IPv6
+    final socket = handler.getSocket();
+    if (socket.address.type != InternetAddressType.IPv6) {
+      throw ArgumentError(
+        'Socket type mismatch: expected IPv6, got ${socket.address.type}. '
+        'Ensure the handler has an IPv6 socket.',
+      );
+    }
+
+    _onSocketRefreshIpv6 = callback;
+    handler.addOnSocketRefresh((newRes, oldRes) => callback(newRes, oldRes));
+  }
+
+  @override
+  void removeOnSocketRefreshIpv4() {
+    final handler = _state.ipv4Handler;
+    if (handler != null && _onSocketRefreshIpv4 != null) {
+      handler.removeOnSocketRefresh((newRes, oldRes) => _onSocketRefreshIpv4!(newRes, oldRes));
+    }
+    _onSocketRefreshIpv4 = null;
+  }
+
+  @override
+  void removeOnSocketRefreshIpv6() {
+    final handler = _state.ipv6Handler;
+    if (handler != null && _onSocketRefreshIpv6 != null) {
+      handler.removeOnSocketRefresh((newRes, oldRes) => _onSocketRefreshIpv6!(newRes, oldRes));
+    }
+    _onSocketRefreshIpv6 = null;
+  }
 }

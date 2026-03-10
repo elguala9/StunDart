@@ -7,5 +7,5 @@ export 'src/types/stun_types.dart';
 export 'src/interfaces/i_stun_handler.dart';
 export 'src/interfaces/i_stun_handler_singleton.dart';
 export 'src/implementations/handlers/stun_handler.dart';
-export 'src/implementations/handlers/stun_handler_singleton.dart';
+export 'src/implementations/singleton/stun_handler_singleton.dart';
 export 'src/implementations/nat/nat_detector.dart';
