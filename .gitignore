@@ -16,3 +16,4 @@ Thumbs.db
 # Coverage
 coverage/
 *.lcov
+pubspec_overrides.yaml

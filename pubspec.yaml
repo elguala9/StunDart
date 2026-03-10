@@ -9,3 +9,12 @@ environment:
 workspace:
   - packages/Stun
   - packages/StunDartTests
+
+dev_dependencies:
+  melos: ^7.3.0
+
+melos:
+  scripts:
+    barrels:
+      run: melos exec --ignore=StunDartTests -- dart run build_runner build
+      description: Generate barrel files (indexes) for all packages using build_runner.
