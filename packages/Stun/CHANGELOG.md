@@ -5,6 +5,26 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-03-10
+
+### Added
+- **Socket Refresh Callbacks**: StunHandler and StunHandlerSingleton now support callbacks when socket is recreated after network errors
+  - `CallbackHandler` typedef for StunHandler callbacks
+  - `SingletonCallbackHandler` typedef for singleton callbacks with IPv4/IPv6 identification
+  - All constructors accept `onSocketRefresh` parameter
+
+### Changed
+- Improved socket error handling with callback support
+- Enhanced code organization with modular directory structure
+
+### Improved
+- Code quality and maintainability through aggressive modularization (<200 lines per core file)
+- Better separation of concerns with dedicated modules for socket management, factories, and request handling
+
+### Tests
+- 172 tests passing (includes 9 new socket refresh callback tests)
+- Full coverage of callback lifecycle and dual-stack behavior
+
 ## [1.3.0] - 2026-03-09
 
 ### Added
@@ -111,6 +131,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [v1.0.0](https://github.com/elguala9/StunDart/releases/tag/v1.0.0) - Initial release
 
 ## Upgrade Guide
+
+### Upgrading from 1.2.0 to 1.2.1
+
+**Breaking Changes:** None - fully backward compatible
+
+**New Features (Optional):**
+```dart
+// Add socket refresh callback to track socket recreation
+final handler = await StunHandler.withoutSocket(
+  address: 'stun.l.google.com',
+  port: 19302,
+  onSocketRefresh: (newResponse, oldResponse) {
+    print('Socket was recreated, new public IP: ${newResponse.publicIp}');
+  },
+);
+
+// Or with singleton
+await StunHandlerSingleton.instance.initialize(
+  address: 'stun.l.google.com',
+  port: 19302,
+  onSocketRefresh: (newResponse, oldResponse, ipv6: bool) {
+    print('${ipv6 ? "IPv6" : "IPv4"} socket refreshed');
+  },
+);
+```
 
 ### Upgrading from 1.2.0 to 1.3.0
 
