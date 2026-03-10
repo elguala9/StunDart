@@ -17,6 +17,8 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   final _state = SingletonHandlerState();
   OnSocketRefreshIpv4? _onSocketRefreshIpv4;
   OnSocketRefreshIpv6? _onSocketRefreshIpv6;
+  OnSocketRefresh? _ipv4WrapperCallback;
+  OnSocketRefresh? _ipv6WrapperCallback;
 
   (OnSocketRefresh?, OnSocketRefresh?) _createSingletonWrappers(OnSingletonSocketRefresh? callback) {
     if (callback == null) return (null, null);
@@ -206,8 +208,16 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
       );
     }
 
+    // Remove previous callback if exists
+    if (_ipv4WrapperCallback != null) {
+      handler.removeOnSocketRefresh(_ipv4WrapperCallback!);
+    }
+
+    // Create and store wrapper callback
+    final wrapper = (StunResponse newRes, StunResponse? oldRes) => callback(newRes, oldRes);
     _onSocketRefreshIpv4 = callback;
-    handler.addOnSocketRefresh((newRes, oldRes) => callback(newRes, oldRes));
+    _ipv4WrapperCallback = wrapper;
+    handler.addOnSocketRefresh(wrapper);
   }
 
   @override
@@ -229,25 +239,35 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
       );
     }
 
+    // Remove previous callback if exists
+    if (_ipv6WrapperCallback != null) {
+      handler.removeOnSocketRefresh(_ipv6WrapperCallback!);
+    }
+
+    // Create and store wrapper callback
+    final wrapper = (StunResponse newRes, StunResponse? oldRes) => callback(newRes, oldRes);
     _onSocketRefreshIpv6 = callback;
-    handler.addOnSocketRefresh((newRes, oldRes) => callback(newRes, oldRes));
+    _ipv6WrapperCallback = wrapper;
+    handler.addOnSocketRefresh(wrapper);
   }
 
   @override
   void removeOnSocketRefreshIpv4() {
     final handler = _state.ipv4Handler;
-    if (handler != null && _onSocketRefreshIpv4 != null) {
-      handler.removeOnSocketRefresh((newRes, oldRes) => _onSocketRefreshIpv4!(newRes, oldRes));
+    if (handler != null && _ipv4WrapperCallback != null) {
+      handler.removeOnSocketRefresh(_ipv4WrapperCallback!);
     }
     _onSocketRefreshIpv4 = null;
+    _ipv4WrapperCallback = null;
   }
 
   @override
   void removeOnSocketRefreshIpv6() {
     final handler = _state.ipv6Handler;
-    if (handler != null && _onSocketRefreshIpv6 != null) {
-      handler.removeOnSocketRefresh((newRes, oldRes) => _onSocketRefreshIpv6!(newRes, oldRes));
+    if (handler != null && _ipv6WrapperCallback != null) {
+      handler.removeOnSocketRefresh(_ipv6WrapperCallback!);
     }
     _onSocketRefreshIpv6 = null;
+    _ipv6WrapperCallback = null;
   }
 }
