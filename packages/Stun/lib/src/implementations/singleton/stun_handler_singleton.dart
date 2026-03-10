@@ -15,10 +15,14 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   static final StunHandlerSingleton _instance = StunHandlerSingleton._internal();
 
   final _state = SingletonHandlerState();
-  OnSocketRefreshIpv4? _onSocketRefreshIpv4;
-  OnSocketRefreshIpv6? _onSocketRefreshIpv6;
-  OnSocketRefresh? _ipv4WrapperCallback;
-  OnSocketRefresh? _ipv6WrapperCallback;
+
+  /// Maps IPv4 callbacks to their wrapper functions
+  /// Allows proper registration and cleanup via handler.addOnSocketRefresh/removeOnSocketRefresh
+  final Map<OnSocketRefreshIpv4, OnSocketRefresh> _ipv4CallbackWrappers = {};
+
+  /// Maps IPv6 callbacks to their wrapper functions
+  /// Allows proper registration and cleanup via handler.addOnSocketRefresh/removeOnSocketRefresh
+  final Map<OnSocketRefreshIpv6, OnSocketRefresh> _ipv6CallbackWrappers = {};
 
   (OnSocketRefresh?, OnSocketRefresh?) _createSingletonWrappers(OnSingletonSocketRefresh? callback) {
     if (callback == null) return (null, null);
@@ -208,16 +212,12 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
       );
     }
 
-    // Remove previous callback if exists
-    if (_ipv4WrapperCallback != null) {
-      handler.removeOnSocketRefresh(_ipv4WrapperCallback!);
-    }
-
-    // Create and store wrapper callback
-    final wrapper = (StunResponse newRes, StunResponse? oldRes) => callback(newRes, oldRes);
-    _onSocketRefreshIpv4 = callback;
-    _ipv4WrapperCallback = wrapper;
-    handler.addOnSocketRefresh(wrapper);
+    // Use putIfAbsent to create wrapper only once, idempotent registration
+    _ipv4CallbackWrappers.putIfAbsent(callback, () {
+      void wrapper(StunResponse newRes, StunResponse? oldRes) => callback(newRes, oldRes);
+      handler.addOnSocketRefresh(wrapper);
+      return wrapper;
+    });
   }
 
   @override
@@ -239,35 +239,31 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
       );
     }
 
-    // Remove previous callback if exists
-    if (_ipv6WrapperCallback != null) {
-      handler.removeOnSocketRefresh(_ipv6WrapperCallback!);
-    }
-
-    // Create and store wrapper callback
-    final wrapper = (StunResponse newRes, StunResponse? oldRes) => callback(newRes, oldRes);
-    _onSocketRefreshIpv6 = callback;
-    _ipv6WrapperCallback = wrapper;
-    handler.addOnSocketRefresh(wrapper);
+    // Use putIfAbsent to create wrapper only once, idempotent registration
+    _ipv6CallbackWrappers.putIfAbsent(callback, () {
+      void wrapper(StunResponse newRes, StunResponse? oldRes) => callback(newRes, oldRes);
+      handler.addOnSocketRefresh(wrapper);
+      return wrapper;
+    });
   }
 
   @override
   void removeOnSocketRefreshIpv4() {
     final handler = _state.ipv4Handler;
-    if (handler != null && _ipv4WrapperCallback != null) {
-      handler.removeOnSocketRefresh(_ipv4WrapperCallback!);
+    // Clear all IPv4 callbacks from the map and unregister from handler
+    for (final wrapper in _ipv4CallbackWrappers.values) {
+      handler?.removeOnSocketRefresh(wrapper);
     }
-    _onSocketRefreshIpv4 = null;
-    _ipv4WrapperCallback = null;
+    _ipv4CallbackWrappers.clear();
   }
 
   @override
   void removeOnSocketRefreshIpv6() {
     final handler = _state.ipv6Handler;
-    if (handler != null && _ipv6WrapperCallback != null) {
-      handler.removeOnSocketRefresh(_ipv6WrapperCallback!);
+    // Clear all IPv6 callbacks from the map and unregister from handler
+    for (final wrapper in _ipv6CallbackWrappers.values) {
+      handler?.removeOnSocketRefresh(wrapper);
     }
-    _onSocketRefreshIpv6 = null;
-    _ipv6WrapperCallback = null;
+    _ipv6CallbackWrappers.clear();
   }
 }
