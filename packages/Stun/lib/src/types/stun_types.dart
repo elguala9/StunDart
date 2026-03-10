@@ -59,7 +59,19 @@ typedef OnSocketRefresh = void Function(
   StunResponse? oldResponse,
 );
 
-/// Socket refresh callback handler for StunHandlerSingleton
+/// Socket refresh callback handler for StunHandlerSingleton IPv4
+typedef OnSocketRefreshIpv4 = void Function(
+  StunResponse newResponse,
+  StunResponse? oldResponse,
+);
+
+/// Socket refresh callback handler for StunHandlerSingleton IPv6
+typedef OnSocketRefreshIpv6 = void Function(
+  StunResponse newResponse,
+  StunResponse? oldResponse,
+);
+
+/// Socket refresh callback handler for StunHandlerSingleton (legacy, for backward compatibility)
 /// Fired when one of its handlers recreates its socket.
 /// [ipv6] identifies which handler (false = IPv4, true = IPv6).
 typedef OnSingletonSocketRefresh = void Function(

@@ -50,4 +50,20 @@ abstract interface class IStunHandlerSingleton {
 
   /// Unregisters a previously added socket refresh callback
   void removeOnSocketRefresh(OnSingletonSocketRefresh callback);
+
+  /// Sets IPv4-specific socket refresh callback with type validation
+  /// Throws [ArgumentError] if socket type doesn't match IPv4
+  /// Throws [StateError] if IPv4 handler is not initialized
+  void setOnSocketRefreshIpv4(OnSocketRefreshIpv4 callback);
+
+  /// Sets IPv6-specific socket refresh callback with type validation
+  /// Throws [ArgumentError] if socket type doesn't match IPv6
+  /// Throws [StateError] if IPv6 handler is not initialized or not available
+  void setOnSocketRefreshIpv6(OnSocketRefreshIpv6 callback);
+
+  /// Removes IPv4-specific socket refresh callback
+  void removeOnSocketRefreshIpv4();
+
+  /// Removes IPv6-specific socket refresh callback
+  void removeOnSocketRefreshIpv6();
 }
