@@ -1,15 +1,16 @@
 import 'dart:io';
 
+import 'package:singleton_manager/singleton_manager.dart';
+
 import '../types/stun_types.dart';
 import 'i_stun_handler.dart';
 
-abstract interface class IStunHandlerSingleton {
+abstract interface class IStunHandlerSingleton implements ISingletonStandardDI {
   Future<void> initialize({
     String? address,
     int? port,
     Duration timeout,
     void Function(String)? onLog,
-    OnSingletonSocketRefresh? onSocketRefresh,
   });
   Future<void> initializeWithHandlers(
     IStunHandler ipv4Handler, {
@@ -45,12 +46,6 @@ abstract interface class IStunHandlerSingleton {
   /// Timestamp of the most recent local request (IPv6 if available, else IPv4)
   DateTime? get lastLocalUpdated;
 
-  /// Registers a callback to be fired when either handler's socket is recreated after network error
-  void addOnSocketRefresh(OnSingletonSocketRefresh callback);
-
-  /// Unregisters a previously added socket refresh callback
-  void removeOnSocketRefresh(OnSingletonSocketRefresh callback);
-
   /// Sets IPv4-specific socket refresh callback with type validation
   /// Throws [ArgumentError] if socket type doesn't match IPv4
   /// Throws [StateError] if IPv4 handler is not initialized
@@ -66,4 +61,8 @@ abstract interface class IStunHandlerSingleton {
 
   /// Removes IPv6-specific socket refresh callback
   void removeOnSocketRefreshIpv6();
+
+  /// Initialize dependency injection - registers singleton and handlers in DI container
+  @override
+  Future<void> initializeDI();
 }

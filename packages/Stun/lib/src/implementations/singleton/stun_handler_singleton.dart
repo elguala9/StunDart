@@ -1,13 +1,14 @@
 import 'dart:io';
 
 import 'package:callback_handler/callback_handler.dart';
+import 'package:singleton_manager/singleton_manager.dart';
 
 import '../../types/stun_types.dart';
 import '../../interfaces/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_singleton.dart';
+import '../../interfaces/i_dual_stun_handler.dart';
+import '../handlers/dual_stun_handler.dart';
 import 'singleton_handler_factory.dart';
-import 'singleton_dual_request.dart';
-import 'singleton_handler_state.dart';
 
 /// Singleton wrapper for managing dual IPv4 and IPv6 STUN handlers
 class StunHandlerSingleton implements IStunHandlerSingleton {
@@ -16,23 +17,15 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
 
   static final StunHandlerSingleton _instance = StunHandlerSingleton._internal();
 
-  final _state = SingletonHandlerState();
+  final IDualStunHandler _dualHandler = DualStunHandler();
 
-  /// Manages IPv4-specific socket refresh callbacks
-  final CallbackHandler<(StunResponse, StunResponse?), void> _ipv4CallbackHandler =
+  /// Manages IPv4-specific socket refresh callbacks (tuple-based via CallbackHandler)
+  final IpCallbackHandler _ipv4CallbackHandler =
       CallbackHandler();
 
-  /// Manages IPv6-specific socket refresh callbacks
-  final CallbackHandler<(StunResponse, StunResponse?), void> _ipv6CallbackHandler =
+  /// Manages IPv6-specific socket refresh callbacks (tuple-based via CallbackHandler)
+  final IpCallbackHandler _ipv6CallbackHandler =
       CallbackHandler();
-
-  (OnSocketRefresh?, OnSocketRefresh?) _createSingletonWrappers(OnSingletonSocketRefresh? callback) {
-    if (callback == null) return (null, null);
-    return (
-      (newRes, oldRes) => callback(newRes, oldRes, ipv6: false),
-      (newRes, oldRes) => callback(newRes, oldRes, ipv6: true),
-    );
-  }
 
   static StunHandlerSingleton get instance => _instance;
 
@@ -42,61 +35,54 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    OnSingletonSocketRefresh? onSocketRefresh,
   }) async {
     final factory = SingletonHandlerFactory(onLog: onLog);
 
-    final (ipv4Callback, ipv6Callback) = _createSingletonWrappers(onSocketRefresh);
-
-    _state.ipv4Handler = await factory.createIpv4Handler(
+    _dualHandler.setIpv4Handler(await factory.createIpv4Handler(
       address: address,
       port: port,
       timeout: timeout,
-      onSocketRefresh: ipv4Callback,
-    );
-    _state.ipv6Handler = await factory.createIpv6HandlerSafe(
+      onSocketRefresh: (newRes, oldRes) => _ipv4CallbackHandler((newRes, oldRes)),
+    ));
+    _dualHandler.setIpv6Handler(await factory.createIpv6HandlerSafe(
       address: address,
       port: port,
       timeout: timeout,
-      onSocketRefresh: ipv6Callback,
-    );
+      onSocketRefresh: (newRes, oldRes) => _ipv6CallbackHandler((newRes, oldRes)),
+    ));
   }
 
   @override
   Future<void> initializeWithHandlers(IStunHandler ipv4Handler, {IStunHandler? ipv6Handler}) async {
-    _state.ipv4Handler = ipv4Handler;
-    _state.ipv6Handler = ipv6Handler;
+    _dualHandler.setIpv4Handler(ipv4Handler);
+    _dualHandler.setIpv6Handler(ipv6Handler);
   }
 
   @override
   void setIpv4Handler(IStunHandler handler) {
-    _state.ipv4Handler = handler;
-    for (final entry in _state.callbackWrapperMap.entries) {
-      handler.addOnSocketRefresh(entry.value.$1);
-    }
+    _dualHandler.setIpv4Handler(handler);
+    handler.addOnSocketRefresh((newRes, oldRes) => _ipv4CallbackHandler((newRes, oldRes)));
   }
 
   @override
   void setIpv6Handler(IStunHandler? handler) {
-    _state.ipv6Handler = handler;
+    _dualHandler.setIpv6Handler(handler);
     if (handler != null) {
-      for (final entry in _state.callbackWrapperMap.entries) {
-        handler.addOnSocketRefresh(entry.value.$2);
-      }
+      handler.addOnSocketRefresh((newRes, oldRes) => _ipv6CallbackHandler((newRes, oldRes)));
     }
   }
 
   IStunHandler _getHandler({required bool ipv6}) {
     if (ipv6) {
-      if (_state.ipv6Handler == null) {
+      if (_dualHandler.ipv6Handler == null) {
         throw StateError('StunHandlerSingleton: IPv6 handler not initialized or not available. Call initialize() first.');
       }
-      return _state.ipv6Handler!;
+      return _dualHandler.ipv6Handler!;
     } else {
-      if (_state.ipv4Handler == null) {
+      if (_dualHandler.ipv4Handler == null) {
         throw StateError('StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.');
       }
-      return _state.ipv4Handler!;
+      return _dualHandler.ipv4Handler!;
     }
   }
 
@@ -104,37 +90,27 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   IStunHandler get ipv4Handler => _getHandler(ipv6: false);
 
   @override
-  IStunHandler? get ipv6Handler => _state.ipv6Handler;
+  IStunHandler? get ipv6Handler => _dualHandler.ipv6Handler;
 
   @override
   void replaceHandler(IStunHandler handler, {required bool ipv6}) {
-    if (ipv6) {
-      setIpv6Handler(handler);
-    } else {
-      setIpv4Handler(handler);
-    }
+    _dualHandler.replaceHandler(handler, ipv6: ipv6);
   }
 
   @override
   Future<StunResponse> performStunRequest() async {
-    if (_state.ipv4Handler == null) {
+    if (_dualHandler.ipv4Handler == null) {
       throw StateError('StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.');
     }
-    return SingletonDualRequest.performStunRequest(
-      ipv4Handler: _state.ipv4Handler!,
-      ipv6Handler: _state.ipv6Handler,
-    );
+    return _dualHandler.performStunRequest();
   }
 
   @override
   Future<LocalInfo> performLocalRequest() async {
-    if (_state.ipv4Handler == null) {
+    if (_dualHandler.ipv4Handler == null) {
       throw StateError('StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.');
     }
-    return SingletonDualRequest.performLocalRequest(
-      ipv4Handler: _state.ipv4Handler!,
-      ipv6Handler: _state.ipv6Handler,
-    );
+    return _dualHandler.performLocalRequest();
   }
 
   @override
@@ -145,62 +121,35 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
 
   @override
   void setStunServer(String address, int port, {bool? ipv6}) {
-    if (ipv6 == null || ipv6 == false) {
-      _state.ipv4Handler?.setStunServer(address, port);
-    }
-    if (ipv6 == null || ipv6 == true) {
-      _state.ipv6Handler?.setStunServer(address, port);
-    }
+    _dualHandler.setStunServer(address, port, ipv6: ipv6);
   }
 
   @override
   void close({bool? ipv6}) {
-    _state.close(ipv6: ipv6);
+    _dualHandler.close(ipv6: ipv6);
   }
 
   @override
-  void addOnSocketRefresh(OnSingletonSocketRefresh callback) {
-    _state.callbackWrapperMap.putIfAbsent(callback, () {
-      void ipv4Wrapper(StunResponse newRes, StunResponse? oldRes) =>
-          callback(newRes, oldRes, ipv6: false);
-      void ipv6Wrapper(StunResponse newRes, StunResponse? oldRes) =>
-          callback(newRes, oldRes, ipv6: true);
-      _state.ipv4Handler?.addOnSocketRefresh(ipv4Wrapper);
-      _state.ipv6Handler?.addOnSocketRefresh(ipv6Wrapper);
-      return (ipv4Wrapper, ipv6Wrapper);
-    });
-  }
+  DateTime? get ipv4LastStunUpdated => _dualHandler.ipv4LastStunUpdated;
 
   @override
-  void removeOnSocketRefresh(OnSingletonSocketRefresh callback) {
-    final wrappers = _state.callbackWrapperMap.remove(callback);
-    if (wrappers == null) return;
-    final (ipv4Wrapper, ipv6Wrapper) = wrappers;
-    _state.ipv4Handler?.removeOnSocketRefresh(ipv4Wrapper);
-    _state.ipv6Handler?.removeOnSocketRefresh(ipv6Wrapper);
-  }
+  DateTime? get ipv6LastStunUpdated => _dualHandler.ipv6LastStunUpdated;
 
   @override
-  DateTime? get ipv4LastStunUpdated => _state.ipv4LastStunUpdated;
+  DateTime? get ipv4LastLocalUpdated => _dualHandler.ipv4LastLocalUpdated;
 
   @override
-  DateTime? get ipv6LastStunUpdated => _state.ipv6LastStunUpdated;
+  DateTime? get ipv6LastLocalUpdated => _dualHandler.ipv6LastLocalUpdated;
 
   @override
-  DateTime? get ipv4LastLocalUpdated => _state.ipv4LastLocalUpdated;
+  DateTime? get lastStunUpdated => _dualHandler.lastStunUpdated;
 
   @override
-  DateTime? get ipv6LastLocalUpdated => _state.ipv6LastLocalUpdated;
-
-  @override
-  DateTime? get lastStunUpdated => _state.lastStunUpdated;
-
-  @override
-  DateTime? get lastLocalUpdated => _state.lastLocalUpdated;
+  DateTime? get lastLocalUpdated => _dualHandler.lastLocalUpdated;
 
   @override
   void setOnSocketRefreshIpv4(OnSocketRefreshIpv4 callback) {
-    final handler = _state.ipv4Handler;
+    final handler = _dualHandler.ipv4Handler;
     if (handler == null) {
       throw StateError('StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.');
     }
@@ -214,14 +163,14 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
       );
     }
 
-    // Register callback with CallbackHandler
+    // Register callback - wrapper unpacks tuple and calls user callback
     void wrapper((StunResponse, StunResponse?) data) => callback(data.$1, data.$2);
     _ipv4CallbackHandler.register(wrapper);
   }
 
   @override
   void setOnSocketRefreshIpv6(OnSocketRefreshIpv6 callback) {
-    final handler = _state.ipv6Handler;
+    final handler = _dualHandler.ipv6Handler;
     if (handler == null) {
       throw StateError(
         'StunHandlerSingleton: IPv6 handler not initialized or not available. '
@@ -238,7 +187,7 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
       );
     }
 
-    // Register callback with CallbackHandler
+    // Register callback - wrapper unpacks tuple and calls user callback
     void wrapper((StunResponse, StunResponse?) data) => callback(data.$1, data.$2);
     _ipv6CallbackHandler.register(wrapper);
   }
@@ -251,5 +200,29 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
   @override
   void removeOnSocketRefreshIpv6() {
     _ipv6CallbackHandler.clear();
+  }
+
+  /// Destroys the singleton by closing all handlers (required by IValueForRegistry)
+  @override
+  void destroy() => close();
+
+  @override
+  Future<void> initializeDI() async {
+    // Get or create the SingletonHandlerFactory from DI container
+    late final SingletonHandlerFactory factory;
+    try {
+      factory = SingletonDIAccess.get<SingletonHandlerFactory>();
+    } catch (_) {
+      // Factory not registered, create a new one
+      factory = SingletonHandlerFactory();
+      await factory.initializeDI();
+    }
+
+    // Register the dual handler in the DI container
+    await _dualHandler.initializeDI();
+
+    // Register this singleton instance in the DI container
+    SingletonDI.registerFactory<StunHandlerSingleton>(() => this);
+    await SingletonDIAccess.add<StunHandlerSingleton>();
   }
 }
