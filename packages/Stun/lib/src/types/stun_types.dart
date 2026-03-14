@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:callback_handler/callback_handler.dart';
+
 
 /// IP version type
 enum IpVersion {
@@ -71,14 +73,7 @@ typedef OnSocketRefreshIpv6 = void Function(
   StunResponse? oldResponse,
 );
 
-/// Socket refresh callback handler for StunHandlerSingleton (legacy, for backward compatibility)
-/// Fired when one of its handlers recreates its socket.
-/// [ipv6] identifies which handler (false = IPv4, true = IPv6).
-typedef OnSingletonSocketRefresh = void Function(
-  StunResponse newResponse,
-  StunResponse? oldResponse, {
-  required bool ipv6,
-});
+typedef IpCallbackHandler = CallbackHandler<(StunResponse, StunResponse?), void>;
 
 /// NAT type classifications per RFC 5780 and RFC 3489
 enum NATType {

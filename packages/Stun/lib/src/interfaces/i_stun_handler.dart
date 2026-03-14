@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:singleton_manager/singleton_manager.dart';
+
 import '../types/stun_types.dart';
 
 /// Interface for STUN handler
-abstract class IStunHandler {
+abstract class IStunHandler implements IValueForRegistry {
   /// Performs a STUN request and returns the public (IP, port) inferred by the server
   Future<StunResponse> performStunRequest();
 
