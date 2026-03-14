@@ -67,13 +67,14 @@ dart test
 ## Key Features
 
 - **RFC 5389 & 5780 Compliant**: Full STUN protocol implementation
-- **Dual-stack Support**: IPv4 and IPv6
+- **Dual-stack Support**: IPv4 and IPv6 with parallel request execution
 - **NAT Detection**: Complete RFC 5780 NAT type detection (7 types, filtering & mapping behaviors)
 - **Performance**: Response caching eliminates redundant network calls
 - **Singleton Pattern**: Global instance management via `StunHandlerSingleton`
 - **Flexible Socket Management**: Internal socket management with `StunHandler.withoutSocket()` or external socket ownership
-- **Zero Dependencies**: Pure Dart implementation
-- **Comprehensive Testing**: 105+ passing tests with full coverage
+- **Dependency Injection**: ISingletonStandardDI compliance for DI container integration
+- **Socket Refresh Callbacks**: IPv4/IPv6-specific typed callbacks for socket recreation events
+- **Comprehensive Testing**: 161+ passing tests with full coverage
 
 ## Workspace Features
 
