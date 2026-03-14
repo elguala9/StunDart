@@ -125,6 +125,10 @@ class StunHandler implements IStunHandler {
   @override
   void close() => _socketMgr.closeSocket();
 
+  /// Destroys the handler by closing socket (required by IValueForRegistry)
+  @override
+  void destroy() => close();
+
   @override
   void setStunServer(String address, int port) {
     _stunAddress = address.trim().isNotEmpty ? address : defaultStunConfig.address;
