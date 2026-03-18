@@ -10,7 +10,6 @@ abstract interface class IStunHandlerSingleton implements ISingletonStandardDI {
     String? address,
     int? port,
     Duration timeout,
-    void Function(String)? onLog,
   });
   Future<void> initializeWithHandlers(
     IStunHandler ipv4Handler, {

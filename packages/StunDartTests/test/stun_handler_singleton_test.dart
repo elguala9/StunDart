@@ -360,20 +360,15 @@ void main() {
       expect(response.publicIp, isNotEmpty);
     });
 
-    test('initialize() accepts onLog callback', () async {
+    test('initialize() completes without throwing', () async {
       final singleton = StunHandlerSingleton.instance;
-      final messages = <String>[];
 
-      await singleton.initialize(
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-        onLog: (msg) => messages.add(msg),
-      );
-
-      expect(
-        messages.any((msg) => msg.contains('handler initialization')),
-        anyOf(isTrue, isFalse), // Message may or may not appear depending on system
-        reason: 'onLog callback should be set without throwing',
+      await expectLater(
+        singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        ),
+        completes,
       );
     });
 
@@ -619,16 +614,8 @@ void main() {
         );
 
         try {
-          int call1 = 0;
-          int call2 = 0;
-
-          singleton.setOnSocketRefreshIpv4((newRes, oldRes) {
-            call1++;
-          });
-
-          singleton.setOnSocketRefreshIpv4((newRes, oldRes) {
-            call2++;
-          });
+          singleton.setOnSocketRefreshIpv4((newRes, oldRes) {});
+          singleton.setOnSocketRefreshIpv4((newRes, oldRes) {});
 
           // Both registrations should succeed without errors
           expect(true, isTrue);

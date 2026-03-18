@@ -130,8 +130,7 @@ class DualStunHandler implements IDualStunHandler {
     }
   }
 
-  /// Destroys the handler by closing all sockets (required by IValueForRegistry)
-  @override
+  /// Destroys the handler by closing all sockets
   void destroy() => close();
 
   @override
@@ -162,6 +161,6 @@ class DualStunHandler implements IDualStunHandler {
   Future<void> initializeDI() async {
     // Register the dual handler in the DI container
     SingletonDI.registerFactory<DualStunHandler>(() => this);
-    await SingletonDIAccess.add<DualStunHandler>();
+    SingletonDIAccess.add<DualStunHandler>();
   }
 }
