@@ -35,16 +35,30 @@ void main() async {
     print('║              NAT DETECTION RESULTS                     ║');
     print('╠════════════════════════════════════════════════════════╣');
     print('║ NAT Type:         ${_padRight(result.natType.displayName, 32)} ║');
-    print('║ Filtering:        ${_padRight(result.filteringBehavior.displayName, 32)} ║');
-    print('║ Mapping:          ${_padRight(result.mappingBehavior.displayName, 32)} ║');
+    print(
+      '║ Filtering:        ${_padRight(result.filteringBehavior.displayName, 32)} ║',
+    );
+    print(
+      '║ Mapping:          ${_padRight(result.mappingBehavior.displayName, 32)} ║',
+    );
     print('╠════════════════════════════════════════════════════════╣');
     print('║ Public IP:        ${_padRight(result.publicIp ?? 'N/A', 32)} ║');
-    print('║ Public Port:      ${_padRight(result.publicPort?.toString() ?? 'N/A', 32)} ║');
-    print('║ Alternate IP:     ${_padRight(result.alternateIp ?? 'N/A', 32)} ║');
-    print('║ Alternate Port:   ${_padRight(result.alternatePort?.toString() ?? 'N/A', 32)} ║');
+    print(
+      '║ Public Port:      ${_padRight(result.publicPort?.toString() ?? 'N/A', 32)} ║',
+    );
+    print(
+      '║ Alternate IP:     ${_padRight(result.alternateIp ?? 'N/A', 32)} ║',
+    );
+    print(
+      '║ Alternate Port:   ${_padRight(result.alternatePort?.toString() ?? 'N/A', 32)} ║',
+    );
     print('╠════════════════════════════════════════════════════════╣');
-    print('║ RFC 5780 Support: ${_padRight(result.rfc5780Supported ? 'Yes' : 'No', 32)} ║');
-    print('║ Detection Time:   ${_padRight('${result.detectionTime.inMilliseconds}ms', 32)} ║');
+    print(
+      '║ RFC 5780 Support: ${_padRight(result.rfc5780Supported ? 'Yes' : 'No', 32)} ║',
+    );
+    print(
+      '║ Detection Time:   ${_padRight('${result.detectionTime.inMilliseconds}ms', 32)} ║',
+    );
     print('╚════════════════════════════════════════════════════════╝');
 
     // Display interpretation
@@ -85,13 +99,17 @@ void _explainNATType(NATType natType) {
 
     case NATType.fullCone:
       print('  Full Cone NAT (also called One-to-One NAT) allows any external');
-      print('  host to send packets to your device once you have sent a packet');
+      print(
+        '  host to send packets to your device once you have sent a packet',
+      );
       print('  to any destination. This is the most permissive type of NAT.');
       break;
 
     case NATType.restrictedCone:
       print('  Restricted Cone NAT only allows packets from external hosts');
-      print('  that you have previously sent packets to. The external host can');
+      print(
+        '  that you have previously sent packets to. The external host can',
+      );
       print('  use any source port.');
       break;
 

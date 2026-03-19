@@ -29,7 +29,11 @@ class StunSocketManager {
         ? InternetAddress.anyIPv6
         : InternetAddress.anyIPv4;
 
-    socket = await RawDatagramSocket.bind(bindAddr, bindPort ?? 0, reuseAddress: true);
+    socket = await RawDatagramSocket.bind(
+      bindAddr,
+      bindPort ?? 0,
+      reuseAddress: true,
+    );
     _log('[StunHandler] Socket created: ${socket!.address}:${socket!.port}');
     return socket!;
   }

@@ -8,7 +8,6 @@ import '../interfaces/i_stun_handler.dart';
 import '../implementations/handlers/stun_handler.dart';
 
 class HandlerFactoryDI extends HandlerFactory implements ISingletonStandardDI {
-
   HandlerFactoryDI() : super();
 
   factory HandlerFactoryDI.initializeDI() {
@@ -18,6 +17,5 @@ class HandlerFactoryDI extends HandlerFactory implements ISingletonStandardDI {
   }
 
   @override
-  void initializeDI() {
-  }
+  void initializeDI() {}
 }

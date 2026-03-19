@@ -9,7 +9,7 @@ void main() {
     final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
     print('Socket created on port: ${socket.port}');
     print('Socket address: ${socket.address}');
-    
+
     final input = (
       address: StunServers.googleStun,
       port: StunServers.defaultPort,
@@ -22,11 +22,11 @@ void main() {
     try {
       print('Performing STUN request...');
       final response = await handler.performStunRequest();
-      
+
       print('Success!');
       print('Public IP: ${response.publicIp}');
       print('Public Port: ${response.publicPort}');
-      
+
       expect(response.publicIp, isNotEmpty);
     } catch (e, stack) {
       print('Error: $e');

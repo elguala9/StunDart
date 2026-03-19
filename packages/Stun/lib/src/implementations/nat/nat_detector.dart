@@ -34,10 +34,10 @@ class NATDetector {
     required int primaryPort,
     required RawDatagramSocket socket,
     Duration timeout = const Duration(seconds: 5),
-  })  : _primaryServer = primaryServer,
-        _primaryPort = primaryPort,
-        _socket = socket,
-        _timeout = timeout {
+  }) : _primaryServer = primaryServer,
+       _primaryPort = primaryPort,
+       _socket = socket,
+       _timeout = timeout {
     // Convert to broadcast stream to allow multiple listeners
     _socketStream = _socket.asBroadcastStream();
   }
@@ -83,14 +83,18 @@ class NATDetector {
         );
       }
 
-      print('[NATDetector] Test 1 passed: ${test1Result.publicIp}:${test1Result.publicPort}');
+      print(
+        '[NATDetector] Test 1 passed: ${test1Result.publicIp}:${test1Result.publicPort}',
+      );
 
       // Test 2: Request from alternate IP/port (change-ip=true, change-port=true)
       final test2Result = await _performTest2();
       diagnostics['test2'] = test2Result.toMap();
 
       if (test2Result.success) {
-        print('[NATDetector] Test 2 passed - checking if Open Internet or Full Cone');
+        print(
+          '[NATDetector] Test 2 passed - checking if Open Internet or Full Cone',
+        );
         // Received response from alternate address = Open Internet or Full Cone
         // Need to check if mapping changes to distinguish
         final test1bis = await _performTest1();
@@ -138,7 +142,10 @@ class NATDetector {
         }
       } else {
         print('[NATDetector] No alternate server available, skipping Test 3');
-        diagnostics['test3'] = {'skipped': true, 'reason': 'No alternate address'};
+        diagnostics['test3'] = {
+          'skipped': true,
+          'reason': 'No alternate address',
+        };
       }
 
       // Test 4: Request from alternate port only (change-port=true)
@@ -156,7 +163,9 @@ class NATDetector {
           diagnostics: diagnostics,
         );
       } else {
-        print('[NATDetector] Test 4 filtered - Port Restricted Cone NAT detected');
+        print(
+          '[NATDetector] Test 4 filtered - Port Restricted Cone NAT detected',
+        );
         return _buildResult(
           natType: NATType.portRestrictedCone,
           filteringBehavior: NATFilteringBehavior.addressAndPortDependent,

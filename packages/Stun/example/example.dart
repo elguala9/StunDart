@@ -22,11 +22,7 @@ Future<void> _exampleWithExternalSocket() async {
   print('Local socket created on port: ${socket.port}\n');
 
   // Configure STUN handler with external socket
-  final input = (
-    address: 'stun.l.google.com',
-    port: 19302,
-    socket: socket,
-  );
+  final input = (address: 'stun.l.google.com', port: 19302, socket: socket);
 
   final handler = StunHandler(input);
 

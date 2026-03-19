@@ -72,10 +72,7 @@ void main() {
         NATFilteringBehavior.addressAndPortDependent.displayName,
         equals('Address and Port-Dependent Filtering'),
       );
-      expect(
-        NATFilteringBehavior.unknown.displayName,
-        equals('Unknown'),
-      );
+      expect(NATFilteringBehavior.unknown.displayName, equals('Unknown'));
     });
 
     test('should support enum equality', () {
@@ -108,10 +105,7 @@ void main() {
         NATMappingBehavior.addressAndPortDependent.displayName,
         equals('Address and Port-Dependent Mapping'),
       );
-      expect(
-        NATMappingBehavior.unknown.displayName,
-        equals('Unknown'),
-      );
+      expect(NATMappingBehavior.unknown.displayName, equals('Unknown'));
     });
 
     test('should support enum equality', () {
@@ -239,14 +233,8 @@ void main() {
       expect(result.diagnostics.keys, contains('test2'));
       expect(result.diagnostics.keys, contains('test3'));
       expect(result.diagnostics.keys, contains('test4'));
-      expect(
-        (result.diagnostics['test1'] as Map)['success'],
-        isTrue,
-      );
-      expect(
-        (result.diagnostics['test2'] as Map)['error'],
-        equals('timeout'),
-      );
+      expect((result.diagnostics['test1'] as Map)['success'], isTrue);
+      expect((result.diagnostics['test2'] as Map)['error'], equals('timeout'));
     });
   });
 
@@ -271,14 +259,8 @@ void main() {
     });
 
     test('should provide meaningful toString representations', () {
-      expect(
-        NATType.fullCone.displayName,
-        contains('Cone'),
-      );
-      expect(
-        NATType.symmetric.displayName,
-        contains('Symmetric'),
-      );
+      expect(NATType.fullCone.displayName, contains('Cone'));
+      expect(NATType.symmetric.displayName, contains('Symmetric'));
       expect(
         NATFilteringBehavior.endpointIndependent.displayName,
         contains('Endpoint-Independent'),

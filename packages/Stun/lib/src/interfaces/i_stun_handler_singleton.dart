@@ -6,11 +6,7 @@ import '../types/stun_types.dart';
 import 'i_stun_handler.dart';
 
 abstract interface class IStunHandlerSingleton implements ISingletonStandardDI {
-  Future<void> initialize({
-    String? address,
-    int? port,
-    Duration timeout,
-  });
+  Future<void> initialize({String? address, int? port, Duration timeout});
   Future<void> initializeWithHandlers(
     IStunHandler ipv4Handler, {
     IStunHandler? ipv6Handler,

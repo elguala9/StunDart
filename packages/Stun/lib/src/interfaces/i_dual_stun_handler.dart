@@ -6,7 +6,7 @@ import 'i_stun_handler.dart';
 
 /// Interface for managing dual IPv4 and IPv6 STUN handlers
 /// Handles parallel request execution and state management
-abstract class IDualStunHandler implements ISingletonStandardDI{
+abstract class IDualStunHandler implements ISingletonStandardDI {
   /// IPv4 handler (always initialized after setup, null after close)
   IStunHandler? get ipv4Handler;
 
