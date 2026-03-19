@@ -175,10 +175,7 @@ void main() {
         messageType: StunMessageType.bindingResponse,
         transactionId: transactionId,
         attributes: [
-          StunAttribute(
-            type: StunAttributeType.otherAddress,
-            value: attrValue,
-          ),
+          StunAttribute(type: StunAttributeType.otherAddress, value: attrValue),
         ],
       );
 

@@ -24,7 +24,7 @@ class StunSocketRefreshManager {
   /// 2. Store the wrapper so we can unregister the exact same function later
   /// 3. Use putIfAbsent() to prevent duplicate registrations
   final Map<OnSocketRefresh, void Function((StunResponse, StunResponse?))>
-      _callbackWrapperMap = {};
+  _callbackWrapperMap = {};
 
   /// Register a socket refresh callback
   ///

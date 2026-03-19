@@ -15,14 +15,13 @@ class HandlerFactory {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     OnSocketRefresh? onSocketRefresh,
-  }) =>
-      StunHandler.withoutSocket(
-        address: address,
-        port: port,
-        ipv6: false,
-        timeout: timeout,
-        onSocketRefresh: onSocketRefresh,
-      );
+  }) => StunHandler.withoutSocket(
+    address: address,
+    port: port,
+    ipv6: false,
+    timeout: timeout,
+    onSocketRefresh: onSocketRefresh,
+  );
 
   /// Creates IPv6 handler without socket
   Future<IStunHandler> createIpv6Handler({
@@ -30,12 +29,11 @@ class HandlerFactory {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     OnSocketRefresh? onSocketRefresh,
-  }) =>
-      StunHandler.withoutSocket(
-        address: address,
-        port: port,
-        ipv6: true,
-        timeout: timeout,
-        onSocketRefresh: onSocketRefresh,
-      );
+  }) => StunHandler.withoutSocket(
+    address: address,
+    port: port,
+    ipv6: true,
+    timeout: timeout,
+    onSocketRefresh: onSocketRefresh,
+  );
 }

@@ -4,7 +4,6 @@ import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 import 'test_constants.dart';
 
-
 void main() {
   group('StunHandler Tests', () {
     test('Query multiple STUN servers and compare public IPs', () async {
@@ -19,7 +18,9 @@ void main() {
 
       // Query each STUN server
       for (final server in stunServers) {
-        print('\n--- Testing STUN server: ${server.address}:${server.port} ---');
+        print(
+          '\n--- Testing STUN server: ${server.address}:${server.port} ---',
+        );
 
         // Create a new socket for each server
         final testSocket = await RawDatagramSocket.bind(
@@ -27,7 +28,7 @@ void main() {
           0,
           reuseAddress: true,
         );
-        
+
         final input = (
           address: server.address,
           port: server.port,
@@ -79,8 +80,11 @@ void main() {
         print('\nAll matching IPs: ${matchingIps == validIps.length}');
 
         // Expect at least 2 servers to agree on the public IP
-        expect(matchingIps, greaterThanOrEqualTo(2),
-            reason: 'At least 2 STUN servers should return the same public IP');
+        expect(
+          matchingIps,
+          greaterThanOrEqualTo(2),
+          reason: 'At least 2 STUN servers should return the same public IP',
+        );
       } else {
         fail('Not enough STUN servers responded successfully');
       }
@@ -201,7 +205,7 @@ void main() {
         final handler = StunHandler(input);
 
         print('\n--- Testing IPv6 STUN ---');
-        
+
         try {
           final response = await handler.performStunRequest();
 
@@ -228,7 +232,7 @@ void main() {
     test('getSocket returns the underlying socket', () async {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final originalPort = socket.port;
-      
+
       final input = (
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -241,8 +245,11 @@ void main() {
       // Verify it returns the same socket
       expect(returnedSocket.port, equals(originalPort));
       expect(returnedSocket.address, equals(socket.address));
-      expect(identical(returnedSocket, socket), isTrue, 
-          reason: 'Should return the exact same socket instance');
+      expect(
+        identical(returnedSocket, socket),
+        isTrue,
+        reason: 'Should return the exact same socket instance',
+      );
 
       handler.close();
     });
@@ -280,46 +287,52 @@ void main() {
       newSocket.close();
     });
 
-    test('StunHandler.withoutSocket() creates handler with internal socket', () async {
-      final handler = await StunHandler.withoutSocket(
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-      );
+    test(
+      'StunHandler.withoutSocket() creates handler with internal socket',
+      () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
 
-      try {
-        // Verify socket was created
-        final socket = handler.getSocket();
-        expect(socket, isNotNull);
-        expect(socket.port, greaterThan(0));
+        try {
+          // Verify socket was created
+          final socket = handler.getSocket();
+          expect(socket, isNotNull);
+          expect(socket.port, greaterThan(0));
 
-        // Verify handler can make STUN requests
-        final response = await handler.performStunRequest();
-        expect(response.publicIp, isNotEmpty);
-        expect(response.publicPort, greaterThan(0));
-      } finally {
-        handler.close();
-      }
-    });
+          // Verify handler can make STUN requests
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+          expect(response.publicPort, greaterThan(0));
+        } finally {
+          handler.close();
+        }
+      },
+    );
 
-    test('StunHandler.withSocket() creates handler from external socket', () async {
-      final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      final originalPort = socket.port;
+    test(
+      'StunHandler.withSocket() creates handler from external socket',
+      () async {
+        final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+        final originalPort = socket.port;
 
-      final handler = StunHandler.withSocket(
-        socket,
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-      );
+        final handler = StunHandler.withSocket(
+          socket,
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
 
-      try {
-        // Verify it uses the provided socket
-        final returnedSocket = handler.getSocket();
-        expect(identical(returnedSocket, socket), isTrue);
-        expect(returnedSocket.port, equals(originalPort));
-      } finally {
-        handler.close();
-      }
-    });
+        try {
+          // Verify it uses the provided socket
+          final returnedSocket = handler.getSocket();
+          expect(identical(returnedSocket, socket), isTrue);
+          expect(returnedSocket.port, equals(originalPort));
+        } finally {
+          handler.close();
+        }
+      },
+    );
 
     test('getSocket throws StateError when socket not initialized', () async {
       final input = (
@@ -331,36 +344,36 @@ void main() {
       final handler = StunHandler(input);
 
       // Should throw StateError
-      expect(
-        () => handler.getSocket(),
-        throwsA(isA<StateError>()),
-      );
+      expect(() => handler.getSocket(), throwsA(isA<StateError>()));
     });
 
-    test('performStunRequest handles socket errors and recreates socket', () async {
-      // Create handler with internal socket
-      final handler = await StunHandler.withoutSocket(
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-      );
+    test(
+      'performStunRequest handles socket errors and recreates socket',
+      () async {
+        // Create handler with internal socket
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
 
-      try {
-        // Perform a successful STUN request
-        final response = await handler.performStunRequest();
-        expect(response.publicIp, isNotEmpty);
-        expect(response.publicPort, greaterThan(0));
+        try {
+          // Perform a successful STUN request
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+          expect(response.publicPort, greaterThan(0));
 
-        // Verify we have a valid socket
-        final socket = handler.getSocket();
-        expect(socket, isNotNull);
-        expect(socket.port, greaterThan(0));
+          // Verify we have a valid socket
+          final socket = handler.getSocket();
+          expect(socket, isNotNull);
+          expect(socket.port, greaterThan(0));
 
-        // The error handling and socket recreation are tested implicitly
-        // in other tests (e.g., Handle STUN request timeout)
-      } finally {
-        handler.close();
-      }
-    });
+          // The error handling and socket recreation are tested implicitly
+          // in other tests (e.g., Handle STUN request timeout)
+        } finally {
+          handler.close();
+        }
+      },
+    );
 
     test('StunHandler.withoutSocket with IPv6', () async {
       try {
@@ -399,29 +412,32 @@ void main() {
       }
     });
 
-    test('StunHandler.withoutSocket() creates handler with internal socket', () async {
-      final handler = await StunHandler.withoutSocket(
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-        ipv6: false,
-      );
+    test(
+      'StunHandler.withoutSocket() creates handler with internal socket',
+      () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+          ipv6: false,
+        );
 
-      try {
-        // Verify socket was created
-        final socket = handler.getSocket();
-        expect(socket, isNotNull);
-        expect(socket.port, greaterThan(0));
-        expect(socket.address.type, equals(InternetAddressType.IPv4));
+        try {
+          // Verify socket was created
+          final socket = handler.getSocket();
+          expect(socket, isNotNull);
+          expect(socket.port, greaterThan(0));
+          expect(socket.address.type, equals(InternetAddressType.IPv4));
 
-        // Verify handler can make STUN requests
-        final response = await handler.performStunRequest();
-        expect(response.publicIp, isNotEmpty);
-        expect(response.publicPort, greaterThan(0));
-        expect(response.ipVersion, equals(IpVersion.v4));
-      } finally {
-        handler.close();
-      }
-    });
+          // Verify handler can make STUN requests
+          final response = await handler.performStunRequest();
+          expect(response.publicIp, isNotEmpty);
+          expect(response.publicPort, greaterThan(0));
+          expect(response.ipVersion, equals(IpVersion.v4));
+        } finally {
+          handler.close();
+        }
+      },
+    );
 
     test('StunHandler.withoutSocket() with IPv6', () async {
       try {
@@ -436,7 +452,9 @@ void main() {
           final socket = handler.getSocket();
           expect(socket.address.type, equals(InternetAddressType.IPv6));
 
-          print('IPv6 socket created with withoutSocket: ${socket.address}:${socket.port}');
+          print(
+            'IPv6 socket created with withoutSocket: ${socket.address}:${socket.port}',
+          );
 
           // Socket should be IPv6
           expect(socket.port, greaterThan(0));
@@ -470,66 +488,78 @@ void main() {
       }
     });
 
-    test('StunHandler.withoutSocket() with default server configuration', () async {
-      // Create without specifying server (should use defaults)
-      final handler = await StunHandler.withoutSocket();
+    test(
+      'StunHandler.withoutSocket() with default server configuration',
+      () async {
+        // Create without specifying server (should use defaults)
+        final handler = await StunHandler.withoutSocket();
 
-      try {
-        // Verify socket was created
-        final socket = handler.getSocket();
-        expect(socket, isNotNull);
-        expect(socket.port, greaterThan(0));
-      } finally {
-        handler.close();
-      }
-    });
+        try {
+          // Verify socket was created
+          final socket = handler.getSocket();
+          expect(socket, isNotNull);
+          expect(socket.port, greaterThan(0));
+        } finally {
+          handler.close();
+        }
+      },
+    );
 
-    test('StunHandler.withoutSocket() can perform multiple STUN requests', () async {
-      final handler = await StunHandler.withoutSocket(
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-      );
+    test(
+      'StunHandler.withoutSocket() can perform multiple STUN requests',
+      () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
 
-      try {
-        // First request
-        final response1 = await handler.performStunRequest();
-        expect(response1.publicIp, isNotEmpty);
+        try {
+          // First request
+          final response1 = await handler.performStunRequest();
+          expect(response1.publicIp, isNotEmpty);
 
-        // Second request on same handler
-        final response2 = await handler.performStunRequest();
-        expect(response2.publicIp, isNotEmpty);
+          // Second request on same handler
+          final response2 = await handler.performStunRequest();
+          expect(response2.publicIp, isNotEmpty);
 
-        // IPs should be the same since we're on the same socket
-        expect(response1.publicIp, equals(response2.publicIp));
-      } finally {
-        handler.close();
-      }
-    });
+          // IPs should be the same since we're on the same socket
+          expect(response1.publicIp, equals(response2.publicIp));
+        } finally {
+          handler.close();
+        }
+      },
+    );
 
-    test('StunHandler.withoutSocket() can change STUN server after creation', () async {
-      final handler = await StunHandler.withoutSocket(
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-      );
+    test(
+      'StunHandler.withoutSocket() can change STUN server after creation',
+      () async {
+        final handler = await StunHandler.withoutSocket(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
 
-      try {
-        // Perform request with initial server
-        final response1 = await handler.performStunRequest();
-        expect(response1.publicIp, isNotEmpty);
+        try {
+          // Perform request with initial server
+          final response1 = await handler.performStunRequest();
+          expect(response1.publicIp, isNotEmpty);
 
-        // Change server
-        handler.setStunServer(StunServers.googleStun1, StunServers.defaultPort);
+          // Change server
+          handler.setStunServer(
+            StunServers.googleStun1,
+            StunServers.defaultPort,
+          );
 
-        // Perform request with new server
-        final response2 = await handler.performStunRequest();
-        expect(response2.publicIp, isNotEmpty);
+          // Perform request with new server
+          final response2 = await handler.performStunRequest();
+          expect(response2.publicIp, isNotEmpty);
 
-        // Should still get valid responses
-        expect(response2.publicPort, greaterThan(0));
-      } finally {
-        handler.close();
-      }
-    });
+          // Should still get valid responses
+          expect(response2.publicPort, greaterThan(0));
+        } finally {
+          handler.close();
+        }
+      },
+    );
 
     test('StunHandler.withoutSocket() close releases socket', () async {
       final handler = await StunHandler.withoutSocket(
@@ -629,8 +659,7 @@ void main() {
         }
       });
 
-      test('Cache: Invalidates when socket is recreated due to error',
-          () async {
+      test('Cache: Invalidates when socket is recreated due to error', () async {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -697,78 +726,90 @@ void main() {
           final localInfo3 = await handler.performLocalRequest();
           expect(localInfo3.localPort, greaterThan(0));
 
-          print('[Cache Test] Local info cache invalidated on socket recreation');
+          print(
+            '[Cache Test] Local info cache invalidated on socket recreation',
+          );
         } finally {
           handler.close();
         }
       });
 
-      test('Cache: Not invalidated by server change (same socket = same IP)',
-          () async {
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+      test(
+        'Cache: Not invalidated by server change (same socket = same IP)',
+        () async {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-        try {
-          // First request
-          final response1 = await handler.performStunRequest();
-          expect(response1.publicIp, isNotEmpty);
-          final originalIp = response1.publicIp;
+          try {
+            // First request
+            final response1 = await handler.performStunRequest();
+            expect(response1.publicIp, isNotEmpty);
+            final originalIp = response1.publicIp;
 
-          // Change STUN server
-          handler.setStunServer(StunServers.googleStun1, StunServers.defaultPort);
+            // Change STUN server
+            handler.setStunServer(
+              StunServers.googleStun1,
+              StunServers.defaultPort,
+            );
 
-          // Next request should return cached response
-          // (same socket = same public IP, regardless of STUN server)
-          final response2 = await handler.performStunRequest();
-          expect(response2.publicIp, equals(originalIp),
+            // Next request should return cached response
+            // (same socket = same public IP, regardless of STUN server)
+            final response2 = await handler.performStunRequest();
+            expect(
+              response2.publicIp,
+              equals(originalIp),
               reason:
-                  'Cache should return same IP even with different STUN server');
+                  'Cache should return same IP even with different STUN server',
+            );
 
-          print('[Cache Test] Cache preserved across server changes');
-        } finally {
-          handler.close();
-        }
-      });
+            print('[Cache Test] Cache preserved across server changes');
+          } finally {
+            handler.close();
+          }
+        },
+      );
 
-      test('Cache: Both STUN and local cache reset together on socket change',
-          () async {
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+      test(
+        'Cache: Both STUN and local cache reset together on socket change',
+        () async {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-        try {
-          // Prime both caches
-          final response1 = await handler.performStunRequest();
-          final localInfo1 = await handler.performLocalRequest();
+          try {
+            // Prime both caches
+            final response1 = await handler.performStunRequest();
+            final localInfo1 = await handler.performLocalRequest();
 
-          expect(response1.publicIp, isNotEmpty);
-          expect(localInfo1.localPort, greaterThan(0));
+            expect(response1.publicIp, isNotEmpty);
+            expect(localInfo1.localPort, greaterThan(0));
 
-          // Verify both are cached (same results)
-          final response1b = await handler.performStunRequest();
-          final localInfo1b = await handler.performLocalRequest();
-          expect(response1b.publicIp, equals(response1.publicIp));
-          expect(localInfo1b.localPort, equals(localInfo1.localPort));
+            // Verify both are cached (same results)
+            final response1b = await handler.performStunRequest();
+            final localInfo1b = await handler.performLocalRequest();
+            expect(response1b.publicIp, equals(response1.publicIp));
+            expect(localInfo1b.localPort, equals(localInfo1.localPort));
 
-          // Force recreation
-          handler.getSocket().close();
+            // Force recreation
+            handler.getSocket().close();
 
-          // Both requests should work with new socket
-          // and both caches should be reset
-          final response2 = await handler.performStunRequest();
-          final localInfo2 = await handler.performLocalRequest();
+            // Both requests should work with new socket
+            // and both caches should be reset
+            final response2 = await handler.performStunRequest();
+            final localInfo2 = await handler.performLocalRequest();
 
-          expect(response2.publicIp, isNotEmpty);
-          expect(localInfo2.localPort, greaterThan(0));
+            expect(response2.publicIp, isNotEmpty);
+            expect(localInfo2.localPort, greaterThan(0));
 
-          print('[Cache Test] Both caches invalidated on socket recreation');
-        } finally {
-          handler.close();
-        }
-      });
+            print('[Cache Test] Both caches invalidated on socket recreation');
+          } finally {
+            handler.close();
+          }
+        },
+      );
     });
 
     group('Timeout and Logging tests', () {
@@ -821,8 +862,7 @@ void main() {
 
       test('StunHandler.withSocket accepts timeout and onLog', () async {
         // Create a socket manually
-        final socket =
-            await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+        final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
         try {
           final messages = <String>[];
           final handler = StunHandler.withSocket(
@@ -855,7 +895,9 @@ void main() {
           // IPv4 address should contain dots
           expect(
             localInfo.localIp,
-            matches(RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$|^127\.0\.0\.1$')),
+            matches(
+              RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$|^127\.0\.0\.1$'),
+            ),
             reason: 'IPv4 address should be in dotted format',
           );
         } finally {
@@ -889,19 +931,30 @@ void main() {
     });
 
     group('Timestamp tests', () {
-      test('Both lastStunUpdated and lastLocalUpdated are null initially', () async {
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+      test(
+        'Both lastStunUpdated and lastLocalUpdated are null initially',
+        () async {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-        try {
-          expect(handler.lastStunUpdated, isNull, reason: 'Should be null before any STUN request');
-          expect(handler.lastLocalUpdated, isNull, reason: 'Should be null before any local request');
-        } finally {
-          handler.close();
-        }
-      });
+          try {
+            expect(
+              handler.lastStunUpdated,
+              isNull,
+              reason: 'Should be null before any STUN request',
+            );
+            expect(
+              handler.lastLocalUpdated,
+              isNull,
+              reason: 'Should be null before any local request',
+            );
+          } finally {
+            handler.close();
+          }
+        },
+      );
 
       test('lastStunUpdated is set after performStunRequest()', () async {
         final handler = await StunHandler.withoutSocket(
@@ -914,14 +967,32 @@ void main() {
           await handler.performStunRequest();
           final afterRequest = DateTime.now();
 
-          expect(handler.lastStunUpdated, isNotNull, reason: 'Should not be null after STUN request');
-          expect(handler.lastStunUpdated!.isAfter(beforeRequest), isTrue, reason: 'Timestamp should be after request start');
-          expect(handler.lastStunUpdated!.isBefore(afterRequest.add(const Duration(seconds: 1))), isTrue, reason: 'Timestamp should be before request end');
+          expect(
+            handler.lastStunUpdated,
+            isNotNull,
+            reason: 'Should not be null after STUN request',
+          );
+          expect(
+            handler.lastStunUpdated!.isAfter(beforeRequest),
+            isTrue,
+            reason: 'Timestamp should be after request start',
+          );
+          expect(
+            handler.lastStunUpdated!.isBefore(
+              afterRequest.add(const Duration(seconds: 1)),
+            ),
+            isTrue,
+            reason: 'Timestamp should be before request end',
+          );
 
           // Second request should return the same cached timestamp (cache hit)
           final secondTimestamp = handler.lastStunUpdated;
           await handler.performStunRequest();
-          expect(handler.lastStunUpdated, equals(secondTimestamp), reason: 'Timestamp should not change on cache hit');
+          expect(
+            handler.lastStunUpdated,
+            equals(secondTimestamp),
+            reason: 'Timestamp should not change on cache hit',
+          );
 
           print('[Timestamp Test] lastStunUpdated set correctly');
         } finally {
@@ -940,14 +1011,32 @@ void main() {
           await handler.performLocalRequest();
           final afterRequest = DateTime.now();
 
-          expect(handler.lastLocalUpdated, isNotNull, reason: 'Should not be null after local request');
-          expect(handler.lastLocalUpdated!.isAfter(beforeRequest), isTrue, reason: 'Timestamp should be after request start');
-          expect(handler.lastLocalUpdated!.isBefore(afterRequest.add(const Duration(seconds: 1))), isTrue, reason: 'Timestamp should be before request end');
+          expect(
+            handler.lastLocalUpdated,
+            isNotNull,
+            reason: 'Should not be null after local request',
+          );
+          expect(
+            handler.lastLocalUpdated!.isAfter(beforeRequest),
+            isTrue,
+            reason: 'Timestamp should be after request start',
+          );
+          expect(
+            handler.lastLocalUpdated!.isBefore(
+              afterRequest.add(const Duration(seconds: 1)),
+            ),
+            isTrue,
+            reason: 'Timestamp should be before request end',
+          );
 
           // Second request should return the same cached timestamp (cache hit)
           final secondTimestamp = handler.lastLocalUpdated;
           await handler.performLocalRequest();
-          expect(handler.lastLocalUpdated, equals(secondTimestamp), reason: 'Timestamp should not change on cache hit');
+          expect(
+            handler.lastLocalUpdated,
+            equals(secondTimestamp),
+            reason: 'Timestamp should not change on cache hit',
+          );
 
           print('[Timestamp Test] lastLocalUpdated set correctly');
         } finally {
@@ -955,40 +1044,45 @@ void main() {
         }
       });
 
-      test('Timestamps are reset to null when cache is reset (socket recreation)', () async {
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+      test(
+        'Timestamps are reset to null when cache is reset (socket recreation)',
+        () async {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-        try {
-          // Prime both caches
-          await handler.performStunRequest();
-          await handler.performLocalRequest();
+          try {
+            // Prime both caches
+            await handler.performStunRequest();
+            await handler.performLocalRequest();
 
-          expect(handler.lastStunUpdated, isNotNull);
-          expect(handler.lastLocalUpdated, isNotNull);
+            expect(handler.lastStunUpdated, isNotNull);
+            expect(handler.lastLocalUpdated, isNotNull);
 
-          // Force socket recreation (closes and recreates socket)
-          handler.getSocket().close();
+            // Force socket recreation (closes and recreates socket)
+            handler.getSocket().close();
 
-          // Next request will trigger socket recreation and cache reset
-          // This should get a fresh response with a new timestamp
-          final response2 = await handler.performStunRequest();
-          expect(response2.publicIp, isNotEmpty);
+            // Next request will trigger socket recreation and cache reset
+            // This should get a fresh response with a new timestamp
+            final response2 = await handler.performStunRequest();
+            expect(response2.publicIp, isNotEmpty);
 
-          // Timestamp should be set and potentially updated (depending on execution timing)
-          expect(handler.lastStunUpdated, isNotNull);
+            // Timestamp should be set and potentially updated (depending on execution timing)
+            expect(handler.lastStunUpdated, isNotNull);
 
-          // The new response should have valid data
-          expect(response2.publicIp, isNotEmpty);
-          expect(response2.publicPort, greaterThan(0));
+            // The new response should have valid data
+            expect(response2.publicIp, isNotEmpty);
+            expect(response2.publicPort, greaterThan(0));
 
-          print('[Timestamp Test] Timestamps reset and updated on socket recreation');
-        } finally {
-          handler.close();
-        }
-      });
+            print(
+              '[Timestamp Test] Timestamps reset and updated on socket recreation',
+            );
+          } finally {
+            handler.close();
+          }
+        },
+      );
     });
 
     group('OnSocketRefresh tests', () {
@@ -1024,8 +1118,11 @@ void main() {
           expect(response.publicIp, isNotEmpty);
 
           // Callback should NOT have been called
-          expect(callCount, equals(0),
-              reason: 'Callback should not fire on normal request');
+          expect(
+            callCount,
+            equals(0),
+            reason: 'Callback should not fire on normal request',
+          );
         } finally {
           handler.close();
         }
@@ -1053,47 +1150,86 @@ void main() {
           expect(response2.publicIp, isNotEmpty);
 
           // Callback should still not have been called
-          expect(callCount, equals(0),
-              reason: 'Callback should not fire on cache hit');
+          expect(
+            callCount,
+            equals(0),
+            reason: 'Callback should not fire on cache hit',
+          );
         } finally {
           handler.close();
         }
       });
 
-      test('StunHandler constructor accepts onSocketRefresh parameter',
-          () async {
-        final handler = StunHandler(
-          (
-            address: StunServers.googleStun,
-            port: StunServers.defaultPort,
-            socket: null,
-          ),
-          onSocketRefresh: (newRes, oldRes) {
-            // Callback parameter accepted
-          },
-        );
+      test(
+        'StunHandler constructor accepts onSocketRefresh parameter',
+        () async {
+          final handler = StunHandler(
+            (
+              address: StunServers.googleStun,
+              port: StunServers.defaultPort,
+              socket: null,
+            ),
+            onSocketRefresh: (newRes, oldRes) {
+              // Callback parameter accepted
+            },
+          );
 
-        try {
-          // Verify constructor accepted the parameter without errors
-          expect(handler, isNotNull);
-        } finally {
-          handler.close();
-        }
-      });
+          try {
+            // Verify constructor accepted the parameter without errors
+            expect(handler, isNotNull);
+          } finally {
+            handler.close();
+          }
+        },
+      );
 
-      test('StunHandler.withSocket() accepts onSocketRefresh parameter',
-          () async {
-        int callCount = 0;
+      test(
+        'StunHandler.withSocket() accepts onSocketRefresh parameter',
+        () async {
+          int callCount = 0;
 
-        final socket = await RawDatagramSocket.bind(
-          InternetAddress.anyIPv4,
-          0,
-          reuseAddress: true,
-        );
+          final socket = await RawDatagramSocket.bind(
+            InternetAddress.anyIPv4,
+            0,
+            reuseAddress: true,
+          );
 
-        try {
-          final handler = StunHandler.withSocket(
-            socket,
+          try {
+            final handler = StunHandler.withSocket(
+              socket,
+              address: StunServers.googleStun,
+              port: StunServers.defaultPort,
+              onSocketRefresh: (newRes, oldRes) {
+                callCount++;
+              },
+            );
+
+            try {
+              // Perform a normal request to verify callback doesn't fire
+              final response = await handler.performStunRequest();
+              expect(response.publicIp, isNotEmpty);
+
+              // Callback should not have fired on normal request
+              expect(
+                callCount,
+                equals(0),
+                reason: 'Callback should not fire on normal request',
+              );
+            } finally {
+              handler.close();
+            }
+          } catch (_) {
+            socket.close();
+          }
+        },
+      );
+
+      test(
+        'StunHandler.withoutSocket() accepts onSocketRefresh parameter',
+        () async {
+          int callCount = 0;
+
+          final handler = await StunHandler.withoutSocket(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
             onSocketRefresh: (newRes, oldRes) {
@@ -1107,40 +1243,16 @@ void main() {
             expect(response.publicIp, isNotEmpty);
 
             // Callback should not have fired on normal request
-            expect(callCount, equals(0),
-                reason: 'Callback should not fire on normal request');
+            expect(
+              callCount,
+              equals(0),
+              reason: 'Callback should not fire on normal request',
+            );
           } finally {
             handler.close();
           }
-        } catch (_) {
-          socket.close();
-        }
-      });
-
-      test('StunHandler.withoutSocket() accepts onSocketRefresh parameter',
-          () async {
-        int callCount = 0;
-
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-          onSocketRefresh: (newRes, oldRes) {
-            callCount++;
-          },
-        );
-
-        try {
-          // Perform a normal request to verify callback doesn't fire
-          final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
-
-          // Callback should not have fired on normal request
-          expect(callCount, equals(0),
-              reason: 'Callback should not fire on normal request');
-        } finally {
-          handler.close();
-        }
-      });
+        },
+      );
     });
 
     group('CallbackHandler library lifecycle tests', () {
@@ -1159,7 +1271,11 @@ void main() {
           // Perform a normal request
           final response = await handler.performStunRequest();
           expect(response.publicIp, isNotEmpty);
-          expect(callLog, isEmpty, reason: 'No callbacks should fire on normal request');
+          expect(
+            callLog,
+            isEmpty,
+            reason: 'No callbacks should fire on normal request',
+          );
         } finally {
           handler.close();
         }
@@ -1217,66 +1333,68 @@ void main() {
         }
       });
 
-      test('Callback handler is properly initialized with no crashes', () async {
-        // Test with 3 different constructors
-        final handler1 = StunHandler(
-          (
+      test(
+        'Callback handler is properly initialized with no crashes',
+        () async {
+          // Test with 3 different constructors
+          final handler1 = StunHandler((
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
             socket: null,
-          ),
-          onSocketRefresh: (newRes, oldRes) {},
-        );
+          ), onSocketRefresh: (newRes, oldRes) {});
 
-        final socket = await RawDatagramSocket.bind(
-          InternetAddress.anyIPv4,
-          0,
-          reuseAddress: true,
-        );
-
-        try {
-          final handler2 = StunHandler.withSocket(
-            socket,
-            address: StunServers.googleStun,
-            port: StunServers.defaultPort,
-            onSocketRefresh: (newRes, oldRes) {},
+          final socket = await RawDatagramSocket.bind(
+            InternetAddress.anyIPv4,
+            0,
+            reuseAddress: true,
           );
 
-          final handler3 = await StunHandler.withoutSocket(
+          try {
+            final handler2 = StunHandler.withSocket(
+              socket,
+              address: StunServers.googleStun,
+              port: StunServers.defaultPort,
+              onSocketRefresh: (newRes, oldRes) {},
+            );
+
+            final handler3 = await StunHandler.withoutSocket(
+              address: StunServers.googleStun,
+              port: StunServers.defaultPort,
+              onSocketRefresh: (newRes, oldRes) {},
+            );
+
+            // All should initialize without errors
+            expect(handler1, isNotNull);
+            expect(handler2, isNotNull);
+            expect(handler3, isNotNull);
+
+            handler1.close();
+            handler2.close();
+            handler3.close();
+          } catch (_) {
+            socket.close();
+          }
+        },
+      );
+
+      test(
+        'Callback null (default) does not cause errors on normal request',
+        () async {
+          final handler = await StunHandler.withoutSocket(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
-            onSocketRefresh: (newRes, oldRes) {},
+            // No callback provided
           );
 
-          // All should initialize without errors
-          expect(handler1, isNotNull);
-          expect(handler2, isNotNull);
-          expect(handler3, isNotNull);
-
-          handler1.close();
-          handler2.close();
-          handler3.close();
-        } catch (_) {
-          socket.close();
-        }
-      });
-
-      test('Callback null (default) does not cause errors on normal request',
-          () async {
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-          // No callback provided
-        );
-
-        try {
-          // Should not crash even with no callback
-          final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
-        } finally {
-          handler.close();
-        }
-      });
+          try {
+            // Should not crash even with no callback
+            final response = await handler.performStunRequest();
+            expect(response.publicIp, isNotEmpty);
+          } finally {
+            handler.close();
+          }
+        },
+      );
 
       test('Handler cleanup (close) works with registered callbacks', () async {
         final handler = await StunHandler.withoutSocket(
@@ -1319,123 +1437,142 @@ void main() {
         }
       });
 
-      test('Callback handler persists across multiple handler instances',
-          () async {
-        int totalCalls = 0;
+      test(
+        'Callback handler persists across multiple handler instances',
+        () async {
+          int totalCalls = 0;
 
-        final handler1 = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-          onSocketRefresh: (newRes, oldRes) {
-            totalCalls++;
-          },
-        );
+          final handler1 = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            onSocketRefresh: (newRes, oldRes) {
+              totalCalls++;
+            },
+          );
 
-        final handler2 = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-          onSocketRefresh: (newRes, oldRes) {
-            totalCalls++;
-          },
-        );
+          final handler2 = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            onSocketRefresh: (newRes, oldRes) {
+              totalCalls++;
+            },
+          );
 
-        try {
-          // Both handlers should work independently
-          final resp1 = await handler1.performStunRequest();
-          final resp2 = await handler2.performStunRequest();
+          try {
+            // Both handlers should work independently
+            final resp1 = await handler1.performStunRequest();
+            final resp2 = await handler2.performStunRequest();
 
-          expect(resp1.publicIp, isNotEmpty);
-          expect(resp2.publicIp, isNotEmpty);
+            expect(resp1.publicIp, isNotEmpty);
+            expect(resp2.publicIp, isNotEmpty);
 
-          // On normal requests, callbacks don't fire
-          expect(totalCalls, equals(0));
-        } finally {
-          handler1.close();
-          handler2.close();
-        }
-      });
+            // On normal requests, callbacks don't fire
+            expect(totalCalls, equals(0));
+          } finally {
+            handler1.close();
+            handler2.close();
+          }
+        },
+      );
     });
 
     group('addOnSocketRefresh / removeOnSocketRefresh tests', () {
-      test('addOnSocketRefresh registers without crash and does not fire on normal request', () async {
-        int callCount = 0;
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+      test(
+        'addOnSocketRefresh registers without crash and does not fire on normal request',
+        () async {
+          int callCount = 0;
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-        try {
-          handler.addOnSocketRefresh((newRes, oldRes) {
-            callCount++;
-          });
+          try {
+            handler.addOnSocketRefresh((newRes, oldRes) {
+              callCount++;
+            });
 
-          final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
-          expect(callCount, equals(0)); // No callback on normal request
-        } finally {
-          handler.close();
-        }
-      });
-
-      test('addOnSocketRefresh is idempotent — double-add with same reference is a no-op', () async {
-        int callCount = 0;
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
-
-        try {
-          void callback(StunResponse newRes, StunResponse? oldRes) {
-            callCount++;
+            final response = await handler.performStunRequest();
+            expect(response.publicIp, isNotEmpty);
+            expect(callCount, equals(0)); // No callback on normal request
+          } finally {
+            handler.close();
           }
+        },
+      );
 
-          handler.addOnSocketRefresh(callback);
-          handler.addOnSocketRefresh(callback); // Add same reference again
+      test(
+        'addOnSocketRefresh is idempotent — double-add with same reference is a no-op',
+        () async {
+          int callCount = 0;
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-          // Verify callback is registered only once (would show in CallbackHandler internals)
-          expect(callCount, equals(0)); // No error, callback registered
-        } finally {
-          handler.close();
-        }
-      });
+          try {
+            void callback(StunResponse newRes, StunResponse? oldRes) {
+              callCount++;
+            }
 
-      test('removeOnSocketRefresh removes a previously added callback (no crash, subsequent remove is no-op)', () async {
-        int callCount = 0;
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+            handler.addOnSocketRefresh(callback);
+            handler.addOnSocketRefresh(callback); // Add same reference again
 
-        try {
-          void callback(StunResponse newRes, StunResponse? oldRes) {
-            callCount++;
+            // Verify callback is registered only once (would show in CallbackHandler internals)
+            expect(callCount, equals(0)); // No error, callback registered
+          } finally {
+            handler.close();
           }
+        },
+      );
 
-          handler.addOnSocketRefresh(callback);
-          handler.removeOnSocketRefresh(callback); // Remove the callback
-          handler.removeOnSocketRefresh(callback); // Remove again (no-op)
+      test(
+        'removeOnSocketRefresh removes a previously added callback (no crash, subsequent remove is no-op)',
+        () async {
+          int callCount = 0;
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-          // Callback should be removed without error
-          expect(callCount, equals(0));
-        } finally {
-          handler.close();
-        }
-      });
+          try {
+            void callback(StunResponse newRes, StunResponse? oldRes) {
+              callCount++;
+            }
 
-      test('removeOnSocketRefresh on unregistered callback is a no-op', () async {
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+            handler.addOnSocketRefresh(callback);
+            handler.removeOnSocketRefresh(callback); // Remove the callback
+            handler.removeOnSocketRefresh(callback); // Remove again (no-op)
 
-        try {
-          void unregisteredCallback(StunResponse newRes, StunResponse? oldRes) {}
-          handler.removeOnSocketRefresh(unregisteredCallback); // No-op, should not crash
-          expect(true, isTrue); // If we reach here, no exception was thrown
-        } finally {
-          handler.close();
-        }
-      });
+            // Callback should be removed without error
+            expect(callCount, equals(0));
+          } finally {
+            handler.close();
+          }
+        },
+      );
+
+      test(
+        'removeOnSocketRefresh on unregistered callback is a no-op',
+        () async {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
+
+          try {
+            void unregisteredCallback(
+              StunResponse newRes,
+              StunResponse? oldRes,
+            ) {}
+            handler.removeOnSocketRefresh(
+              unregisteredCallback,
+            ); // No-op, should not crash
+            expect(true, isTrue); // If we reach here, no exception was thrown
+          } finally {
+            handler.close();
+          }
+        },
+      );
 
       test('Multiple different callbacks can be added without error', () async {
         final List<int> callCounts = [0, 0, 0];
@@ -1473,6 +1610,7 @@ void main() {
           void callback1(StunResponse newRes, StunResponse? oldRes) {
             callCounts[0]++;
           }
+
           void callback2(StunResponse newRes, StunResponse? oldRes) {
             callCounts[1]++;
           }
@@ -1488,39 +1626,48 @@ void main() {
         }
       });
 
-      test('Constructor-registered callback can be removed and re-added via addOnSocketRefresh', () async {
-        int constructorCallCount = 0;
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-          onSocketRefresh: (newRes, oldRes) {
-            constructorCallCount++;
-          },
-        );
+      test(
+        'Constructor-registered callback can be removed and re-added via addOnSocketRefresh',
+        () async {
+          int constructorCallCount = 0;
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            onSocketRefresh: (newRes, oldRes) {
+              constructorCallCount++;
+            },
+          );
 
-        try {
-          expect(constructorCallCount, equals(0)); // No callback on normal request
-        } finally {
-          handler.close();
-        }
-      });
+          try {
+            expect(
+              constructorCallCount,
+              equals(0),
+            ); // No callback on normal request
+          } finally {
+            handler.close();
+          }
+        },
+      );
 
-      test('IStunHandler interface exposes addOnSocketRefresh/removeOnSocketRefresh (compile check)', () async {
-        final handler = await StunHandler.withoutSocket(
-          address: StunServers.googleStun,
-          port: StunServers.defaultPort,
-        );
+      test(
+        'IStunHandler interface exposes addOnSocketRefresh/removeOnSocketRefresh (compile check)',
+        () async {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+          );
 
-        try {
-          // These should compile - interface methods are public
-          IStunHandler iHandler = handler;
-          iHandler.addOnSocketRefresh((newRes, oldRes) {});
-          iHandler.removeOnSocketRefresh((newRes, oldRes) {});
-          expect(true, isTrue); // If we reach here, interface is correct
-        } finally {
-          handler.close();
-        }
-      });
+          try {
+            // These should compile - interface methods are public
+            IStunHandler iHandler = handler;
+            iHandler.addOnSocketRefresh((newRes, oldRes) {});
+            iHandler.removeOnSocketRefresh((newRes, oldRes) {});
+            expect(true, isTrue); // If we reach here, interface is correct
+          } finally {
+            handler.close();
+          }
+        },
+      );
     });
   });
 }

@@ -42,13 +42,10 @@ class DualStunHandler implements IDualStunHandler {
 
     if (_ipv6Handler != null) {
       // Execute both in parallel, continue even if one fails
-      final results = await Future.wait(
-        [
-          _ipv4Handler!.performStunRequest(),
-          _ipv6Handler!.performStunRequest(),
-        ],
-        eagerError: false,
-      );
+      final results = await Future.wait([
+        _ipv4Handler!.performStunRequest(),
+        _ipv6Handler!.performStunRequest(),
+      ], eagerError: false);
       // Prefer IPv6 result if available
       return results[1];
     } else {
@@ -64,13 +61,10 @@ class DualStunHandler implements IDualStunHandler {
 
     if (_ipv6Handler != null) {
       // Execute both in parallel, continue even if one fails
-      final results = await Future.wait(
-        [
-          _ipv4Handler!.performLocalRequest(),
-          _ipv6Handler!.performLocalRequest(),
-        ],
-        eagerError: false,
-      );
+      final results = await Future.wait([
+        _ipv4Handler!.performLocalRequest(),
+        _ipv6Handler!.performLocalRequest(),
+      ], eagerError: false);
       // Prefer IPv6 result if available
       return results[1];
     } else {
@@ -82,7 +76,9 @@ class DualStunHandler implements IDualStunHandler {
   Future<bool> pingStunServer({bool ipv6 = true}) {
     if (ipv6) {
       if (_ipv6Handler == null) {
-        throw StateError('DualStunHandler: IPv6 handler not initialized or not available');
+        throw StateError(
+          'DualStunHandler: IPv6 handler not initialized or not available',
+        );
       }
       return _ipv6Handler!.pingStunServer();
     } else {
@@ -97,7 +93,9 @@ class DualStunHandler implements IDualStunHandler {
   RawDatagramSocket getSocket({bool ipv6 = true}) {
     if (ipv6) {
       if (_ipv6Handler == null) {
-        throw StateError('DualStunHandler: IPv6 handler not initialized or not available');
+        throw StateError(
+          'DualStunHandler: IPv6 handler not initialized or not available',
+        );
       }
       return _ipv6Handler!.getSocket();
     } else {
@@ -152,14 +150,16 @@ class DualStunHandler implements IDualStunHandler {
   }
 
   @override
-  DateTime? get lastStunUpdated => _laterOf(ipv4LastStunUpdated, ipv6LastStunUpdated);
+  DateTime? get lastStunUpdated =>
+      _laterOf(ipv4LastStunUpdated, ipv6LastStunUpdated);
 
   @override
-  DateTime? get lastLocalUpdated => _laterOf(ipv4LastLocalUpdated, ipv6LastLocalUpdated);
+  DateTime? get lastLocalUpdated =>
+      _laterOf(ipv4LastLocalUpdated, ipv6LastLocalUpdated);
 
   @override
   Future<void> initializeDI() async {
-    // Register the dual handler in the DI container
+    SingletonDIAccess.addInstanceAs<IDualStunHandler, DualStunHandler>(this);
     SingletonDI.registerFactory<DualStunHandler>(() => this);
     SingletonDIAccess.add<DualStunHandler>();
   }

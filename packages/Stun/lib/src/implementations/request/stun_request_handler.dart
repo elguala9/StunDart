@@ -96,7 +96,8 @@ class StunRequestHandler {
       onTimeout: () {
         subscription?.cancel();
         throw TimeoutException(
-          '[StunHandler] STUN request timed out after ${timeout.inSeconds}s');
+          '[StunHandler] STUN request timed out after ${timeout.inSeconds}s',
+        );
       },
     );
   }

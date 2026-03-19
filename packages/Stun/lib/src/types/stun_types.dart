@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:callback_handler/callback_handler.dart';
 
-
 /// IP version type
 enum IpVersion {
   v4('IPv4'),
@@ -49,31 +48,27 @@ typedef LocalInfo = ({
 typedef StunHandlerInput = ({
   String? address, // stun server address
   int? port, // stun server port
-  RawDatagramSocket? socket, // optional socket; if null, will be created internally
+  RawDatagramSocket?
+  socket, // optional socket; if null, will be created internally
 });
 
 /// Socket refresh callback handler using callback_handler library
 /// Fired when StunHandler recreates its socket after a network error.
 /// [newResponse] is the first successful result on the new socket.
 /// [oldResponse] is the cached result before the error (null if cache was empty).
-typedef OnSocketRefresh = void Function(
-  StunResponse newResponse,
-  StunResponse? oldResponse,
-);
+typedef OnSocketRefresh =
+    void Function(StunResponse newResponse, StunResponse? oldResponse);
 
 /// Socket refresh callback handler for StunHandlerSingleton IPv4
-typedef OnSocketRefreshIpv4 = void Function(
-  StunResponse newResponse,
-  StunResponse? oldResponse,
-);
+typedef OnSocketRefreshIpv4 =
+    void Function(StunResponse newResponse, StunResponse? oldResponse);
 
 /// Socket refresh callback handler for StunHandlerSingleton IPv6
-typedef OnSocketRefreshIpv6 = void Function(
-  StunResponse newResponse,
-  StunResponse? oldResponse,
-);
+typedef OnSocketRefreshIpv6 =
+    void Function(StunResponse newResponse, StunResponse? oldResponse);
 
-typedef IpCallbackHandler = CallbackHandler<(StunResponse, StunResponse?), void>;
+typedef IpCallbackHandler =
+    CallbackHandler<(StunResponse, StunResponse?), void>;
 
 /// NAT type classifications per RFC 5780 and RFC 3489
 enum NATType {

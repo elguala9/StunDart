@@ -11,41 +11,40 @@ import '../../interfaces/i_stun_handler.dart';
 /// STUN handler implementation with optional socket and auto-recreation
 class StunHandler implements IStunHandler {
   /// Creates a STUN handler with the provided configuration (backward compatible)
-  StunHandler(
-    StunHandlerInput input, {
-    OnSocketRefresh? onSocketRefresh,
-  })  : _stunAddress = input.address ?? defaultStunConfig.address,
-        _stunPort = input.port ?? defaultStunConfig.port,
-        _timeout = const Duration(seconds: 5),
-        _onLog = null,
-        _socketMgr = StunSocketManager(
-          bindType: input.socket?.address.type ?? InternetAddressType.IPv4,
-          bindPort: null,
-          onLog: null,
-        ) {
+  StunHandler(StunHandlerInput input, {OnSocketRefresh? onSocketRefresh})
+    : _stunAddress = input.address ?? defaultStunConfig.address,
+      _stunPort = input.port ?? defaultStunConfig.port,
+      _timeout = const Duration(seconds: 5),
+      _onLog = null,
+      _socketMgr = StunSocketManager(
+        bindType: input.socket?.address.type ?? InternetAddressType.IPv4,
+        bindPort: null,
+        onLog: null,
+      ) {
     if (input.socket != null) _socketMgr.socket = input.socket;
     _registerSocketRefreshCallback(onSocketRefresh);
   }
 
-  /// Named constructor for explicit socket ownership
-  StunHandler.withSocket(
+  /// Factory constructor for explicit socket ownership
+  factory StunHandler.withSocket(
     RawDatagramSocket socket, {
     String? address,
     int? port,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
     OnSocketRefresh? onSocketRefresh,
-  })  : _stunAddress = address ?? defaultStunConfig.address,
-        _stunPort = port ?? defaultStunConfig.port,
-        _timeout = timeout,
-        _onLog = onLog,
-        _socketMgr = StunSocketManager(
-          bindType: socket.address.type,
-          bindPort: null,
-          onLog: onLog,
-        ) {
-    _socketMgr.socket = socket;
-    _registerSocketRefreshCallback(onSocketRefresh);
+  }) {
+    final handler = StunHandler._internal(
+      stunAddress: address,
+      stunPort: port,
+      bindType: socket.address.type,
+      bindPort: null,
+      timeout: timeout,
+      onLog: onLog,
+      onSocketRefresh: onSocketRefresh,
+    );
+    handler._socketMgr.socket = socket;
+    return handler;
   }
 
   /// Private constructor for factory use
@@ -53,18 +52,19 @@ class StunHandler implements IStunHandler {
     String? stunAddress,
     int? stunPort,
     required InternetAddressType bindType,
+    int? bindPort = 0,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
     OnSocketRefresh? onSocketRefresh,
-  })  : _stunAddress = stunAddress ?? defaultStunConfig.address,
-        _stunPort = stunPort ?? defaultStunConfig.port,
-        _timeout = timeout,
-        _onLog = onLog,
-        _socketMgr = StunSocketManager(
-          bindType: bindType,
-          bindPort: 0,
-          onLog: onLog,
-        ) {
+  }) : _stunAddress = stunAddress ?? defaultStunConfig.address,
+       _stunPort = stunPort ?? defaultStunConfig.port,
+       _timeout = timeout,
+       _onLog = onLog,
+       _socketMgr = StunSocketManager(
+         bindType: bindType,
+         bindPort: bindPort,
+         onLog: onLog,
+       ) {
     _registerSocketRefreshCallback(onSocketRefresh);
   }
 
@@ -90,10 +90,12 @@ class StunHandler implements IStunHandler {
   }
 
   @override
-  void addOnSocketRefresh(OnSocketRefresh callback) => _refreshManager.register(callback);
+  void addOnSocketRefresh(OnSocketRefresh callback) =>
+      _refreshManager.register(callback);
 
   @override
-  void removeOnSocketRefresh(OnSocketRefresh callback) => _refreshManager.unregister(callback);
+  void removeOnSocketRefresh(OnSocketRefresh callback) =>
+      _refreshManager.unregister(callback);
 
   @override
   DateTime? get lastStunUpdated => _socketMgr.lastStunUpdated;
@@ -117,7 +119,9 @@ class StunHandler implements IStunHandler {
   @override
   RawDatagramSocket getSocket() {
     if (_socketMgr.socket == null) {
-      throw StateError('Socket not yet initialized. Use StunHandler.create() for automatic socket management.');
+      throw StateError(
+        'Socket not yet initialized. Use StunHandler.create() for automatic socket management.',
+      );
     }
     return _socketMgr.socket!;
   }
@@ -131,7 +135,9 @@ class StunHandler implements IStunHandler {
 
   @override
   void setStunServer(String address, int port) {
-    _stunAddress = address.trim().isNotEmpty ? address : defaultStunConfig.address;
+    _stunAddress = address.trim().isNotEmpty
+        ? address
+        : defaultStunConfig.address;
     _stunPort = (port > 0 && port < 65536) ? port : defaultStunConfig.port;
   }
 
@@ -146,12 +152,18 @@ class StunHandler implements IStunHandler {
       _socketMgr.lastStunUpdated = DateTime.now();
       return _socketMgr.cachedStunResponse!;
     } on SocketException catch (e) {
-      return _handleSocketError('[StunHandler] Socket error (${e.message}), attempting recreation...');
+      return _handleSocketError(
+        '[StunHandler] Socket error (${e.message}), attempting recreation...',
+      );
     } on OSError catch (e) {
-      return _handleSocketError('[StunHandler] OS error (${e.message}), attempting recreation...');
+      return _handleSocketError(
+        '[StunHandler] OS error (${e.message}), attempting recreation...',
+      );
     } on StateError catch (e) {
       if (e.message.contains('already been listened to')) {
-        return _handleSocketError('[StunHandler] Stream error (socket already in use), attempting recreation...');
+        return _handleSocketError(
+          '[StunHandler] Stream error (socket already in use), attempting recreation...',
+        );
       }
       rethrow;
     }
