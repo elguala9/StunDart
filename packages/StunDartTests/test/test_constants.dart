@@ -1,5 +1,5 @@
 /// Test constants used across multiple test files
-library test_constants;
+library;
 
 /// STUN servers used for testing
 class StunServers {

@@ -1,7 +1,7 @@
 /// Stun library
 ///
 /// A Dart implementation of the STUN protocol for NAT traversal.
-library stun;
+library;
 
 export 'src/types/stun_types.dart';
 export 'src/interfaces/i_stun_handler.dart';
