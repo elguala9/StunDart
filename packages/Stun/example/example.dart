@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:singleton_manager/singleton_manager.dart';
 import 'package:stun/stun.dart';
 
 void main() async {
@@ -11,6 +12,9 @@ void main() async {
   print('\n--- Pattern 2: Internal Socket Management ---\n');
   // Pattern 2: Let StunHandler manage the socket internally
   await _exampleWithInternalSocket();
+
+  print('\n--- Pattern 3: DI-based Singleton ---\n');
+  await _exampleWithDI();
 
   print('\n=== Example Complete ===');
 }
@@ -65,6 +69,44 @@ Future<void> _exampleWithExternalSocket() async {
     print('Error: $e');
   } finally {
     handler.close();
+  }
+}
+
+/// Example 3: DI-based singleton using StunHandlerBase and IDualCallbackHandler
+Future<void> _exampleWithDI() async {
+  try {
+    // Initialize the DI container with IPv4 (+ IPv6 if available)
+    await initialPointStun(
+      address: 'stun.l.google.com',
+      port: 19302,
+    );
+
+    print('✅ DI container initialized\n');
+
+    // Retrieve the singleton from the container
+    final stun = SingletonDIAccess.get<StunHandlerBase>();
+
+    // Register a socket refresh callback via IDualCallbackHandler
+    final callbacks = SingletonDIAccess.get<IDualCallbackHandler>();
+    callbacks.registerIpv4((data) {
+      final (newResponse, _) = data;
+      print('   [callback] IPv4 socket refreshed → ${newResponse.publicIp}');
+    });
+
+    // Perform requests through the injected singleton
+    print('1. Performing STUN request via DI singleton...');
+    final response = await stun.performStunRequest();
+    print('   Public IP: ${response.publicIp}');
+    print('   IP Version: ${response.ipVersion.value}\n');
+
+    print('2. Performing local request...');
+    final localInfo = await stun.performLocalRequest();
+    print('   Local IP: ${localInfo.localIp}');
+    print('   Local Port: ${localInfo.localPort}');
+
+    stun.close();
+  } catch (e) {
+    print('Error: $e');
   }
 }
 

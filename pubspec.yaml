@@ -16,5 +16,5 @@ dev_dependencies:
 melos:
   scripts:
     barrels:
-      run: melos exec --ignore=StunDartTests -- dart run build_runner build
-      description: Generate barrel files (indexes) for all packages using build_runner.
+      run: melos exec --ignore=stundart_tests -- dart pub global run index_generator
+      description: Generate barrel/index files for all packages using index_generator.
