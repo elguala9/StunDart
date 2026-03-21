@@ -5,6 +5,25 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-03-21
+
+### Added
+- **`StunHandlerBase` now part of public API**: Base class for DI-based singleton integrations is now exported from `stun.dart`
+- **`IDualCallbackHandler` now part of public API**: Interface for managing IPv4/IPv6 socket refresh callbacks is now exported from `stun.dart`
+- **`index_generator` tooling**: Barrel file (`stun.dart`) is now auto-generated via `index_generator`
+  - Run `melos run barrels` to regenerate the barrel file after adding new public symbols
+  - Configuration in `pubspec.yaml` under `index_generator:` key
+
+### Fixed
+- **Circular import in `stun_handler_base.dart`**: Replaced `import 'package:stun/stun.dart'` with direct relative imports, enabling `StunHandlerBase` to be safely exported from the public barrel
+
+### Tooling
+- Added `melos run barrels` script that runs `index_generator` across all packages (excluding test packages)
+- `stun.dart` barrel is now regenerated automatically — no more manual export management
+
+### Tests
+- 177 tests passing ✅
+
 ## [1.2.1] - 2026-03-10
 
 ### Added
@@ -125,12 +144,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ---
 
 **Full Commits:**
+- [v1.4.0](https://github.com/elguala9/StunDart/releases/tag/v1.4.0) - Public API expansion, circular import fix, index_generator tooling
 - [v1.3.0](https://github.com/elguala9/StunDart/releases/tag/v1.3.0) - Enhanced with timeout, logging, and formal singleton interface
 - [v1.2.0](https://github.com/elguala9/StunDart/releases/tag/v1.2.0) - Dual-stack singleton management
 - [v1.1.0](https://github.com/elguala9/StunDart/releases/tag/v1.1.0) - Response caching
 - [v1.0.0](https://github.com/elguala9/StunDart/releases/tag/v1.0.0) - Initial release
 
 ## Upgrade Guide
+
+### Upgrading from 1.3.0 to 1.4.0
+
+**Breaking Changes:** None — fully backward compatible
+
+**New Public Symbols:**
+```dart
+// StunHandlerBase and IDualCallbackHandler are now importable directly
+import 'package:stun/stun.dart';
+
+// Use IDualCallbackHandler for custom callback wiring
+final callbacks = DualCallbackHandler();
+callbacks.registerIpv4((data) => print('IPv4 refresh: ${data.$1.publicIp}'));
+callbacks.registerIpv6((data) => print('IPv6 refresh: ${data.$1.publicIp}'));
+
+// Or subclass StunHandlerBase for custom DI integration
+class MyStunSingleton extends StunHandlerBase { ... }
+```
+
+**Developer Tooling:**
+```bash
+# Regenerate barrel file (stun.dart) after adding new public files
+melos run barrels
+```
 
 ### Upgrading from 1.2.0 to 1.2.1
 
