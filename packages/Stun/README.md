@@ -50,7 +50,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  stun: ^1.4.0
+  stun: ^1.4.1
 ```
 
 Then run:
