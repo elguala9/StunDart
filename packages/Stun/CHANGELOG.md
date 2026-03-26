@@ -150,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ---
 
 **Full Commits:**
+- [v1.4.1](https://github.com/elguala9/StunDart/releases/tag/v1.4.1) - Dependency updates: singleton_manager ^0.5.0, singleton_manager_generator ^1.2.0
 - [v1.4.0](https://github.com/elguala9/StunDart/releases/tag/v1.4.0) - Public API expansion, circular import fix, index_generator tooling
 - [v1.3.0](https://github.com/elguala9/StunDart/releases/tag/v1.3.0) - Enhanced with timeout, logging, and formal singleton interface
 - [v1.2.0](https://github.com/elguala9/StunDart/releases/tag/v1.2.0) - Dual-stack singleton management
@@ -157,6 +158,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [v1.0.0](https://github.com/elguala9/StunDart/releases/tag/v1.0.0) - Initial release
 
 ## Upgrade Guide
+
+### Upgrading from 1.4.0 to 1.4.1
+
+**Breaking Changes:** None — dependency-only update, no API changes
 
 ### Upgrading from 1.3.0 to 1.4.0
 
