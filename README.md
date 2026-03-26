@@ -9,7 +9,7 @@ This monorepo contains the following packages:
 ```
 StunDart/
 ├── packages/
-│   ├── StunDart/          # Main StunDart library
+│   ├── Stun/              # Main StunDart library
 │   └── StunDartTests/     # Test suite for StunDart
 ├── pubspec.yaml           # Workspace configuration
 └── analysis_options.yaml  # Shared linting rules
@@ -17,11 +17,11 @@ StunDart/
 
 ## Packages
 
-### StunDart
+### Stun
 
 The main STUN protocol implementation library.
 
-- **Location**: `packages/StunDart`
+- **Location**: `packages/Stun`
 - **Purpose**: Core STUN protocol functionality
 
 ### StunDartTests
@@ -35,7 +35,7 @@ Comprehensive test suite for the StunDart package.
 
 ### Prerequisites
 
-- Dart SDK 3.0.0 or higher
+- Dart SDK 3.9.4 or higher
 
 ### Installation
 
@@ -51,7 +51,7 @@ dart pub get
 Navigate to individual packages to work on them:
 
 ```bash
-cd packages/StunDart
+cd packages/Stun
 dart pub get
 ```
 
