@@ -5,6 +5,12 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.1] - 2026-03-26
+
+### Changed
+- Updated `singleton_manager` dependency from `^0.4.0` to `^0.5.0`
+- Updated `singleton_manager_generator` dev dependency from `^1.0.4` to `^1.2.0`
+
 ## [1.4.0] - 2026-03-21
 
 ### Added

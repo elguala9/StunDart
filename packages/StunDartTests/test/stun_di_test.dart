@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
 import 'package:stun/src/generated/stun_handler_base_di.dart';
-import 'package:stun/src/interfaces/i_dual_callback_handler.dart';
 import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 

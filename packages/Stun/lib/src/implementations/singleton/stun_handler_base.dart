@@ -22,6 +22,8 @@ class StunHandlerBase {
   @protected
   late IDualCallbackHandler callbacks = DualCallbackHandler();
 
+  
+
   IStunHandler _getHandler({required bool ipv6}) {
     if (ipv6) {
       if (dualHandlerProtected.ipv6Handler == null) {
