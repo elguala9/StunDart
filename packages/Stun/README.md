@@ -37,7 +37,7 @@ A complete Dart implementation of the STUN (Session Traversal Utilities for NAT)
 - Internal socket management options
 
 ✅ **Production Ready**
-- Comprehensive test suite (177 tests)
+- Comprehensive test suite (198 tests)
 - Error handling and validation
 - Port mapping discovery
 - Local network information
@@ -50,7 +50,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  stun: ^1.4.1
+  stun: ^1.5.0
 ```
 
 Then run:
@@ -710,23 +710,25 @@ The test suite includes:
 - Logging support tests
 - Edge case and socket lifecycle tests
 
-**Total: 177 tests - All passing ✅**
+**Total: 198 tests - All passing ✅**
 
 ### `StunHandlerBase` & DI Integration
 
-`StunHandlerBase` is the injectable base class behind `StunHandlerSingleton`. It can be subclassed for custom DI frameworks:
+`StunHandlerBase` implements `IStunHandlerBase` and can be registered in two DI systems.
+
+#### `SingletonDIAccess` — one global instance
 
 ```dart
 import 'package:stun/stun.dart';
 import 'package:singleton_manager/singleton_manager.dart';
 
-// Initialize via stun_di helpers
+// Initialize and register in the DI container
 await initialPointStun(
   address: 'stun.l.google.com',
   port: 19302,
 );
 
-// Retrieve the singleton from the DI container
+// Retrieve the singleton
 final stun = SingletonDIAccess.get<StunHandlerBase>();
 final response = await stun.performStunRequest();
 print('Public IP: ${response.publicIp}');
@@ -739,6 +741,41 @@ callbacks.registerIpv4((data) {
 });
 ```
 
+#### `RegistryAccess` — multiple named instances
+
+Use `initialPointStunRegistry` when you need more than one independent STUN stack (e.g. different servers or ports) identified by a string key.
+
+```dart
+import 'package:stun/src/initial_point/initial_point_registry.dart';
+import 'package:stun/src/interfaces/i_stun_handler_base.dart';
+import 'package:singleton_manager/singleton_manager.dart';
+
+// Register two independent STUN stacks
+await initialPointStunRegistry('primary',   address: 'stun.l.google.com', port: 19302);
+await initialPointStunRegistry('secondary', address: 'stun1.l.google.com', port: 19302);
+
+// Retrieve by key — typed as IStunHandlerBase
+final primary   = RegistryAccess.getInstance<IStunHandlerBase>('primary');
+final secondary = RegistryAccess.getInstance<IStunHandlerBase>('secondary');
+
+final r1 = await primary.performStunRequest();
+final r2 = await secondary.performStunRequest();
+print('primary   public IP: ${r1.publicIp}');
+print('secondary public IP: ${r2.publicIp}');
+
+// Clean up when done
+primary.destroy();
+secondary.destroy();
+```
+
+If you already have bound sockets, use the `WithSockets` variant:
+
+```dart
+final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+await initialPointStunWithSocketsRegistry('my-stun', ipv4);
+final stun = RegistryAccess.getInstance<IStunHandlerBase>('my-stun');
+```
+
 ## Architecture
 
 StunDart follows a clean architecture with separation of concerns:
@@ -749,17 +786,20 @@ packages/Stun/lib/src/
 │   └── stun_types.dart
 ├── interfaces/                   # Abstract interfaces
 │   ├── i_stun_handler.dart
+│   ├── i_stun_handler_base.dart       # Contract for StunHandlerBase (IValueForRegistry)
 │   ├── i_stun_handler_singleton.dart
 │   ├── i_dual_stun_handler.dart
 │   └── i_dual_callback_handler.dart
-├── di/                           # DI entry points
-│   └── stun_di.dart
+├── initial_point/                # DI entry points
+│   ├── stun_builder.dart              # Shared socket-wiring helper
+│   ├── initial_point.dart             # SingletonDIAccess registration
+│   └── initial_point_registry.dart   # RegistryAccess registration (named instances)
 └── implementations/              # Concrete implementations
     ├── handlers/
     │   ├── stun_handler.dart          # Main STUN handler
     │   └── dual_stun_handler.dart     # Dual IPv4/IPv6 handler
     ├── singleton/
-    │   ├── stun_handler_base.dart     # Injectable base class
+    │   ├── stun_handler_base.dart     # Injectable base class (implements IStunHandlerBase)
     │   └── stun_handler_singleton.dart
     ├── nat/
     │   └── nat_detector.dart          # NAT type detection

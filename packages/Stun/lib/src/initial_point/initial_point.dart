@@ -2,12 +2,10 @@ import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
 import 'package:stun/src/generated/stun_handler_base_di.dart';
-import 'package:stun/src/implementations/singleton/dual_callback_handler.dart';
 import 'package:stun/src/interfaces/i_dual_callback_handler.dart';
+import 'package:stun/src/interfaces/i_dual_stun_handler.dart';
 
-import '../implementations/handlers/dual_stun_handler.dart';
-import '../implementations/handlers/stun_handler.dart';
-import '../interfaces/i_dual_stun_handler.dart';
+import 'stun_builder.dart';
 
 /// Initializes all STUN components from pre-bound sockets and registers them in the DI container.
 Future<void> initialPointStunWithSockets(
@@ -17,35 +15,18 @@ Future<void> initialPointStunWithSockets(
   int? port,
   Duration timeout = const Duration(seconds: 5),
 }) async {
-  final dualHandler = DualStunHandler();
-  final dualCallback = DualCallbackHandler();
-
-  dualHandler.setIpv4Handler(
-    StunHandler.withSocket(
-      ipv4Socket,
-      address: address,
-      port: port,
-      timeout: timeout,
-      onSocketRefresh: dualCallback.onIpv4,
-    ),
+  final (:dualHandler, :dualCallback) = buildStunHandlers(
+    ipv4Socket,
+    ipv6Socket: ipv6Socket,
+    address: address,
+    port: port,
+    timeout: timeout,
   );
 
-  if (ipv6Socket != null) {
-    dualHandler.setIpv6Handler(
-      StunHandler.withSocket(
-        ipv6Socket,
-        address: address,
-        port: port,
-        timeout: timeout,
-        onSocketRefresh: dualCallback.onIpv6,
-      ),
-    );
-  }
-
-  SingletonDIAccess.addInstanceAs<IDualStunHandler, DualStunHandler>(
+  SingletonDIAccess.addInstanceAs<IDualStunHandler, IDualStunHandler>(
     dualHandler,
   );
-  SingletonDIAccess.addInstanceAs<IDualCallbackHandler, DualCallbackHandler>(
+  SingletonDIAccess.addInstanceAs<IDualCallbackHandler, IDualCallbackHandler>(
     dualCallback,
   );
   SingletonDIAccess.addInstance(StunHandlerBaseDI.initializeDI());

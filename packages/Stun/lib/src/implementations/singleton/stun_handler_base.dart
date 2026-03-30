@@ -5,13 +5,14 @@ import 'package:singleton_manager/singleton_manager.dart';
 import '../../interfaces/i_dual_callback_handler.dart';
 import '../../interfaces/i_dual_stun_handler.dart';
 import '../../interfaces/i_stun_handler.dart';
+import '../../interfaces/i_stun_handler_base.dart';
 import '../../types/stun_types.dart';
 import '../handlers/dual_stun_handler.dart';
 import 'dual_callback_handler.dart';
 import 'singleton_handler_factory.dart';
 
 @isSingleton
-class StunHandlerBase {
+class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   @isInjected
   @protected
   late IDualStunHandler dualHandlerProtected = DualStunHandler();
@@ -184,4 +185,7 @@ class StunHandlerBase {
 
   void removeOnSocketRefreshIpv4() => callbacks.clearIpv4();
   void removeOnSocketRefreshIpv6() => callbacks.clearIpv6();
+
+  @override
+  void destroy() => close();
 }

@@ -5,6 +5,30 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-03-30
+
+### Added
+- **`IStunHandlerBase` interface** (`interfaces/i_stun_handler_base.dart`): Full public contract for `StunHandlerBase`, extends `IValueForRegistry` to enable `RegistryAccess` registration
+- **`RegistryAccess` initial point** (`initial_point/initial_point_registry.dart`): Named multi-instance support via string keys
+  - `initialPointStunWithSocketsRegistry(key, ipv4Socket, {...})` — pre-bound sockets variant
+  - `initialPointStunRegistry(key, {...})` — auto-bind variant
+  - Retrieve with `RegistryAccess.getInstance<IStunHandlerBase>(key)`
+  - Re-registering the same key replaces the previous instance
+- **`stun_builder.dart`** shared socket-wiring helper: common logic extracted from initial-point variants, returns `IDualStunHandler`/`IDualCallbackHandler` interfaces
+
+### Changed
+- `StunHandlerBase` now implements `IStunHandlerBase` and `ValueForRegistry` mixin; exposes `destroy()` (delegates to `close()`)
+- `initial_point.dart` refactored to use `stun_builder.dart` and register via interfaces (`IDualStunHandler`, `IDualCallbackHandler`)
+- All initial-point code uses interfaces, never concrete classes
+
+### Tests
+- 198 tests passing ✅ (+21 registry initial-point tests)
+
+## [1.4.2] - 2026-03-30
+
+### Changed
+- Updated `singleton_manager` dependency from `^0.5.0` to `^0.6.1`
+
 ## [1.4.1] - 2026-03-26
 
 ### Changed
