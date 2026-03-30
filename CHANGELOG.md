@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-03-30
+
+### Added
+- `IStunHandlerBase` interface: full public contract for `StunHandlerBase`, extends `IValueForRegistry`
+- `RegistryAccess` initial point: named multi-instance STUN registration via string keys
+- Shared `stun_builder.dart` helper: common socket-wiring logic for both initial-point variants
+
+### Changed
+- `StunHandlerBase` implements `IStunHandlerBase` + `ValueForRegistry`, adds `destroy()`
+- Initial-point code uses interfaces throughout (no concrete type leakage)
+
+### Tests
+- 198 tests passing ✅
+
+## [1.4.2] - 2026-03-30
+
+### Changed
+- Updated `singleton_manager` dependency from `^0.5.0` to `^0.6.1`
+
 ## [1.2.2] - 2026-03-14
 
 ### Added
