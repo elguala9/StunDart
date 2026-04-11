@@ -5,6 +5,14 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] - 2026-04-11
+
+### Fixed
+- **Dual-stack fallback in `DualStunHandler`**: `performStunRequest()` and `performLocalRequest()` now correctly fall back to IPv4 when IPv6 fails. Previously, `Future.wait(eagerError: false)` waited for both futures but still threw if IPv6 failed, discarding a successful IPv4 result. IPv6 failures are now treated as non-fatal via `catchError`, and the method returns the IPv4 result as fallback.
+
+### Tests
+- 198 tests passing ✅
+
 ## [1.5.0] - 2026-03-30
 
 ### Added
