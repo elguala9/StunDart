@@ -40,17 +40,20 @@ class DualStunHandler implements IDualStunHandler {
       throw StateError('DualStunHandler: IPv4 handler not initialized');
     }
 
-    if (_ipv6Handler != null) {
-      // Execute both in parallel, continue even if one fails
-      final results = await Future.wait([
-        _ipv4Handler!.performStunRequest(),
-        _ipv6Handler!.performStunRequest(),
-      ], eagerError: false);
-      // Prefer IPv6 result if available
-      return results[1];
-    } else {
+    if (_ipv6Handler == null) {
       return _ipv4Handler!.performStunRequest();
     }
+
+    // Run both in parallel; IPv6 failure is non-fatal — fallback to IPv4
+    final ipv4Future = _ipv4Handler!.performStunRequest();
+    final ipv6Future = _ipv6Handler!
+        .performStunRequest()
+        .then<StunResponse?>((r) => r)
+        .catchError((_) => null);
+
+    final ipv4Result = await ipv4Future;
+    final ipv6Result = await ipv6Future;
+    return ipv6Result ?? ipv4Result;
   }
 
   @override
@@ -59,17 +62,20 @@ class DualStunHandler implements IDualStunHandler {
       throw StateError('DualStunHandler: IPv4 handler not initialized');
     }
 
-    if (_ipv6Handler != null) {
-      // Execute both in parallel, continue even if one fails
-      final results = await Future.wait([
-        _ipv4Handler!.performLocalRequest(),
-        _ipv6Handler!.performLocalRequest(),
-      ], eagerError: false);
-      // Prefer IPv6 result if available
-      return results[1];
-    } else {
+    if (_ipv6Handler == null) {
       return _ipv4Handler!.performLocalRequest();
     }
+
+    // Run both in parallel; IPv6 failure is non-fatal — fallback to IPv4
+    final ipv4Future = _ipv4Handler!.performLocalRequest();
+    final ipv6Future = _ipv6Handler!
+        .performLocalRequest()
+        .then<LocalInfo?>((r) => r)
+        .catchError((_) => null);
+
+    final ipv4Result = await ipv4Future;
+    final ipv6Result = await ipv6Future;
+    return ipv6Result ?? ipv4Result;
   }
 
   @override

@@ -17,6 +17,7 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   @protected
   late IDualStunHandler dualHandlerProtected = DualStunHandler();
 
+  @override
   IDualStunHandler get dualHandler => dualHandlerProtected;
 
   @isInjected
@@ -43,13 +44,17 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     }
   }
 
+  @override
   IStunHandler get ipv4Handler => _getHandler(ipv6: false);
+  @override
   IStunHandler? get ipv6Handler => dualHandlerProtected.ipv6Handler;
 
+  @override
   void replaceHandler(IStunHandler handler, {required bool ipv6}) {
     dualHandlerProtected.replaceHandler(handler, ipv6: ipv6);
   }
 
+  @override
   Future<StunResponse> performStunRequest() async {
     if (dualHandlerProtected.ipv4Handler == null) {
       throw StateError(
@@ -59,6 +64,7 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     return dualHandlerProtected.performStunRequest();
   }
 
+  @override
   Future<LocalInfo> performLocalRequest() async {
     if (dualHandlerProtected.ipv4Handler == null) {
       throw StateError(
@@ -68,29 +74,40 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     return dualHandlerProtected.performLocalRequest();
   }
 
+  @override
   Future<bool> pingStunServer({bool ipv6 = true}) =>
       _getHandler(ipv6: ipv6).pingStunServer();
 
+  @override
   RawDatagramSocket getSocket({bool ipv6 = true}) =>
       _getHandler(ipv6: ipv6).getSocket();
 
+  @override
   void setStunServer(String address, int port, {bool? ipv6}) {
     dualHandlerProtected.setStunServer(address, port, ipv6: ipv6);
   }
 
+  @override
   void close({bool? ipv6}) => dualHandlerProtected.close(ipv6: ipv6);
 
+  @override
   DateTime? get ipv4LastStunUpdated => dualHandlerProtected.ipv4LastStunUpdated;
+  @override
   DateTime? get ipv6LastStunUpdated => dualHandlerProtected.ipv6LastStunUpdated;
+  @override
   DateTime? get ipv4LastLocalUpdated =>
       dualHandlerProtected.ipv4LastLocalUpdated;
+  @override
   DateTime? get ipv6LastLocalUpdated =>
       dualHandlerProtected.ipv6LastLocalUpdated;
+  @override
   DateTime? get lastStunUpdated => dualHandlerProtected.lastStunUpdated;
+  @override
   DateTime? get lastLocalUpdated => dualHandlerProtected.lastLocalUpdated;
 
   Future<void> initializeDualHandlerDI() => dualHandlerProtected.initializeDI();
 
+  @override
   Future<void> initialize({
     String? address,
     int? port,
@@ -119,6 +136,7 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     dualHandlerProtected.setIpv6Handler(ipv6);
   }
 
+  @override
   Future<void> initializeWithHandlers(
     IStunHandler ipv4Handler, {
     IStunHandler? ipv6Handler,
@@ -129,11 +147,13 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     if (ipv6Handler != null) ipv6Handler.addOnSocketRefresh(callbacks.onIpv6);
   }
 
+  @override
   void setIpv4Handler(IStunHandler handler) {
     dualHandlerProtected.setIpv4Handler(handler);
     handler.addOnSocketRefresh(callbacks.onIpv4);
   }
 
+  @override
   void setIpv6Handler(IStunHandler? handler) {
     dualHandlerProtected.setIpv6Handler(handler);
     if (handler != null) handler.addOnSocketRefresh(callbacks.onIpv6);
@@ -144,6 +164,7 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   ) =>
       (data) => cb(data.$1, data.$2);
 
+  @override
   void setOnSocketRefreshIpv4(OnSocketRefreshIpv4 callback) {
     final handler = dualHandlerProtected.ipv4Handler;
     if (handler == null) {
@@ -163,6 +184,7 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     callbacks.registerIpv4(_wrapCallback(callback));
   }
 
+  @override
   void setOnSocketRefreshIpv6(OnSocketRefreshIpv6 callback) {
     final handler = dualHandlerProtected.ipv6Handler;
     if (handler == null) {
@@ -183,7 +205,9 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     callbacks.registerIpv6(_wrapCallback(callback));
   }
 
+  @override
   void removeOnSocketRefreshIpv4() => callbacks.clearIpv4();
+  @override
   void removeOnSocketRefreshIpv6() => callbacks.clearIpv6();
 
   @override
