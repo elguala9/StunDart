@@ -17,3 +17,5 @@ Thumbs.db
 coverage/
 *.lcov
 pubspec_overrides.yaml
+.vexp/
+.serena/
