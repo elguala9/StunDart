@@ -20,3 +20,4 @@ pubspec_overrides.yaml
 .vexp/
 .serena/
 .*
+.speedy/
