@@ -111,7 +111,14 @@ class StunHandler implements IStunHandler {
 
     final socket = await _socketMgr.getSocket();
     final localIp = await _socketMgr.getLocalIp();
-    _socketMgr.cachedLocalInfo = (localIp: localIp, localPort: socket.port);
+    final ipVersion = socket.address.type == InternetAddressType.IPv6
+        ? IpVersion.v6
+        : IpVersion.v4;
+    _socketMgr.cachedLocalInfo = (
+      localIp: localIp,
+      localPort: socket.port,
+      ipVersion: ipVersion,
+    );
     _socketMgr.lastLocalUpdated = DateTime.now();
     return _socketMgr.cachedLocalInfo!;
   }

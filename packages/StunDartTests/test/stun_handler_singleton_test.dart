@@ -127,11 +127,18 @@ void main() {
       );
 
       final response = await singleton.performStunRequest();
-      expect(response.publicIp, isNotEmpty);
-      expect(response.publicPort, greaterThan(0));
+      // IPv4 is expected to be available in this test environment
+      expect(response.stunResponseIpv4?.publicIp, isNotEmpty);
+      expect(response.stunResponseIpv4?.publicPort, greaterThan(0));
+
+      if (singleton.ipv6Handler != null) {
+        expect(response.stunResponseIpv6?.publicIp, isNotEmpty);
+        expect(response.stunResponseIpv6?.publicPort, greaterThan(0));
+      }
     });
 
-    test('performStunRequest() prefers IPv6 if available', () async {
+    test('performStunRequest() returns per-stack results matching each '
+        'handler', () async {
       final singleton = StunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
@@ -139,15 +146,15 @@ void main() {
       );
 
       final response = await singleton.performStunRequest();
-      // Should be able to get a response (either IPv6 or IPv4)
-      expect(response.publicIp, isNotEmpty);
-      expect(response.publicPort, greaterThan(0));
 
-      // If IPv6 is available, verify it was used
+      // If IPv6 is available, verify its slot matches a direct request
       if (singleton.ipv6Handler != null) {
         final ipv6Response = await singleton.ipv6Handler!.performStunRequest();
-        expect(response.publicIp, equals(ipv6Response.publicIp));
-        expect(response.publicPort, equals(ipv6Response.publicPort));
+        expect(response.stunResponseIpv6?.publicIp, equals(ipv6Response.publicIp));
+        expect(
+          response.stunResponseIpv6?.publicPort,
+          equals(ipv6Response.publicPort),
+        );
       }
     });
 
@@ -159,8 +166,14 @@ void main() {
       );
 
       final info = await singleton.performLocalRequest();
-      expect(info.localIp, isNotEmpty);
-      expect(info.localPort, greaterThan(0));
+      // IPv4 is expected to be available in this test environment
+      expect(info.localDualInfoIpv4?.localIp, isNotEmpty);
+      expect(info.localDualInfoIpv4?.localPort, greaterThan(0));
+
+      if (singleton.ipv6Handler != null) {
+        expect(info.localDualInfoIpv6?.localIp, isNotEmpty);
+        expect(info.localDualInfoIpv6?.localPort, greaterThan(0));
+      }
     });
 
     test('performLocalRequest() caches results', () async {
@@ -174,8 +187,14 @@ void main() {
       final info2 = await singleton.performLocalRequest();
 
       // Should be identical due to caching
-      expect(info1.localIp, equals(info2.localIp));
-      expect(info1.localPort, equals(info2.localPort));
+      expect(
+        info1.localDualInfoIpv4?.localIp,
+        equals(info2.localDualInfoIpv4?.localIp),
+      );
+      expect(
+        info1.localDualInfoIpv4?.localPort,
+        equals(info2.localDualInfoIpv4?.localPort),
+      );
     });
 
     test('replaceHandler(mock, ipv6: true) replaces only IPv6', () async {

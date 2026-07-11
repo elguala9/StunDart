@@ -33,6 +33,12 @@ typedef StunResponse = ({
   Map<String, dynamic>? attrs, // Eventuali altri attributi STUN
 });
 
+// Response from both ipv4 and ipv6
+typedef StunDualResponse = ({
+  StunResponse? stunResponseIpv4,
+  StunResponse? stunResponseIpv6
+});
+
 /// Local network information
 ///
 /// Example:
@@ -42,6 +48,13 @@ typedef StunResponse = ({
 typedef LocalInfo = ({
   String localIp, // Es: "192.168.1.2"
   int localPort, // Es: 12345
+  IpVersion ipVersion // IpVersion.v4 o IpVersion.v6
+});
+
+// Info from both ipv4 and ipv6
+typedef LocalDualInfo = ({
+  LocalInfo? localDualInfoIpv4,
+  LocalInfo? localDualInfoIpv6
 });
 
 /// Input parameters for StunHandler constructor

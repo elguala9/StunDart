@@ -55,11 +55,11 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   }
 
   @override
-  Future<StunResponse> performStunRequest() =>
+  Future<StunDualResponse> performStunRequest() =>
       dualHandlerProtected.performStunRequest();
 
   @override
-  Future<LocalInfo> performLocalRequest() =>
+  Future<LocalDualInfo> performLocalRequest() =>
       dualHandlerProtected.performLocalRequest();
 
   @override
@@ -112,7 +112,11 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
         onSocketRefresh: callbacks.onIpv4,
       );
     } catch (_) {}
-    dualHandlerProtected.setIpv4Handler(ipv4);
+    if (ipv4 != null) {
+      dualHandlerProtected.setIpv4Handler(ipv4);
+    } else {
+      dualHandlerProtected.clearIpv4Handler();
+    }
 
     IStunHandler? ipv6;
     try {
@@ -123,7 +127,11 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
         onSocketRefresh: callbacks.onIpv6,
       );
     } catch (_) {}
-    dualHandlerProtected.setIpv6Handler(ipv6);
+    if (ipv6 != null) {
+      dualHandlerProtected.setIpv6Handler(ipv6);
+    } else {
+      dualHandlerProtected.clearIpv6Handler();
+    }
 
     if (ipv4 == null && ipv6 == null) {
       throw StateError(
@@ -140,21 +148,31 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   }) async {
     dualHandlerProtected.setIpv4Handler(ipv4Handler);
     ipv4Handler.addOnSocketRefresh(callbacks.onIpv4);
-    dualHandlerProtected.setIpv6Handler(ipv6Handler);
-    if (ipv6Handler != null) ipv6Handler.addOnSocketRefresh(callbacks.onIpv6);
+    if (ipv6Handler != null) {
+      dualHandlerProtected.setIpv6Handler(ipv6Handler);
+      ipv6Handler.addOnSocketRefresh(callbacks.onIpv6);
+    } else {
+      dualHandlerProtected.clearIpv6Handler();
+    }
   }
 
   @override
-  void setIpv4Handler(IStunHandler? handler) {
+  void setIpv4Handler(IStunHandler handler) {
     dualHandlerProtected.setIpv4Handler(handler);
-    if (handler != null) handler.addOnSocketRefresh(callbacks.onIpv4);
+    handler.addOnSocketRefresh(callbacks.onIpv4);
   }
 
   @override
-  void setIpv6Handler(IStunHandler? handler) {
+  void setIpv6Handler(IStunHandler handler) {
     dualHandlerProtected.setIpv6Handler(handler);
-    if (handler != null) handler.addOnSocketRefresh(callbacks.onIpv6);
+    handler.addOnSocketRefresh(callbacks.onIpv6);
   }
+
+  @override
+  void clearIpv4Handler() => dualHandlerProtected.clearIpv4Handler();
+
+  @override
+  void clearIpv6Handler() => dualHandlerProtected.clearIpv6Handler();
 
   static void Function((StunResponse, StunResponse?)) _wrapCallback(
     void Function(StunResponse, StunResponse?) cb,
