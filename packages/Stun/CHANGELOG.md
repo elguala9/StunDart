@@ -5,6 +5,19 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-07-11
+
+### Added
+- **IPv4 is now optional**: `DualStunHandler` and `StunHandlerBase`/`Singleton` accept a nullable IPv4 handler, symmetric to IPv6. At least one of the two must be present; either one alone is sufficient.
+- **`IDualHandlerFacade`** (`interfaces/i_dual_handler_facade.dart`): internal shared contract factored out of `IDualStunHandler` and `IStunHandlerBase` to avoid redeclaring the same members in both.
+- `clearIpv4Handler()` / `clearIpv6Handler()` to explicitly remove a handler.
+
+### Changed
+- `replaceHandler()`/`setStunServer()`/`close()` and related APIs updated to handle a possibly-null IPv4 or IPv6 handler consistently.
+
+### Tests
+- Expanded coverage for optional-IPv4 and handler-clearing scenarios in `dual_stun_handler_fallback_test.dart` and `stun_handler_singleton_test.dart`.
+
 ## [1.5.1] - 2026-04-11
 
 ### Fixed
