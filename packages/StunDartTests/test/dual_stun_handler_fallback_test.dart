@@ -324,4 +324,210 @@ void main() {
       expect(info.localDualInfoIpv4, isNull);
     });
   });
+
+  group('DualStunHandler - socket type validation (unit)', () {
+    late RawDatagramSocket ipv4Socket;
+    late RawDatagramSocket ipv6Socket;
+
+    setUp(() async {
+      ipv4Socket = await _FakeSocket.ipv4();
+      ipv6Socket = await _FakeSocket.ipv6();
+    });
+
+    tearDown(() {
+      try {
+        ipv4Socket.close();
+      } catch (_) {}
+      try {
+        ipv6Socket.close();
+      } catch (_) {}
+    });
+
+    test('setIpv4Handler throws ArgumentError when given an IPv6 socket',
+        () async {
+      final dual = DualStunHandler();
+
+      expect(
+        () => dual.setIpv4Handler(
+          _SuccessHandler(ipv6Socket, _ipv6Response, ipVersion: IpVersion.v6),
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(dual.ipv4Handler, isNull,
+          reason: 'Rejected handler must not be stored');
+    });
+
+    test('setIpv6Handler throws ArgumentError when given an IPv4 socket',
+        () async {
+      final dual = DualStunHandler();
+
+      expect(
+        () => dual.setIpv6Handler(
+          _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(dual.ipv6Handler, isNull,
+          reason: 'Rejected handler must not be stored');
+    });
+
+    test('setIpv4Handler accepts a handler with a matching IPv4 socket',
+        () async {
+      final dual = DualStunHandler();
+      final handler = _SuccessHandler(
+        ipv4Socket,
+        _ipv4Response,
+        ipVersion: IpVersion.v4,
+      );
+
+      dual.setIpv4Handler(handler);
+      expect(dual.ipv4Handler, same(handler));
+    });
+
+    test('setIpv6Handler accepts a handler with a matching IPv6 socket',
+        () async {
+      final dual = DualStunHandler();
+      final handler = _SuccessHandler(
+        ipv6Socket,
+        _ipv6Response,
+        ipVersion: IpVersion.v6,
+      );
+
+      dual.setIpv6Handler(handler);
+      expect(dual.ipv6Handler, same(handler));
+    });
+
+    test('replaceHandler(ipv6: false) throws ArgumentError given an IPv6 '
+        'socket handler', () async {
+      final dual = DualStunHandler();
+
+      expect(
+        () => dual.replaceHandler(
+          _SuccessHandler(ipv6Socket, _ipv6Response, ipVersion: IpVersion.v6),
+          ipv6: false,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('replaceHandler(ipv6: true) throws ArgumentError given an IPv4 '
+        'socket handler', () async {
+      final dual = DualStunHandler();
+
+      expect(
+        () => dual.replaceHandler(
+          _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
+          ipv6: true,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('DualStunHandler - clearIpv4Handler / clearIpv6Handler (unit)', () {
+    late RawDatagramSocket ipv4Socket;
+    late RawDatagramSocket ipv6Socket;
+
+    setUp(() async {
+      ipv4Socket = await _FakeSocket.ipv4();
+      ipv6Socket = await _FakeSocket.ipv6();
+    });
+
+    tearDown(() {
+      try {
+        ipv4Socket.close();
+      } catch (_) {}
+      try {
+        ipv6Socket.close();
+      } catch (_) {}
+    });
+
+    test('clearIpv4Handler sets ipv4Handler back to null', () async {
+      final dual = DualStunHandler();
+      dual.setIpv4Handler(
+        _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
+      );
+
+      dual.clearIpv4Handler();
+      expect(dual.ipv4Handler, isNull);
+    });
+
+    test('clearIpv6Handler sets ipv6Handler back to null', () async {
+      final dual = DualStunHandler();
+      dual.setIpv6Handler(
+        _SuccessHandler(ipv6Socket, _ipv6Response, ipVersion: IpVersion.v6),
+      );
+
+      dual.clearIpv6Handler();
+      expect(dual.ipv6Handler, isNull);
+    });
+
+    test(
+        'performStunRequest returns only the IPv6 slot after '
+        'clearIpv4Handler', () async {
+      final dual = DualStunHandler();
+      dual.setIpv4Handler(
+        _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
+      );
+      dual.setIpv6Handler(
+        _SuccessHandler(ipv6Socket, _ipv6Response, ipVersion: IpVersion.v6),
+      );
+
+      dual.clearIpv4Handler();
+
+      final result = await dual.performStunRequest();
+      expect(result.stunResponseIpv4, isNull);
+      expect(result.stunResponseIpv6?.publicIp, equals('2001:db8::1'));
+    });
+
+    test(
+        'performStunRequest throws StateError once both handlers are '
+        'cleared', () async {
+      final dual = DualStunHandler();
+      dual.setIpv4Handler(
+        _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
+      );
+      dual.setIpv6Handler(
+        _SuccessHandler(ipv6Socket, _ipv6Response, ipVersion: IpVersion.v6),
+      );
+
+      dual.clearIpv4Handler();
+      dual.clearIpv6Handler();
+
+      await expectLater(
+        dual.performStunRequest(),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('getSocket(ipv6: false) throws StateError after clearIpv4Handler',
+        () async {
+      final dual = DualStunHandler();
+      dual.setIpv4Handler(
+        _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
+      );
+
+      dual.clearIpv4Handler();
+
+      expect(
+        () => dual.getSocket(ipv6: false),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('pingStunServer(ipv6: false) throws StateError after '
+        'clearIpv4Handler', () async {
+      final dual = DualStunHandler();
+      dual.setIpv4Handler(
+        _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
+      );
+
+      dual.clearIpv4Handler();
+
+      expect(
+        () => dual.pingStunServer(ipv6: false),
+        throwsA(isA<StateError>()),
+      );
+    });
+  });
 }
