@@ -16,14 +16,32 @@ class DualStunHandler implements IDualStunHandler {
   IStunHandler? get ipv6Handler => _ipv6Handler;
 
   @override
-  void setIpv4Handler(IStunHandler? handler) {
+  void setIpv4Handler(IStunHandler handler) {
+    if (handler.getSocket().address.type != InternetAddressType.IPv4) {
+      throw ArgumentError(
+        'DualStunHandler: expected an IPv4 socket, got '
+        '${handler.getSocket().address.type}.',
+      );
+    }
     _ipv4Handler = handler;
   }
 
   @override
-  void setIpv6Handler(IStunHandler? handler) {
+  void setIpv6Handler(IStunHandler handler) {
+    if (handler.getSocket().address.type != InternetAddressType.IPv6) {
+      throw ArgumentError(
+        'DualStunHandler: expected an IPv6 socket, got '
+        '${handler.getSocket().address.type}.',
+      );
+    }
     _ipv6Handler = handler;
   }
+
+  @override
+  void clearIpv4Handler() => _ipv4Handler = null;
+
+  @override
+  void clearIpv6Handler() => _ipv6Handler = null;
 
   @override
   void replaceHandler(IStunHandler handler, {required bool ipv6}) {
@@ -35,55 +53,42 @@ class DualStunHandler implements IDualStunHandler {
   }
 
   @override
-  Future<StunResponse> performStunRequest() async {
+  Future<StunDualResponse> performStunRequest() async {
     if (_ipv4Handler == null && _ipv6Handler == null) {
       throw StateError('DualStunHandler: no handler initialized');
     }
 
-    if (_ipv4Handler == null) {
-      return _ipv6Handler!.performStunRequest();
-    }
-
-    if (_ipv6Handler == null) {
-      return _ipv4Handler!.performStunRequest();
-    }
-
-    // Run both in parallel; IPv6 failure is non-fatal — fallback to IPv4
-    final ipv4Future = _ipv4Handler!.performStunRequest();
-    final ipv6Future = _ipv6Handler!
-        .performStunRequest()
-        .then<StunResponse?>((r) => r)
-        .catchError((_) => null);
+    // Run on both handlers in parallel when both are available; either
+    // handler's failure is non-fatal and surfaces as a null slot.
+    final ipv4Future = _safeCall(_ipv4Handler?.performStunRequest());
+    final ipv6Future = _safeCall(_ipv6Handler?.performStunRequest());
 
     final ipv4Result = await ipv4Future;
     final ipv6Result = await ipv6Future;
-    return ipv6Result ?? ipv4Result;
+
+    return (stunResponseIpv4: ipv4Result, stunResponseIpv6: ipv6Result);
   }
 
   @override
-  Future<LocalInfo> performLocalRequest() async {
+  Future<LocalDualInfo> performLocalRequest() async {
     if (_ipv4Handler == null && _ipv6Handler == null) {
       throw StateError('DualStunHandler: no handler initialized');
     }
 
-    if (_ipv4Handler == null) {
-      return _ipv6Handler!.performLocalRequest();
-    }
-
-    if (_ipv6Handler == null) {
-      return _ipv4Handler!.performLocalRequest();
-    }
-
-    // Run both in parallel; IPv6 failure is non-fatal — fallback to IPv4
-    final ipv4Future = _ipv4Handler!.performLocalRequest();
-    final ipv6Future = _ipv6Handler!
-        .performLocalRequest()
-        .then<LocalInfo?>((r) => r)
-        .catchError((_) => null);
+    // Run on both handlers in parallel when both are available; either
+    // handler's failure is non-fatal and surfaces as a null slot.
+    final ipv4Future = _safeCall(_ipv4Handler?.performLocalRequest());
+    final ipv6Future = _safeCall(_ipv6Handler?.performLocalRequest());
 
     final ipv4Result = await ipv4Future;
     final ipv6Result = await ipv6Future;
-    return ipv6Result ?? ipv4Result;
+
+    return (localDualInfoIpv4: ipv4Result, localDualInfoIpv6: ipv6Result);
+  }
+
+  static Future<T?> _safeCall<T>(Future<T>? future) {
+    if (future == null) return Future.value(null);
+    return future.then<T?>((r) => r).catchError((_) => null);
   }
 
   @override

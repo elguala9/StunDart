@@ -96,13 +96,25 @@ Future<void> _exampleWithDI() async {
     // Perform requests through the injected singleton
     print('1. Performing STUN request via DI singleton...');
     final response = await stun.performStunRequest();
-    print('   Public IP: ${response.publicIp}');
-    print('   IP Version: ${response.ipVersion.value}\n');
+    final stunIpv4 = response.stunResponseIpv4;
+    final stunIpv6 = response.stunResponseIpv6;
+    if (stunIpv4 != null) {
+      print('   IPv4 Public IP: ${stunIpv4.publicIp}');
+    }
+    if (stunIpv6 != null) {
+      print('   IPv6 Public IP: ${stunIpv6.publicIp}');
+    }
 
     print('2. Performing local request...');
     final localInfo = await stun.performLocalRequest();
-    print('   Local IP: ${localInfo.localIp}');
-    print('   Local Port: ${localInfo.localPort}');
+    final localIpv4 = localInfo.localDualInfoIpv4;
+    final localIpv6 = localInfo.localDualInfoIpv6;
+    if (localIpv4 != null) {
+      print('   IPv4 Local: ${localIpv4.localIp}:${localIpv4.localPort}');
+    }
+    if (localIpv6 != null) {
+      print('   IPv6 Local: ${localIpv6.localIp}:${localIpv6.localPort}');
+    }
 
     stun.close();
   } catch (e) {
