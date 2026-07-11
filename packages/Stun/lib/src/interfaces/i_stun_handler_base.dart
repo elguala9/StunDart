@@ -8,10 +8,10 @@ import 'i_stun_handler.dart';
 
 /// Contract for the high-level STUN handler that manages dual IPv4/IPv6 stacks.
 /// Extends [IValueForRegistry] so instances can be registered via [RegistryAccess].
-abstract interface class IStunHandlerBase implements IValueForRegistry {
+abstract class IStunHandlerBase implements IValueForRegistry {
   IDualStunHandler get dualHandler;
 
-  IStunHandler get ipv4Handler;
+  IStunHandler? get ipv4Handler;
   IStunHandler? get ipv6Handler;
 
   void replaceHandler(IStunHandler handler, {required bool ipv6});
@@ -43,7 +43,7 @@ abstract interface class IStunHandlerBase implements IValueForRegistry {
     IStunHandler? ipv6Handler,
   });
 
-  void setIpv4Handler(IStunHandler handler);
+  void setIpv4Handler(IStunHandler? handler);
   void setIpv6Handler(IStunHandler? handler);
 
   void setOnSocketRefreshIpv4(OnSocketRefreshIpv4 callback);
