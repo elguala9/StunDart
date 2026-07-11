@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:singleton_manager/singleton_manager.dart';
+import 'package:stun/src/interfaces/i_stun_handler_base.dart';
 
 import '../types/stun_types.dart';
 import 'i_stun_handler.dart';
@@ -7,14 +8,14 @@ import 'i_stun_handler.dart';
 /// Interface for managing dual IPv4 and IPv6 STUN handlers
 /// Handles parallel request execution and state management
 abstract class IDualStunHandler implements ISingletonStandardDI {
-  /// IPv4 handler (always initialized after setup, null after close)
+  /// IPv4 handler (optional, null if unavailable or after close)
   IStunHandler? get ipv4Handler;
 
   /// IPv6 handler (optional, null if unavailable or after close)
   IStunHandler? get ipv6Handler;
 
-  /// Sets the IPv4 handler
-  void setIpv4Handler(IStunHandler handler);
+  /// Sets the IPv4 handler (can be null)
+  void setIpv4Handler(IStunHandler? handler);
 
   /// Sets the IPv6 handler (can be null)
   void setIpv6Handler(IStunHandler? handler);
@@ -22,12 +23,16 @@ abstract class IDualStunHandler implements ISingletonStandardDI {
   /// Replaces a specific handler (IPv4 or IPv6)
   void replaceHandler(IStunHandler handler, {required bool ipv6});
 
-  /// Performs STUN request on both handlers in parallel
-  /// Returns best result: IPv6 if available, otherwise IPv4
+  /// Performs STUN request. Runs on both handlers in parallel when both are
+  /// available (IPv6 preferred, falls back to IPv4 on IPv6 failure); runs on
+  /// whichever single handler is available otherwise.
+  /// Throws [StateError] if neither handler is initialized.
   Future<StunResponse> performStunRequest();
 
-  /// Performs local request on both handlers in parallel
-  /// Returns best result: IPv6 if available, otherwise IPv4
+  /// Performs local request. Runs on both handlers in parallel when both are
+  /// available (IPv6 preferred, falls back to IPv4 on IPv6 failure); runs on
+  /// whichever single handler is available otherwise.
+  /// Throws [StateError] if neither handler is initialized.
   Future<LocalInfo> performLocalRequest();
 
   /// Pings the STUN server on specified handler

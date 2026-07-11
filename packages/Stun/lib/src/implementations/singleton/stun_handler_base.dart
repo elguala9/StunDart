@@ -37,7 +37,7 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     } else {
       if (dualHandlerProtected.ipv4Handler == null) {
         throw StateError(
-          'StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.',
+          'StunHandlerSingleton: IPv4 handler not initialized or not available. Call initialize() first.',
         );
       }
       return dualHandlerProtected.ipv4Handler!;
@@ -45,7 +45,7 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   }
 
   @override
-  IStunHandler get ipv4Handler => _getHandler(ipv6: false);
+  IStunHandler? get ipv4Handler => dualHandlerProtected.ipv4Handler;
   @override
   IStunHandler? get ipv6Handler => dualHandlerProtected.ipv6Handler;
 
@@ -55,24 +55,12 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   }
 
   @override
-  Future<StunResponse> performStunRequest() async {
-    if (dualHandlerProtected.ipv4Handler == null) {
-      throw StateError(
-        'StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.',
-      );
-    }
-    return dualHandlerProtected.performStunRequest();
-  }
+  Future<StunResponse> performStunRequest() =>
+      dualHandlerProtected.performStunRequest();
 
   @override
-  Future<LocalInfo> performLocalRequest() async {
-    if (dualHandlerProtected.ipv4Handler == null) {
-      throw StateError(
-        'StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.',
-      );
-    }
-    return dualHandlerProtected.performLocalRequest();
-  }
+  Future<LocalInfo> performLocalRequest() =>
+      dualHandlerProtected.performLocalRequest();
 
   @override
   Future<bool> pingStunServer({bool ipv6 = true}) =>
@@ -115,14 +103,16 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   }) async {
     const factory = SingletonHandlerFactory();
 
-    dualHandlerProtected.setIpv4Handler(
-      await factory.createIpv4Handler(
+    IStunHandler? ipv4;
+    try {
+      ipv4 = await factory.createIpv4Handler(
         address: address,
         port: port,
         timeout: timeout,
         onSocketRefresh: callbacks.onIpv4,
-      ),
-    );
+      );
+    } catch (_) {}
+    dualHandlerProtected.setIpv4Handler(ipv4);
 
     IStunHandler? ipv6;
     try {
@@ -134,6 +124,13 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
       );
     } catch (_) {}
     dualHandlerProtected.setIpv6Handler(ipv6);
+
+    if (ipv4 == null && ipv6 == null) {
+      throw StateError(
+        'StunHandlerSingleton: failed to initialize any handler '
+        '(IPv4 and IPv6 both unavailable).',
+      );
+    }
   }
 
   @override
@@ -148,9 +145,9 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
   }
 
   @override
-  void setIpv4Handler(IStunHandler handler) {
+  void setIpv4Handler(IStunHandler? handler) {
     dualHandlerProtected.setIpv4Handler(handler);
-    handler.addOnSocketRefresh(callbacks.onIpv4);
+    if (handler != null) handler.addOnSocketRefresh(callbacks.onIpv4);
   }
 
   @override
@@ -169,7 +166,8 @@ class StunHandlerBase with ValueForRegistry implements IStunHandlerBase {
     final handler = dualHandlerProtected.ipv4Handler;
     if (handler == null) {
       throw StateError(
-        'StunHandlerSingleton: IPv4 handler not initialized. Call initialize() first.',
+        'StunHandlerSingleton: IPv4 handler not initialized or not available. '
+        'Call initialize() first and ensure IPv4 is available on this system.',
       );
     }
 

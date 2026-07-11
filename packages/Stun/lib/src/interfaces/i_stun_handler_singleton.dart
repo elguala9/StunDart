@@ -11,9 +11,9 @@ abstract interface class IStunHandlerSingleton implements ISingletonStandardDI {
     IStunHandler ipv4Handler, {
     IStunHandler? ipv6Handler,
   });
-  IStunHandler get ipv4Handler;
+  IStunHandler? get ipv4Handler;
   IStunHandler? get ipv6Handler;
-  void setIpv4Handler(IStunHandler handler);
+  void setIpv4Handler(IStunHandler? handler);
   void setIpv6Handler(IStunHandler? handler);
   void replaceHandler(IStunHandler handler, {required bool ipv6});
   Future<StunResponse> performStunRequest();

@@ -225,10 +225,33 @@ void main() {
           reason: 'IPv6 must be called exactly once (parallel launch)');
     });
 
-    test('propagates error when IPv4 fails (IPv4 is required)', () async {
+    test('propagates error when IPv4 fails and no IPv6 handler is set',
+        () async {
       final dual = DualStunHandler();
       dual.setIpv4Handler(
         _FailingHandler(ipv4Socket, Exception('IPv4 broken')),
+      );
+
+      await expectLater(
+        dual.performStunRequest(),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test('returns IPv6 result when no IPv4 handler is set', () async {
+      final dual = DualStunHandler();
+      dual.setIpv6Handler(_SuccessHandler(ipv6Socket, _ipv6Response));
+
+      final result = await dual.performStunRequest();
+      expect(result.publicIp, equals('2001:db8::1'));
+      expect(result.ipVersion, equals(IpVersion.v6));
+    });
+
+    test('propagates error when IPv6 fails and no IPv4 handler is set',
+        () async {
+      final dual = DualStunHandler();
+      dual.setIpv6Handler(
+        _FailingHandler(ipv6Socket, Exception('IPv6 broken')),
       );
 
       await expectLater(
@@ -267,6 +290,14 @@ void main() {
       final info = await dual.performLocalRequest();
       // Result comes from IPv4 fake (port of ipv4Socket)
       expect(info.localPort, equals(ipv4Socket.port));
+    });
+
+    test('returns IPv6 local info when no IPv4 handler is set', () async {
+      final dual = DualStunHandler();
+      dual.setIpv6Handler(_SuccessHandler(ipv6Socket, _ipv6Response));
+
+      final info = await dual.performLocalRequest();
+      expect(info.localPort, equals(ipv6Socket.port));
     });
   });
 }

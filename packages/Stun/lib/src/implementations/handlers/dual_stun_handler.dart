@@ -16,7 +16,7 @@ class DualStunHandler implements IDualStunHandler {
   IStunHandler? get ipv6Handler => _ipv6Handler;
 
   @override
-  void setIpv4Handler(IStunHandler handler) {
+  void setIpv4Handler(IStunHandler? handler) {
     _ipv4Handler = handler;
   }
 
@@ -36,8 +36,12 @@ class DualStunHandler implements IDualStunHandler {
 
   @override
   Future<StunResponse> performStunRequest() async {
+    if (_ipv4Handler == null && _ipv6Handler == null) {
+      throw StateError('DualStunHandler: no handler initialized');
+    }
+
     if (_ipv4Handler == null) {
-      throw StateError('DualStunHandler: IPv4 handler not initialized');
+      return _ipv6Handler!.performStunRequest();
     }
 
     if (_ipv6Handler == null) {
@@ -58,8 +62,12 @@ class DualStunHandler implements IDualStunHandler {
 
   @override
   Future<LocalInfo> performLocalRequest() async {
+    if (_ipv4Handler == null && _ipv6Handler == null) {
+      throw StateError('DualStunHandler: no handler initialized');
+    }
+
     if (_ipv4Handler == null) {
-      throw StateError('DualStunHandler: IPv4 handler not initialized');
+      return _ipv6Handler!.performLocalRequest();
     }
 
     if (_ipv6Handler == null) {
@@ -89,7 +97,9 @@ class DualStunHandler implements IDualStunHandler {
       return _ipv6Handler!.pingStunServer();
     } else {
       if (_ipv4Handler == null) {
-        throw StateError('DualStunHandler: IPv4 handler not initialized');
+        throw StateError(
+          'DualStunHandler: IPv4 handler not initialized or not available',
+        );
       }
       return _ipv4Handler!.pingStunServer();
     }
@@ -106,7 +116,9 @@ class DualStunHandler implements IDualStunHandler {
       return _ipv6Handler!.getSocket();
     } else {
       if (_ipv4Handler == null) {
-        throw StateError('DualStunHandler: IPv4 handler not initialized');
+        throw StateError(
+          'DualStunHandler: IPv4 handler not initialized or not available',
+        );
       }
       return _ipv4Handler!.getSocket();
     }

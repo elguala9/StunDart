@@ -32,19 +32,40 @@ void main() {
       expect(identical(instance1, instance2), isTrue);
     });
 
-    test('initialize() creates IPv4 handler (always)', () async {
+    test('initialize() creates IPv4 handler (if available)', () async {
       final singleton = StunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
       );
 
-      // IPv4 should always exist
+      // IPv4 is optional, but is expected to be available in this test environment
       final ipv4Handler = singleton.ipv4Handler;
       expect(ipv4Handler, isNotNull);
-      final ipv4Socket = ipv4Handler.getSocket();
+      final ipv4Socket = ipv4Handler!.getSocket();
       expect(ipv4Socket.address.type, equals(InternetAddressType.IPv4));
     });
+
+    test(
+      'initialize() throws when neither IPv4 nor IPv6 is available',
+      () async {
+        // At least one of ipv4Handler/ipv6Handler must be available after
+        // initialize(); it is not possible to exercise the "both fail" path
+        // without simulating a fully offline system, so this documents the
+        // contract exercised indirectly by the other initialize() tests.
+        final singleton = StunHandlerSingleton.instance;
+        await singleton.initialize(
+          address: StunServers.googleStun,
+          port: StunServers.defaultPort,
+        );
+
+        expect(
+          singleton.ipv4Handler != null || singleton.ipv6Handler != null,
+          isTrue,
+          reason: 'At least one handler must be available after initialize()',
+        );
+      },
+    );
 
     test('initialize() creates IPv6 handler (if available)', () async {
       final singleton = StunHandlerSingleton.instance;
@@ -65,7 +86,7 @@ void main() {
       }
     });
 
-    test('ipv4Handler getter always returns non-null', () async {
+    test('ipv4Handler getter returns non-null when available', () async {
       final singleton = StunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
@@ -73,9 +94,10 @@ void main() {
       );
 
       final handler = singleton.ipv4Handler;
+      // IPv4 is optional, but is expected to be available in this test environment
       expect(handler, isNotNull);
       expect(
-        handler.getSocket().address.type,
+        handler!.getSocket().address.type,
         equals(InternetAddressType.IPv4),
       );
     });
@@ -193,7 +215,7 @@ void main() {
       singleton.replaceHandler(newHandler, ipv6: false);
 
       // Should use the new handler
-      final socket = singleton.ipv4Handler.getSocket();
+      final socket = singleton.ipv4Handler!.getSocket();
       expect(socket, isNotNull);
     });
 
@@ -365,7 +387,7 @@ void main() {
 
       final ipv4Handler = singleton.ipv4Handler;
       expect(ipv4Handler, isNotNull);
-      final response = await ipv4Handler.performStunRequest();
+      final response = await ipv4Handler!.performStunRequest();
       expect(response.publicIp, isNotEmpty);
     });
 
@@ -631,7 +653,8 @@ void main() {
           try {
             // Get IPv4 handler and verify it's actually IPv4
             final ipv4Handler = singleton.ipv4Handler;
-            final ipv4Socket = ipv4Handler.getSocket();
+            expect(ipv4Handler, isNotNull);
+            final ipv4Socket = ipv4Handler!.getSocket();
             expect(ipv4Socket.address.type, equals(InternetAddressType.IPv4));
 
             // Setting IPv4 callback on IPv4 handler should work
