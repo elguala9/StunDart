@@ -2,10 +2,12 @@ import 'dart:io';
 import 'dart:async';
 
 import './stun_message.dart';
+import '../../mixins/stun_logger_mixin.dart';
+import '../../mixins/stun_server_resolver_mixin.dart';
 import '../../types/stun_types.dart';
 
 /// Handles core STUN request/response logic
-class StunRequestHandler {
+class StunRequestHandler with StunLoggerMixin, StunServerResolverMixin {
   StunRequestHandler({
     required this.stunAddress,
     required this.stunPort,
@@ -16,10 +18,9 @@ class StunRequestHandler {
   final String stunAddress;
   final int stunPort;
   final Duration timeout;
-  final void Function(String)? onLog;
 
-  /// Helper to log messages
-  void _log(String message) => onLog?.call(message);
+  @override
+  final void Function(String)? onLog;
 
   /// Core STUN request logic
   Future<StunResponse> performStunRequest(RawDatagramSocket socket) async {
@@ -31,19 +32,11 @@ class StunRequestHandler {
     final isIPv6Socket = socket.address.type == InternetAddressType.IPv6;
 
     // Log local socket info
-    _log('[StunHandler] Local socket: ${socket.address}:${socket.port}');
+    log('[StunHandler] Local socket: ${socket.address}:${socket.port}');
 
     // Send request to STUN server
-    final stunServerAddr = await InternetAddress.lookup(
-      stunAddress,
-      type: isIPv6Socket ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
-    );
-    if (stunServerAddr.isEmpty) {
-      throw StateError('Could not resolve STUN server address: $stunAddress');
-    }
-
-    final targetAddr = stunServerAddr.first;
-    _log('[StunHandler] Sending STUN request to $targetAddr:$stunPort');
+    final targetAddr = await resolveStunServer(stunAddress, ipv6: isIPv6Socket);
+    log('[StunHandler] Sending STUN request to $targetAddr:$stunPort');
 
     socket.send(requestBytes, targetAddr, stunPort);
 
@@ -77,10 +70,10 @@ class StunRequestHandler {
               ? '[${response.publicIp}]:${response.publicPort}'
               : '${response.publicIp}:${response.publicPort}';
 
-          _log(
+          log(
             '[StunHandler] STUN response: $addressDisplay (${response.ipVersion.value})',
           );
-          _log(
+          log(
             '[StunHandler] Port mapping: Local ${socket.port} -> Public ${response.publicPort}',
           );
 
