@@ -1,12 +1,12 @@
 import 'package:singleton_manager/singleton_manager.dart';
 
+import '../../mixins/handler_factory_mixin.dart';
 import '../../types/stun_types.dart';
 import '../../interfaces/i_stun_handler.dart';
-import '../handlers/stun_handler.dart';
 
 /// Base factory for creating STUN handler instances (IPv4 and IPv6)
 @isSingleton
-class HandlerFactory {
+class HandlerFactory with HandlerFactoryMixin {
   const HandlerFactory();
 
   /// Creates IPv4 handler without socket
@@ -15,10 +15,10 @@ class HandlerFactory {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     OnSocketRefresh? onSocketRefresh,
-  }) => StunHandler.withoutSocket(
+  }) => createHandler(
+    ipv6: false,
     address: address,
     port: port,
-    ipv6: false,
     timeout: timeout,
     onSocketRefresh: onSocketRefresh,
   );
@@ -29,10 +29,10 @@ class HandlerFactory {
     int? port,
     Duration timeout = const Duration(seconds: 5),
     OnSocketRefresh? onSocketRefresh,
-  }) => StunHandler.withoutSocket(
+  }) => createHandler(
+    ipv6: true,
     address: address,
     port: port,
-    ipv6: true,
     timeout: timeout,
     onSocketRefresh: onSocketRefresh,
   );

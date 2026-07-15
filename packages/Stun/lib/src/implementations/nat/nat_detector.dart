@@ -1,7 +1,9 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 
-import '../request/stun_message.dart';
+import '../../mixins/nat_detector_mixin.dart';
+import '../../mixins/stun_logger_mixin.dart';
+import '../../mixins/stun_server_resolver_mixin.dart';
 import '../../types/stun_types.dart';
 
 /// NAT Type Detector implementing RFC 5780 NAT Behavior Discovery
@@ -22,31 +24,43 @@ import '../../types/stun_types.dart';
 /// print('NAT Type: ${result.natType.displayName}');
 /// socket.close();
 /// ```
-class NATDetector {
+class NATDetector
+    with StunLoggerMixin, StunServerResolverMixin, NATDetectorMixin {
   /// Creates a NAT detector
   ///
   /// - [primaryServer]: STUN server hostname or IP address
   /// - [primaryPort]: STUN server port (typically 3478 or 19302)
   /// - [socket]: UDP socket to use for communication
   /// - [timeout]: Maximum time to wait for each test response
+  /// - [onLog]: Optional logging callback
   NATDetector({
-    required String primaryServer,
-    required int primaryPort,
-    required RawDatagramSocket socket,
-    Duration timeout = const Duration(seconds: 5),
-  }) : _primaryServer = primaryServer,
-       _primaryPort = primaryPort,
-       _socket = socket,
-       _timeout = timeout {
+    required this.primaryServer,
+    required this.primaryPort,
+    required this.socket,
+    this.timeout = const Duration(seconds: 5),
+    this.onLog,
+  }) {
     // Convert to broadcast stream to allow multiple listeners
-    _socketStream = _socket.asBroadcastStream();
+    socketStream = socket.asBroadcastStream();
   }
 
-  final String _primaryServer;
-  final int _primaryPort;
-  final RawDatagramSocket _socket;
-  final Duration _timeout;
-  late final Stream<RawSocketEvent> _socketStream;
+  @override
+  final String primaryServer;
+
+  @override
+  final int primaryPort;
+
+  @override
+  final RawDatagramSocket socket;
+
+  @override
+  final Duration timeout;
+
+  @override
+  final void Function(String)? onLog;
+
+  @override
+  late final Stream<RawSocketEvent> socketStream;
 
   // Test results storage
   String? _publicIp1;
@@ -54,6 +68,44 @@ class NATDetector {
   String? _alternateIp;
   int? _alternatePort;
   bool _rfc5780Supported = false;
+
+  @override
+  String? get publicIp1 => _publicIp1;
+
+  @override
+  int? get publicPort1 => _publicPort1;
+
+  @override
+  String? get alternateIp => _alternateIp;
+
+  @override
+  int? get alternatePort => _alternatePort;
+
+  @override
+  bool get rfc5780Supported => _rfc5780Supported;
+
+  /// Stores the state discovered by Test 1 and returns a result reflecting
+  /// the stored state (alternate address survives runs that don't find one).
+  NATTestResult _recordTest1(NATTestResult result) {
+    if (!result.success) return result;
+
+    _publicIp1 = result.publicIp;
+    _publicPort1 = result.publicPort;
+    if (result.alternateIp != null) {
+      _alternateIp = result.alternateIp;
+      _alternatePort = result.alternatePort;
+      _rfc5780Supported = result.rfc5780Supported;
+    }
+
+    return NATTestResult(
+      success: true,
+      publicIp: result.publicIp,
+      publicPort: result.publicPort,
+      alternateIp: _alternateIp,
+      alternatePort: _alternatePort,
+      rfc5780Supported: _rfc5780Supported,
+    );
+  }
 
   /// Perform full RFC 5780 NAT type detection
   ///
@@ -68,41 +120,41 @@ class NATDetector {
     final diagnostics = <String, dynamic>{};
 
     try {
-      print('[NATDetector] Starting NAT type detection...');
+      log('[NATDetector] Starting NAT type detection...');
 
       // Test 1: Basic binding request to primary server
-      final test1Result = await _performTest1();
+      final test1Result = _recordTest1(await performTest1());
       diagnostics['test1'] = test1Result.toMap();
 
       if (!test1Result.success) {
-        print('[NATDetector] Test 1 failed - UDP appears to be blocked');
-        return _buildResult(
+        log('[NATDetector] Test 1 failed - UDP appears to be blocked');
+        return buildResult(
           natType: NATType.udpBlocked,
           detectionTime: DateTime.now().difference(startTime),
           diagnostics: diagnostics,
         );
       }
 
-      print(
+      log(
         '[NATDetector] Test 1 passed: ${test1Result.publicIp}:${test1Result.publicPort}',
       );
 
       // Test 2: Request from alternate IP/port (change-ip=true, change-port=true)
-      final test2Result = await _performTest2();
+      final test2Result = await performTest2();
       diagnostics['test2'] = test2Result.toMap();
 
       if (test2Result.success) {
-        print(
+        log(
           '[NATDetector] Test 2 passed - checking if Open Internet or Full Cone',
         );
         // Received response from alternate address = Open Internet or Full Cone
         // Need to check if mapping changes to distinguish
-        final test1bis = await _performTest1();
+        final test1bis = _recordTest1(await performTest1());
         diagnostics['test1bis'] = test1bis.toMap();
 
         if (test1bis.publicPort == _publicPort1) {
-          print('[NATDetector] Mapping consistent - Full Cone NAT detected');
-          return _buildResult(
+          log('[NATDetector] Mapping consistent - Full Cone NAT detected');
+          return buildResult(
             natType: NATType.fullCone,
             filteringBehavior: NATFilteringBehavior.endpointIndependent,
             mappingBehavior: NATMappingBehavior.endpointIndependent,
@@ -110,8 +162,8 @@ class NATDetector {
             diagnostics: diagnostics,
           );
         } else {
-          print('[NATDetector] No NAT - Open Internet detected');
-          return _buildResult(
+          log('[NATDetector] No NAT - Open Internet detected');
+          return buildResult(
             natType: NATType.openInternet,
             filteringBehavior: NATFilteringBehavior.endpointIndependent,
             mappingBehavior: NATMappingBehavior.endpointIndependent,
@@ -121,18 +173,18 @@ class NATDetector {
         }
       }
 
-      print('[NATDetector] Test 2 filtered - NAT is present');
+      log('[NATDetector] Test 2 filtered - NAT is present');
 
       // Test 3: Request to alternate server address (if OTHER-ADDRESS available)
       if (_alternateIp != null && _alternatePort != null) {
-        print('[NATDetector] Running Test 3 to alternate server...');
-        final test3Result = await _performTest3();
+        log('[NATDetector] Running Test 3 to alternate server...');
+        final test3Result = await performTest3();
         diagnostics['test3'] = test3Result.toMap();
 
         if (test3Result.success && test3Result.publicPort != _publicPort1) {
           // Mapping changed = Symmetric NAT
-          print('[NATDetector] Port mapping changed - Symmetric NAT detected');
-          return _buildResult(
+          log('[NATDetector] Port mapping changed - Symmetric NAT detected');
+          return buildResult(
             natType: NATType.symmetric,
             filteringBehavior: NATFilteringBehavior.addressAndPortDependent,
             mappingBehavior: NATMappingBehavior.addressAndPortDependent,
@@ -141,7 +193,7 @@ class NATDetector {
           );
         }
       } else {
-        print('[NATDetector] No alternate server available, skipping Test 3');
+        log('[NATDetector] No alternate server available, skipping Test 3');
         diagnostics['test3'] = {
           'skipped': true,
           'reason': 'No alternate address',
@@ -149,13 +201,13 @@ class NATDetector {
       }
 
       // Test 4: Request from alternate port only (change-port=true)
-      print('[NATDetector] Running Test 4 (change port only)...');
-      final test4Result = await _performTest4();
+      log('[NATDetector] Running Test 4 (change port only)...');
+      final test4Result = await performTest4();
       diagnostics['test4'] = test4Result.toMap();
 
       if (test4Result.success) {
-        print('[NATDetector] Test 4 passed - Restricted Cone NAT detected');
-        return _buildResult(
+        log('[NATDetector] Test 4 passed - Restricted Cone NAT detected');
+        return buildResult(
           natType: NATType.restrictedCone,
           filteringBehavior: NATFilteringBehavior.addressDependent,
           mappingBehavior: NATMappingBehavior.endpointIndependent,
@@ -163,10 +215,10 @@ class NATDetector {
           diagnostics: diagnostics,
         );
       } else {
-        print(
+        log(
           '[NATDetector] Test 4 filtered - Port Restricted Cone NAT detected',
         );
-        return _buildResult(
+        return buildResult(
           natType: NATType.portRestrictedCone,
           filteringBehavior: NATFilteringBehavior.addressAndPortDependent,
           mappingBehavior: NATMappingBehavior.endpointIndependent,
@@ -175,276 +227,13 @@ class NATDetector {
         );
       }
     } catch (e) {
-      print('[NATDetector] Error during detection: $e');
+      log('[NATDetector] Error during detection: $e');
       diagnostics['error'] = e.toString();
-      return _buildResult(
+      return buildResult(
         natType: NATType.udpBlocked,
         detectionTime: DateTime.now().difference(startTime),
         diagnostics: diagnostics,
       );
     }
-  }
-
-  /// Test 1: Normal binding request to primary server
-  Future<_TestResult> _performTest1() async {
-    try {
-      final request = StunMessage.createBindingRequest();
-      final serverAddr = await _resolveServer(_primaryServer);
-
-      final response = await _sendAndReceive(
-        serverAddr: serverAddr,
-        serverPort: _primaryPort,
-        request: request,
-      );
-
-      if (response == null) {
-        return _TestResult(success: false, error: 'No response');
-      }
-
-      final mappedAddr = response.getXorMappedAddress();
-      if (mappedAddr == null) {
-        return _TestResult(success: false, error: 'No XOR-MAPPED-ADDRESS');
-      }
-
-      // Store public IP and port
-      _publicIp1 = mappedAddr.ip;
-      _publicPort1 = mappedAddr.port;
-
-      // Try to get alternate server address (RFC 5780)
-      final otherAddr = response.getOtherAddress();
-      if (otherAddr != null) {
-        _alternateIp = otherAddr.ip;
-        _alternatePort = otherAddr.port;
-        _rfc5780Supported = true;
-      } else {
-        // Fallback to RFC 3489 CHANGED-ADDRESS
-        final changedAddr = response.getChangedAddress();
-        if (changedAddr != null) {
-          _alternateIp = changedAddr.ip;
-          _alternatePort = changedAddr.port;
-          _rfc5780Supported = false;
-        }
-      }
-
-      return _TestResult(
-        success: true,
-        publicIp: mappedAddr.ip,
-        publicPort: mappedAddr.port,
-        alternateIp: _alternateIp,
-        alternatePort: _alternatePort,
-      );
-    } catch (e) {
-      return _TestResult(success: false, error: e.toString());
-    }
-  }
-
-  /// Test 2: Request with CHANGE-REQUEST (IP + Port)
-  Future<_TestResult> _performTest2() async {
-    try {
-      final request = StunMessage.createBindingRequestWithChangeRequest(
-        changeIp: true,
-        changePort: true,
-      );
-      final serverAddr = await _resolveServer(_primaryServer);
-
-      final response = await _sendAndReceive(
-        serverAddr: serverAddr,
-        serverPort: _primaryPort,
-        request: request,
-      );
-
-      if (response == null) {
-        return _TestResult(success: false, error: 'Filtered or timeout');
-      }
-
-      final mappedAddr = response.getXorMappedAddress();
-      return _TestResult(
-        success: true,
-        publicIp: mappedAddr?.ip,
-        publicPort: mappedAddr?.port,
-      );
-    } catch (e) {
-      return _TestResult(success: false, error: e.toString());
-    }
-  }
-
-  /// Test 3: Request to alternate server
-  Future<_TestResult> _performTest3() async {
-    if (_alternateIp == null || _alternatePort == null) {
-      return _TestResult(success: false, error: 'No alternate server');
-    }
-
-    try {
-      final request = StunMessage.createBindingRequest();
-      final serverAddr = InternetAddress(_alternateIp!);
-
-      final response = await _sendAndReceive(
-        serverAddr: serverAddr,
-        serverPort: _alternatePort!,
-        request: request,
-      );
-
-      if (response == null) {
-        return _TestResult(success: false, error: 'No response from alternate');
-      }
-
-      final mappedAddr = response.getXorMappedAddress();
-      if (mappedAddr == null) {
-        return _TestResult(success: false, error: 'No XOR-MAPPED-ADDRESS');
-      }
-
-      return _TestResult(
-        success: true,
-        publicIp: mappedAddr.ip,
-        publicPort: mappedAddr.port,
-      );
-    } catch (e) {
-      return _TestResult(success: false, error: e.toString());
-    }
-  }
-
-  /// Test 4: Request with CHANGE-REQUEST (Port only)
-  Future<_TestResult> _performTest4() async {
-    try {
-      final request = StunMessage.createBindingRequestWithChangeRequest(
-        changeIp: false,
-        changePort: true,
-      );
-      final serverAddr = await _resolveServer(_primaryServer);
-
-      final response = await _sendAndReceive(
-        serverAddr: serverAddr,
-        serverPort: _primaryPort,
-        request: request,
-      );
-
-      if (response == null) {
-        return _TestResult(success: false, error: 'Filtered or timeout');
-      }
-
-      final mappedAddr = response.getXorMappedAddress();
-      return _TestResult(
-        success: true,
-        publicIp: mappedAddr?.ip,
-        publicPort: mappedAddr?.port,
-      );
-    } catch (e) {
-      return _TestResult(success: false, error: e.toString());
-    }
-  }
-
-  /// Send a STUN request and wait for response
-  Future<StunMessage?> _sendAndReceive({
-    required InternetAddress serverAddr,
-    required int serverPort,
-    required StunMessage request,
-  }) async {
-    final requestBytes = request.toBytes();
-    _socket.send(requestBytes, serverAddr, serverPort);
-
-    final completer = Completer<StunMessage?>();
-    StreamSubscription<RawSocketEvent>? subscription;
-
-    subscription = _socketStream.listen((event) {
-      if (event == RawSocketEvent.read) {
-        final datagram = _socket.receive();
-        if (datagram == null) return;
-
-        try {
-          final response = StunMessage.fromBytes(datagram.data);
-
-          // Verify transaction ID matches
-          bool transactionIdMatches = true;
-          for (var i = 0; i < 12; i++) {
-            if (response.transactionId[i] != request.transactionId[i]) {
-              transactionIdMatches = false;
-              break;
-            }
-          }
-
-          if (transactionIdMatches && !completer.isCompleted) {
-            subscription?.cancel();
-            completer.complete(response);
-          }
-        } catch (e) {
-          // Ignore parsing errors (could be unrelated UDP traffic)
-        }
-      }
-    });
-
-    return completer.future.timeout(
-      _timeout,
-      onTimeout: () {
-        subscription?.cancel();
-        return null;
-      },
-    );
-  }
-
-  /// Resolve server hostname to IP address
-  Future<InternetAddress> _resolveServer(String hostname) async {
-    final isIPv6Socket = _socket.address.type == InternetAddressType.IPv6;
-    final addresses = await InternetAddress.lookup(
-      hostname,
-      type: isIPv6Socket ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
-    );
-
-    if (addresses.isEmpty) {
-      throw StateError('Could not resolve server: $hostname');
-    }
-
-    return addresses.first;
-  }
-
-  /// Build final detection result
-  NATDetectionResult _buildResult({
-    required NATType natType,
-    NATFilteringBehavior filteringBehavior = NATFilteringBehavior.unknown,
-    NATMappingBehavior mappingBehavior = NATMappingBehavior.unknown,
-    required Duration detectionTime,
-    required Map<String, dynamic> diagnostics,
-  }) {
-    return (
-      natType: natType,
-      filteringBehavior: filteringBehavior,
-      mappingBehavior: mappingBehavior,
-      publicIp: _publicIp1,
-      publicPort: _publicPort1,
-      alternateIp: _alternateIp,
-      alternatePort: _alternatePort,
-      rfc5780Supported: _rfc5780Supported,
-      detectionTime: detectionTime,
-      diagnostics: diagnostics,
-    );
-  }
-}
-
-/// Internal test result
-class _TestResult {
-  _TestResult({
-    required this.success,
-    this.publicIp,
-    this.publicPort,
-    this.alternateIp,
-    this.alternatePort,
-    this.error,
-  });
-
-  final bool success;
-  final String? publicIp;
-  final int? publicPort;
-  final String? alternateIp;
-  final int? alternatePort;
-  final String? error;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'success': success,
-      if (publicIp != null) 'publicIp': publicIp,
-      if (publicPort != null) 'publicPort': publicPort,
-      if (alternateIp != null) 'alternateIp': alternateIp,
-      if (alternatePort != null) 'alternatePort': alternatePort,
-      if (error != null) 'error': error,
-    };
   }
 }

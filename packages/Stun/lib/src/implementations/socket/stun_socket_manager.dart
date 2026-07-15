@@ -1,8 +1,9 @@
 import 'dart:io';
+import '../../mixins/stun_logger_mixin.dart';
 import '../../types/stun_types.dart';
 
 /// Manages socket lifecycle, caching, and local IP resolution
-class StunSocketManager {
+class StunSocketManager with StunLoggerMixin {
   StunSocketManager({
     required this.bindType,
     required this.bindPort,
@@ -11,6 +12,8 @@ class StunSocketManager {
 
   final InternetAddressType bindType;
   final int? bindPort;
+
+  @override
   final void Function(String)? onLog;
 
   RawDatagramSocket? socket;
@@ -18,8 +21,6 @@ class StunSocketManager {
   LocalInfo? cachedLocalInfo;
   DateTime? lastStunUpdated;
   DateTime? lastLocalUpdated;
-
-  void _log(String message) => onLog?.call(message);
 
   // Socket operations
   Future<RawDatagramSocket> getSocket() async {
@@ -34,7 +35,7 @@ class StunSocketManager {
       bindPort ?? 0,
       reuseAddress: true,
     );
-    _log('[StunHandler] Socket created: ${socket!.address}:${socket!.port}');
+    log('[StunHandler] Socket created: ${socket!.address}:${socket!.port}');
     return socket!;
   }
 
@@ -43,7 +44,7 @@ class StunSocketManager {
     socket?.close();
     socket = null;
     await getSocket();
-    _log('[StunHandler] Socket recreated with new port');
+    log('[StunHandler] Socket recreated with new port');
   }
 
   void closeSocket() => socket?.close();
