@@ -5,6 +5,14 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.6.1] - 2026-07-15
+
+### Changed
+- **Internal refactor into mixins** (`src/mixins/`): shared logic extracted from `StunHandler`, `DualStunHandler`, `NATDetector`, `StunMessage`, `StunHandlerBase`, `HandlerFactory`, and `StunSocketManager` into reusable mixins (`StunHandlerMixin`, `DualStunHandlerMixin`, `NatDetectorMixin`, `StunMessageMixin`, `StunHandlerBaseMixin`, `HandlerFactoryMixin`, `DualHandlerSelectorMixin`, `StunServerResolverMixin`, `StunLoggerMixin`, `DestroyableHandlerMixin`). No public API changes — fully backward compatible.
+
+### Tests
+- 223 tests passing ✅
+
 ## [1.6.0] - 2026-07-11
 
 ### Added
