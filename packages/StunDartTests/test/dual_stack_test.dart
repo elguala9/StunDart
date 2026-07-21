@@ -36,21 +36,21 @@ void main() {
 
           print('\n✅ SUCCESS with ${server.name}!');
           print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          print('Your Public IPv6: ${response.publicIp}');
-          print('Your Public Port: ${response.publicPort}');
-          print('IP Version: ${response.ipVersion.value}');
+          print('Your Public IPv6: ${response.publicIp(InternetAddressType.IPv6)}');
+          print('Your Public Port: ${response.publicPort(InternetAddressType.IPv6)}');
+          print('IP Version: IPv6');
           print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
           handler.close();
 
           expect(
-            response.publicIp.isNotEmpty,
+            response.publicIp(InternetAddressType.IPv6) != null,
             isTrue,
             reason: 'Should receive an IPv6 address',
           );
-          expect(response.ipVersion, equals(IpVersion.v6));
+          expect(response.publicIp(InternetAddressType.IPv6), isNotNull);
           expect(
-            response.publicIp.contains(':'),
+            response.publicIp(InternetAddressType.IPv6)!.contains(':'),
             isTrue,
             reason: 'IPv6 addresses contain colons',
           );
@@ -92,8 +92,8 @@ void main() {
           final response4 = await handler4.performStunRequest().timeout(
             TestTimeouts.short,
           );
-          ipv4Addresses.add(response4.publicIp);
-          print('✅ IPv4 from $server: ${response4.publicIp}');
+          ipv4Addresses.add(response4.publicIp(InternetAddressType.IPv4)!);
+          print('✅ IPv4 from $server: ${response4.publicIp(InternetAddressType.IPv4)}');
           handler4.close();
         } catch (e) {
           print('❌ IPv4 failed from $server: $e');
@@ -118,8 +118,8 @@ void main() {
           final response6 = await handler6.performStunRequest().timeout(
             TestTimeouts.medium,
           );
-          ipv6Addresses.add(response6.publicIp);
-          print('✅ IPv6 from $server: ${response6.publicIp}');
+          ipv6Addresses.add(response6.publicIp(InternetAddressType.IPv6)!);
+          print('✅ IPv6 from $server: ${response6.publicIp(InternetAddressType.IPv6)}');
           handler6.close();
         } catch (e) {
           print('❌ IPv6 failed from $server: $e');

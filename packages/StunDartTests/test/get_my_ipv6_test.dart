@@ -35,14 +35,14 @@ void main() {
 
         print('\n✅ SUCCESS!');
         print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        print('Your Public IPv6: ${response.publicIp}');
-        print('Your Public Port: ${response.publicPort}');
-        print('IP Version: ${response.ipVersion.value}');
+        print('Your Public IPv6: ${response.publicIp(InternetAddressType.IPv6)}');
+        print('Your Public Port: ${response.publicPort(InternetAddressType.IPv6)}');
+        print('IP Version: IPv6');
         print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        expect(response.ipVersion, equals(IpVersion.v6));
+        expect(response.publicIp(InternetAddressType.IPv6), isNotNull);
         expect(
-          response.publicIp,
+          response.publicIp(InternetAddressType.IPv6),
           contains(':'),
           reason: 'IPv6 addresses contain colons',
         );
@@ -87,7 +87,7 @@ void main() {
         final handler4 = StunHandler(input4);
 
         final response4 = await handler4.performStunRequest();
-        ipv4Address = response4.publicIp;
+        ipv4Address = response4.publicIp(InternetAddressType.IPv4);
 
         print('IPv4 Address: $ipv4Address');
         handler4.close();
@@ -110,7 +110,7 @@ void main() {
         final handler6 = StunHandler(input6);
 
         final response6 = await handler6.performStunRequest();
-        ipv6Address = response6.publicIp;
+        ipv6Address = response6.publicIp(InternetAddressType.IPv6);
 
         print('IPv6 Address: $ipv6Address');
         handler6.close();

@@ -41,15 +41,15 @@ void main() {
           // Perform STUN request
           final response = await handler.performStunRequest();
 
-          print('Public IP: ${response.publicIp}');
-          print('Public Port: ${response.publicPort}');
+          print('Public IP: ${response.publicIp(InternetAddressType.IPv4)}');
+          print('Public Port: ${response.publicPort(InternetAddressType.IPv4)}');
 
-          publicIps.add(response.publicIp);
+          publicIps.add(response.publicIp(InternetAddressType.IPv4)!);
 
           // Verify response contains valid data
-          expect(response.publicIp, isNotEmpty);
-          expect(response.publicPort, greaterThan(0));
-          expect(response.publicPort, lessThan(65536));
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          expect(response.publicPort(InternetAddressType.IPv4), greaterThan(0));
+          expect(response.publicPort(InternetAddressType.IPv4), lessThan(65536));
         } catch (e) {
           print('Error querying ${server.address}: $e');
           // Add empty string to maintain list alignment
@@ -129,11 +129,11 @@ void main() {
 
       final localInfo = await handler.performLocalRequest();
 
-      print('Local IP: ${localInfo.localIp}');
-      print('Local Port: ${localInfo.localPort}');
+      print('Local IP: ${localInfo.localIpv4}');
+      print('Local Port: ${localInfo.localPortIpv4}');
 
-      expect(localInfo.localIp, isNotEmpty);
-      expect(localInfo.localPort, greaterThan(0));
+      expect(localInfo.localIpv4, isNotEmpty);
+      expect(localInfo.localPortIpv4, greaterThan(0));
 
       handler.close();
     });
@@ -158,7 +158,7 @@ void main() {
 
       final response = await handler.performStunRequest();
 
-      expect(response.publicIp, isNotEmpty);
+      expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
       handler.close();
     });
@@ -209,13 +209,13 @@ void main() {
         try {
           final response = await handler.performStunRequest();
 
-          print('Public IPv6: ${response.publicIp}');
-          print('Public Port: ${response.publicPort}');
-          print('IP Version: ${response.ipVersion.value}');
+          print('Public IPv6: ${response.publicIp(InternetAddressType.IPv6)}');
+          print('Public Port: ${response.publicPort(InternetAddressType.IPv6)}');
+          print('IP Version: IPv6');
 
-          expect(response.publicIp, isNotEmpty);
-          expect(response.publicPort, greaterThan(0));
-          expect(response.ipVersion, equals(IpVersion.v6));
+          expect(response.publicIp(InternetAddressType.IPv6), isNotEmpty);
+          expect(response.publicPort(InternetAddressType.IPv6), greaterThan(0));
+          expect(response.publicIp(InternetAddressType.IPv6), isNotNull);
         } catch (e) {
           print('IPv6 test failed (might not be available): $e');
           // IPv6 might not be available in all environments
@@ -303,8 +303,8 @@ void main() {
 
           // Verify handler can make STUN requests
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
-          expect(response.publicPort, greaterThan(0));
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          expect(response.publicPort(InternetAddressType.IPv4), greaterThan(0));
         } finally {
           handler.close();
         }
@@ -359,8 +359,8 @@ void main() {
         try {
           // Perform a successful STUN request
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
-          expect(response.publicPort, greaterThan(0));
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          expect(response.publicPort(InternetAddressType.IPv4), greaterThan(0));
 
           // Verify we have a valid socket
           final socket = handler.getSocket();
@@ -430,9 +430,9 @@ void main() {
 
           // Verify handler can make STUN requests
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
-          expect(response.publicPort, greaterThan(0));
-          expect(response.ipVersion, equals(IpVersion.v4));
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          expect(response.publicPort(InternetAddressType.IPv4), greaterThan(0));
+          expect(response.publicIp(InternetAddressType.IPv4), isNotNull);
         } finally {
           handler.close();
         }
@@ -481,8 +481,8 @@ void main() {
 
         // Perform STUN request with custom server
         final response = await handler.performStunRequest();
-        expect(response.publicIp, isNotEmpty);
-        expect(response.publicPort, greaterThan(0));
+        expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+        expect(response.publicPort(InternetAddressType.IPv4), greaterThan(0));
       } finally {
         handler.close();
       }
@@ -516,14 +516,14 @@ void main() {
         try {
           // First request
           final response1 = await handler.performStunRequest();
-          expect(response1.publicIp, isNotEmpty);
+          expect(response1.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // Second request on same handler
           final response2 = await handler.performStunRequest();
-          expect(response2.publicIp, isNotEmpty);
+          expect(response2.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // IPs should be the same since we're on the same socket
-          expect(response1.publicIp, equals(response2.publicIp));
+          expect(response1.publicIp(InternetAddressType.IPv4), equals(response2.publicIp(InternetAddressType.IPv4)));
         } finally {
           handler.close();
         }
@@ -541,7 +541,7 @@ void main() {
         try {
           // Perform request with initial server
           final response1 = await handler.performStunRequest();
-          expect(response1.publicIp, isNotEmpty);
+          expect(response1.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // Change server
           handler.setStunServer(
@@ -551,10 +551,10 @@ void main() {
 
           // Perform request with new server
           final response2 = await handler.performStunRequest();
-          expect(response2.publicIp, isNotEmpty);
+          expect(response2.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // Should still get valid responses
-          expect(response2.publicPort, greaterThan(0));
+          expect(response2.publicPort(InternetAddressType.IPv4), greaterThan(0));
         } finally {
           handler.close();
         }
@@ -592,11 +592,11 @@ void main() {
         // Get local network information
         final localInfo = await handler.performLocalRequest();
 
-        print('Local IP: ${localInfo.localIp}');
-        print('Local Port: ${localInfo.localPort}');
+        print('Local IP: ${localInfo.localIpv4}');
+        print('Local Port: ${localInfo.localPortIpv4}');
 
-        expect(localInfo.localIp, isNotEmpty);
-        expect(localInfo.localPort, greaterThan(0));
+        expect(localInfo.localIpv4, isNotEmpty);
+        expect(localInfo.localPortIpv4, greaterThan(0));
       } finally {
         handler.close();
       }
@@ -612,18 +612,18 @@ void main() {
         try {
           // First request - makes actual STUN call
           final response1 = await handler.performStunRequest();
-          expect(response1.publicIp, isNotEmpty);
-          expect(response1.publicPort, greaterThan(0));
+          expect(response1.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          expect(response1.publicPort(InternetAddressType.IPv4), greaterThan(0));
 
           // Second request - should return cached value (same IP:port)
           final response2 = await handler.performStunRequest();
-          expect(response2.publicIp, equals(response1.publicIp));
-          expect(response2.publicPort, equals(response1.publicPort));
+          expect(response2.publicIp(InternetAddressType.IPv4), equals(response1.publicIp(InternetAddressType.IPv4)));
+          expect(response2.publicPort(InternetAddressType.IPv4), equals(response1.publicPort(InternetAddressType.IPv4)));
 
           // Third request - still cached
           final response3 = await handler.performStunRequest();
-          expect(response3.publicIp, equals(response1.publicIp));
-          expect(response3.publicPort, equals(response1.publicPort));
+          expect(response3.publicIp(InternetAddressType.IPv4), equals(response1.publicIp(InternetAddressType.IPv4)));
+          expect(response3.publicPort(InternetAddressType.IPv4), equals(response1.publicPort(InternetAddressType.IPv4)));
 
           print('[Cache Test] STUN response cached successfully');
         } finally {
@@ -640,18 +640,18 @@ void main() {
         try {
           // First request - makes actual call
           final localInfo1 = await handler.performLocalRequest();
-          expect(localInfo1.localIp, isNotEmpty);
-          expect(localInfo1.localPort, greaterThan(0));
+          expect(localInfo1.localIpv4, isNotEmpty);
+          expect(localInfo1.localPortIpv4, greaterThan(0));
 
           // Second request - should return cached value
           final localInfo2 = await handler.performLocalRequest();
-          expect(localInfo2.localIp, equals(localInfo1.localIp));
-          expect(localInfo2.localPort, equals(localInfo1.localPort));
+          expect(localInfo2.localIpv4, equals(localInfo1.localIpv4));
+          expect(localInfo2.localPortIpv4, equals(localInfo1.localPortIpv4));
 
           // Third request - still cached
           final localInfo3 = await handler.performLocalRequest();
-          expect(localInfo3.localIp, equals(localInfo1.localIp));
-          expect(localInfo3.localPort, equals(localInfo1.localPort));
+          expect(localInfo3.localIpv4, equals(localInfo1.localIpv4));
+          expect(localInfo3.localPortIpv4, equals(localInfo1.localPortIpv4));
 
           print('[Cache Test] Local info cached successfully');
         } finally {
@@ -668,19 +668,19 @@ void main() {
         try {
           // First request - fills cache
           final response1 = await handler.performStunRequest();
-          expect(response1.publicIp, isNotEmpty);
-          final cachedIp = response1.publicIp;
+          expect(response1.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          final cachedIp = response1.publicIp(InternetAddressType.IPv4);
 
           // Verify second request returns cached response
           final response1b = await handler.performStunRequest();
-          expect(response1b.publicIp, equals(cachedIp));
+          expect(response1b.publicIp(InternetAddressType.IPv4), equals(cachedIp));
 
           // Force socket recreation by closing it
           handler.getSocket().close();
 
           // Next request will detect the closed socket, recreate it, and reset cache
           final response2 = await handler.performStunRequest();
-          expect(response2.publicIp, isNotEmpty);
+          expect(response2.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // After socket recreation, we should get a fresh response
           // (Cache was reset when socket was recreated)
@@ -691,7 +691,7 @@ void main() {
 
           // Verify we can still make requests with the new socket
           final response3 = await handler.performStunRequest();
-          expect(response3.publicIp, isNotEmpty);
+          expect(response3.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           print('[Cache Test] Cache invalidated on socket recreation');
         } finally {
@@ -708,23 +708,23 @@ void main() {
         try {
           // First request - fills cache
           final localInfo1 = await handler.performLocalRequest();
-          expect(localInfo1.localPort, greaterThan(0));
-          final cachedPort = localInfo1.localPort;
+          expect(localInfo1.localPortIpv4, greaterThan(0));
+          final cachedPort = localInfo1.localPortIpv4;
 
           // Verify cached request returns same port
           final localInfo1b = await handler.performLocalRequest();
-          expect(localInfo1b.localPort, equals(cachedPort));
+          expect(localInfo1b.localPortIpv4, equals(cachedPort));
 
           // Force socket recreation
           handler.getSocket().close();
 
           // Next request triggers socket recreation and cache reset
           final localInfo2 = await handler.performLocalRequest();
-          expect(localInfo2.localPort, greaterThan(0));
+          expect(localInfo2.localPortIpv4, greaterThan(0));
 
           // New request should use fresh socket
           final localInfo3 = await handler.performLocalRequest();
-          expect(localInfo3.localPort, greaterThan(0));
+          expect(localInfo3.localPortIpv4, greaterThan(0));
 
           print(
             '[Cache Test] Local info cache invalidated on socket recreation',
@@ -745,8 +745,8 @@ void main() {
           try {
             // First request
             final response1 = await handler.performStunRequest();
-            expect(response1.publicIp, isNotEmpty);
-            final originalIp = response1.publicIp;
+            expect(response1.publicIp(InternetAddressType.IPv4), isNotEmpty);
+            final originalIp = response1.publicIp(InternetAddressType.IPv4);
 
             // Change STUN server
             handler.setStunServer(
@@ -758,7 +758,7 @@ void main() {
             // (same socket = same public IP, regardless of STUN server)
             final response2 = await handler.performStunRequest();
             expect(
-              response2.publicIp,
+              response2.publicIp(InternetAddressType.IPv4),
               equals(originalIp),
               reason:
                   'Cache should return same IP even with different STUN server',
@@ -784,14 +784,14 @@ void main() {
             final response1 = await handler.performStunRequest();
             final localInfo1 = await handler.performLocalRequest();
 
-            expect(response1.publicIp, isNotEmpty);
-            expect(localInfo1.localPort, greaterThan(0));
+            expect(response1.publicIp(InternetAddressType.IPv4), isNotEmpty);
+            expect(localInfo1.localPortIpv4, greaterThan(0));
 
             // Verify both are cached (same results)
             final response1b = await handler.performStunRequest();
             final localInfo1b = await handler.performLocalRequest();
-            expect(response1b.publicIp, equals(response1.publicIp));
-            expect(localInfo1b.localPort, equals(localInfo1.localPort));
+            expect(response1b.publicIp(InternetAddressType.IPv4), equals(response1.publicIp(InternetAddressType.IPv4)));
+            expect(localInfo1b.localPortIpv4, equals(localInfo1.localPortIpv4));
 
             // Force recreation
             handler.getSocket().close();
@@ -801,8 +801,8 @@ void main() {
             final response2 = await handler.performStunRequest();
             final localInfo2 = await handler.performLocalRequest();
 
-            expect(response2.publicIp, isNotEmpty);
-            expect(localInfo2.localPort, greaterThan(0));
+            expect(response2.publicIp(InternetAddressType.IPv4), isNotEmpty);
+            expect(localInfo2.localPortIpv4, greaterThan(0));
 
             print('[Cache Test] Both caches invalidated on socket recreation');
           } finally {
@@ -822,7 +822,7 @@ void main() {
         try {
           // This should work fine with a 1-second timeout for a real STUN server
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
         } finally {
           handler.close();
         }
@@ -854,7 +854,7 @@ void main() {
         try {
           // Should not throw
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
         } finally {
           handler.close();
         }
@@ -875,7 +875,7 @@ void main() {
           try {
             // onLog should not crash
             final response = await handler.performStunRequest();
-            expect(response.publicIp, isNotEmpty);
+            expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
           } finally {
             handler.close();
           }
@@ -894,7 +894,7 @@ void main() {
           final localInfo = await handler.performLocalRequest();
           // IPv4 address should contain dots
           expect(
-            localInfo.localIp,
+            localInfo.localIpv4,
             matches(
               RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$|^127\.0\.0\.1$'),
             ),
@@ -916,7 +916,7 @@ void main() {
             final localInfo = await handler.performLocalRequest();
             // IPv6 address should contain colons
             expect(
-              localInfo.localIp.contains(':'),
+              localInfo.localIpv6!.contains(':'),
               isTrue,
               reason: 'IPv6 address should contain colons',
             );
@@ -1066,14 +1066,14 @@ void main() {
             // Next request will trigger socket recreation and cache reset
             // This should get a fresh response with a new timestamp
             final response2 = await handler.performStunRequest();
-            expect(response2.publicIp, isNotEmpty);
+            expect(response2.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
             // Timestamp should be set and potentially updated (depending on execution timing)
             expect(handler.lastStunUpdated, isNotNull);
 
             // The new response should have valid data
-            expect(response2.publicIp, isNotEmpty);
-            expect(response2.publicPort, greaterThan(0));
+            expect(response2.publicIp(InternetAddressType.IPv4), isNotEmpty);
+            expect(response2.publicPort(InternetAddressType.IPv4), greaterThan(0));
 
             print(
               '[Timestamp Test] Timestamps reset and updated on socket recreation',
@@ -1095,7 +1095,7 @@ void main() {
         try {
           // Should not crash when performing a request with no callback
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
         } finally {
           handler.close();
         }
@@ -1115,7 +1115,7 @@ void main() {
         try {
           // Perform a successful request (no socket error)
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // Callback should NOT have been called
           expect(
@@ -1142,12 +1142,12 @@ void main() {
         try {
           // First request (normal)
           final response1 = await handler.performStunRequest();
-          expect(response1.publicIp, isNotEmpty);
+          expect(response1.publicIp(InternetAddressType.IPv4), isNotEmpty);
           expect(callCount, equals(0));
 
           // Second request (cache hit)
           final response2 = await handler.performStunRequest();
-          expect(response2.publicIp, isNotEmpty);
+          expect(response2.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // Callback should still not have been called
           expect(
@@ -1207,7 +1207,7 @@ void main() {
             try {
               // Perform a normal request to verify callback doesn't fire
               final response = await handler.performStunRequest();
-              expect(response.publicIp, isNotEmpty);
+              expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
               // Callback should not have fired on normal request
               expect(
@@ -1240,7 +1240,7 @@ void main() {
           try {
             // Perform a normal request to verify callback doesn't fire
             final response = await handler.performStunRequest();
-            expect(response.publicIp, isNotEmpty);
+            expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
             // Callback should not have fired on normal request
             expect(
@@ -1270,7 +1270,7 @@ void main() {
         try {
           // Perform a normal request
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
           expect(
             callLog,
             isEmpty,
@@ -1297,7 +1297,7 @@ void main() {
         try {
           // Perform a normal request to verify correct data handling
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // Callback doesn't fire on normal request, so captured should be null
           expect(capturedNew, isNull);
@@ -1315,8 +1315,8 @@ void main() {
           port: StunServers.defaultPort,
           onSocketRefresh: (newRes, oldRes) {
             capturedData.add({
-              'newIp': newRes.publicIp,
-              'newPort': newRes.publicPort,
+              'newIp': newRes.publicIp(InternetAddressType.IPv4),
+              'newPort': newRes.publicPort(InternetAddressType.IPv4),
               'oldResponse': oldRes,
             });
           },
@@ -1324,7 +1324,7 @@ void main() {
 
         try {
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
           // On normal request, callback not fired, so no data captured
           expect(capturedData, isEmpty);
@@ -1389,7 +1389,7 @@ void main() {
           try {
             // Should not crash even with no callback
             final response = await handler.performStunRequest();
-            expect(response.publicIp, isNotEmpty);
+            expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
           } finally {
             handler.close();
           }
@@ -1407,7 +1407,7 @@ void main() {
 
         // Perform a request
         final response = await handler.performStunRequest();
-        expect(response.publicIp, isNotEmpty);
+        expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
         // Close handler (should clean up callback handler)
         handler.close();
@@ -1427,11 +1427,11 @@ void main() {
 
         try {
           final response = await handler.performStunRequest();
-          expect(response.publicIp, isNotEmpty);
-          expect(response.publicPort, greaterThan(0));
-          expect(response.ipVersion, isNotNull);
-          expect(response.transactionId, isNotNull);
-          expect(response.raw, isNotNull);
+          expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          expect(response.publicPort(InternetAddressType.IPv4), greaterThan(0));
+          expect(response.publicIp(InternetAddressType.IPv4), isNotNull);
+          expect(response.transactionId(InternetAddressType.IPv4), isNotNull);
+          expect(response.raw(InternetAddressType.IPv4), isNotNull);
         } finally {
           handler.close();
         }
@@ -1463,8 +1463,8 @@ void main() {
             final resp1 = await handler1.performStunRequest();
             final resp2 = await handler2.performStunRequest();
 
-            expect(resp1.publicIp, isNotEmpty);
-            expect(resp2.publicIp, isNotEmpty);
+            expect(resp1.publicIp(InternetAddressType.IPv4), isNotEmpty);
+            expect(resp2.publicIp(InternetAddressType.IPv4), isNotEmpty);
 
             // On normal requests, callbacks don't fire
             expect(totalCalls, equals(0));
@@ -1492,7 +1492,7 @@ void main() {
             });
 
             final response = await handler.performStunRequest();
-            expect(response.publicIp, isNotEmpty);
+            expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
             expect(callCount, equals(0)); // No callback on normal request
           } finally {
             handler.close();

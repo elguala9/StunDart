@@ -114,7 +114,7 @@ class StunHandler
   static Future<StunHandler> withoutSocket({
     String? address,
     int? port,
-    bool ipv6 = true,
+    bool ipv6 = false,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
     OnSocketRefresh? onSocketRefresh,

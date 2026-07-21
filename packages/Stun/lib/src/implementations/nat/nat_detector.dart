@@ -5,6 +5,7 @@ import '../../mixins/nat_detector_mixin.dart';
 import '../../mixins/stun_logger_mixin.dart';
 import '../../mixins/stun_server_resolver_mixin.dart';
 import '../../types/stun_types.dart';
+import '../config/stun_config.dart';
 
 /// NAT Type Detector implementing RFC 5780 NAT Behavior Discovery
 ///
@@ -31,12 +32,19 @@ class NATDetector
   /// - [primaryServer]: STUN server hostname or IP address
   /// - [primaryPort]: STUN server port (typically 3478 or 19302)
   /// - [socket]: UDP socket to use for communication
+  /// - [secondaryServer]: Optional independent STUN server used as Test 3
+  ///   fallback when the primary server does not advertise an alternate
+  ///   address (OTHER-ADDRESS/CHANGED-ADDRESS). Must resolve to a different
+  ///   IP than [primaryServer] to be meaningful for symmetric NAT detection.
+  /// - [secondaryPort]: Port of the secondary STUN server
   /// - [timeout]: Maximum time to wait for each test response
   /// - [onLog]: Optional logging callback
   NATDetector({
     required this.primaryServer,
     required this.primaryPort,
     required this.socket,
+    this.secondaryServer,
+    this.secondaryPort,
     this.timeout = const Duration(seconds: 5),
     this.onLog,
   }) {
@@ -44,11 +52,41 @@ class NATDetector
     socketStream = socket.asBroadcastStream();
   }
 
+  /// Creates a NAT detector with default constant configuration
+  /// ([defaultNatDetectorConfig]) and a self-bound IPv4 socket.
+  ///
+  /// The detector owns the socket: call `detector.socket.close()` when done.
+  ///
+  /// Example:
+  /// ```dart
+  /// final detector = await NATDetector.withDefaults();
+  /// final result = await detector.detectNATType();
+  /// print('NAT Type: ${result.natType.displayName}');
+  /// detector.socket.close();
+  /// ```
+  static Future<NATDetector> withDefaults() async {
+    final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+    return NATDetector(
+      primaryServer: defaultNatDetectorConfig.primaryServer,
+      primaryPort: defaultNatDetectorConfig.primaryPort,
+      socket: socket,
+      secondaryServer: defaultNatDetectorConfig.secondaryServer,
+      secondaryPort: defaultNatDetectorConfig.secondaryPort,
+      timeout: defaultNatDetectorConfig.timeout,
+    );
+  }
+
   @override
   final String primaryServer;
 
   @override
   final int primaryPort;
+
+  @override
+  final String? secondaryServer;
+
+  @override
+  final int? secondaryPort;
 
   @override
   final RawDatagramSocket socket;
@@ -175,9 +213,18 @@ class NATDetector
 
       log('[NATDetector] Test 2 filtered - NAT is present');
 
-      // Test 3: Request to alternate server address (if OTHER-ADDRESS available)
-      if (_alternateIp != null && _alternatePort != null) {
-        log('[NATDetector] Running Test 3 to alternate server...');
+      // Test 3: Request to alternate server address (if OTHER-ADDRESS
+      // available, otherwise fall back to the configured secondary server)
+      final hasAlternate = _alternateIp != null && _alternatePort != null;
+      final hasSecondary = secondaryServer != null && secondaryPort != null;
+
+      if (hasAlternate || hasSecondary) {
+        log(
+          hasAlternate
+              ? '[NATDetector] Running Test 3 to alternate server...'
+              : '[NATDetector] Running Test 3 to secondary server '
+                    '$secondaryServer:$secondaryPort...',
+        );
         final test3Result = await performTest3();
         diagnostics['test3'] = test3Result.toMap();
 
@@ -193,7 +240,10 @@ class NATDetector
           );
         }
       } else {
-        log('[NATDetector] No alternate server available, skipping Test 3');
+        log(
+          '[NATDetector] No alternate or secondary server available, '
+          'skipping Test 3',
+        );
         diagnostics['test3'] = {
           'skipped': true,
           'reason': 'No alternate address',

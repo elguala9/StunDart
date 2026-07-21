@@ -56,25 +56,32 @@ class StunRequestHandler with StunLoggerMixin, StunServerResolverMixin {
         // Extract public IP and port from XOR-MAPPED-ADDRESS
         if (xorMappedAddr != null && !completer.isCompleted) {
           final ipVersion = isIPv6Socket ? IpVersion.v6 : IpVersion.v4;
-          final response = (
+          final attrs = <String, dynamic>{
+            'transactionId': stunResponse.transactionId,
+          };
+          final response = StunResponse((
             publicIp: xorMappedAddr.ip,
             publicPort: xorMappedAddr.port,
             ipVersion: ipVersion,
             transactionId: stunResponse.transactionId,
             raw: datagram.data,
-            attrs: {'transactionId': stunResponse.transactionId},
-          );
+            attrs: attrs,
+          ), null);
 
-          // Format address correctly based on IP version
+          final addrType = isIPv6Socket
+              ? InternetAddressType.IPv6
+              : InternetAddressType.IPv4;
+          final publicIp = response.publicIp(addrType)!;
+          final publicPort = response.publicPort(addrType)!;
           final addressDisplay = ipVersion == IpVersion.v6
-              ? '[${response.publicIp}]:${response.publicPort}'
-              : '${response.publicIp}:${response.publicPort}';
+              ? '[$publicIp]:$publicPort'
+              : '$publicIp:$publicPort';
 
           log(
-            '[StunHandler] STUN response: $addressDisplay (${response.ipVersion.value})',
+            '[StunHandler] STUN response: $addressDisplay ($ipVersion)',
           );
           log(
-            '[StunHandler] Port mapping: Local ${socket.port} -> Public ${response.publicPort}',
+            '[StunHandler] Port mapping: Local ${socket.port} -> Public $publicPort',
           );
 
           subscription?.cancel();

@@ -5,10 +5,16 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Optional secondary server for NAT detection**: `NATDetector` now accepts `secondaryServer`/`secondaryPort`. When the primary STUN server does not advertise an alternate address (OTHER-ADDRESS/CHANGED-ADDRESS), Test 3 falls back to the secondary server, enabling symmetric NAT detection against servers without RFC 5780/3489 support (e.g. Google STUN). Test 3 fails explicitly if the secondary server resolves to the same endpoint as the primary.
+- **`NATDetector.withDefaults()`**: zero-argument async factory that binds its own IPv4 socket and uses the constant defaults from `defaultNatDetectorConfig` (Google STUN primary + secondary, 5s timeout). The caller closes the socket via `detector.socket.close()`.
+
 ## [1.6.1] - 2026-07-15
 
 ### Changed
-- **Internal refactor into mixins** (`src/mixins/`): shared logic extracted from `StunHandler`, `DualStunHandler`, `NATDetector`, `StunMessage`, `StunHandlerBase`, `HandlerFactory`, and `StunSocketManager` into reusable mixins (`StunHandlerMixin`, `DualStunHandlerMixin`, `NatDetectorMixin`, `StunMessageMixin`, `StunHandlerBaseMixin`, `HandlerFactoryMixin`, `DualHandlerSelectorMixin`, `StunServerResolverMixin`, `StunLoggerMixin`, `DestroyableHandlerMixin`). No public API changes — fully backward compatible.
+- **Internal refactor into mixins** (`src/mixins/`): shared logic extracted from `StunHandler`, `DualStunHandler`, `NATDetector`, `StunMessage`, `StunHandlerBase`, `HandlerFactory`, and `StunSocketManager` into reusable mixins (`StunHandlerMixin`, `DualStunHandlerMixin`, `NatDetectorMixin`, `StunMessageMixin`, `StunHandlerBaseMixin`, `HandlerFactoryMixin`, `HandlerSelectorMixin`, `StunServerResolverMixin`, `StunLoggerMixin`, `DestroyableHandlerMixin`). No public API changes — fully backward compatible.
 
 ### Tests
 - 223 tests passing ✅
