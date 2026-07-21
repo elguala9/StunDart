@@ -1,5 +1,5 @@
 import 'dart:io';
-import '../../mixins/stun_logger_mixin.dart';
+import '../../mixins/single/stun_logger_mixin.dart';
 import '../../types/stun_types.dart';
 
 /// Manages socket lifecycle, caching, and local IP resolution

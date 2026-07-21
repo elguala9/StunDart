@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 import 'dart:math';
-import '../config/stun_constants.dart';
-import '../../mixins/stun_message_mixin.dart';
+import '../../config/stun_constants.dart';
+import '../../mixins/single/stun_message_mixin.dart';
 
 // Re-export types from stun_constants for convenience
-export '../config/stun_constants.dart' show StunMessageType, StunAttributeType;
+export '../../config/stun_constants.dart' show StunMessageType, StunAttributeType;
 
 /// STUN Message class for encoding/decoding STUN packets
 class StunMessage with StunMessageMixin {

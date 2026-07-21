@@ -1,6 +1,8 @@
-﻿import 'package:singleton_manager/singleton_manager.dart';
+import 'dart:io';
 
-import '../../interfaces/i_dual_stun_handler_singleton.dart';
+import 'package:singleton_manager/singleton_manager.dart';
+
+import '../../interfaces/dual/i_dual_stun_handler_singleton.dart';
 import 'dual_stun_handler_base.dart';
 import 'singleton_handler_factory.dart';
 
@@ -16,7 +18,7 @@ class DualStunHandlerSingleton extends DualStunHandlerBase
 
   @override
   Future<void> initializeDI() async {
-    if (dualHandler.getHandler(ipv6: false) == null) {
+    if (dualHandler.getHandler(type: InternetAddressType.IPv4) == null) {
       throw StateError(
         'DualStunHandlerSingleton: call initialize() before initializeDI().',
       );

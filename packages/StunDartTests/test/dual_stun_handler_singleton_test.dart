@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 import 'test_constants.dart';
@@ -197,7 +197,7 @@ void main() {
       );
     });
 
-    test('replaceHandler(mock, ipv6: true) replaces only IPv6', () async {
+    test('replaceHandler(mock, type: InternetAddressType.IPv6) replaces only IPv6', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
@@ -208,17 +208,17 @@ void main() {
       final newHandler = await StunHandler.withoutSocket(
         address: StunServers.googleStun1,
         port: StunServers.defaultPort,
-        ipv6: true,
+        type: InternetAddressType.IPv6,
       );
 
-      singleton.replaceHandler(newHandler, ipv6: true);
+      singleton.replaceHandler(newHandler, type: InternetAddressType.IPv6);
 
       // IPv4 should still be the original
       final currentIpv4 = singleton.ipv4Handler;
       expect(identical(originalIpv4, currentIpv4), isTrue);
     });
 
-    test('replaceHandler(mock, ipv6: false) replaces only IPv4', () async {
+    test('replaceHandler(mock, type: InternetAddressType.IPv4) replaces only IPv4', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
@@ -228,17 +228,17 @@ void main() {
       final newHandler = await StunHandler.withoutSocket(
         address: StunServers.googleStun1,
         port: StunServers.defaultPort,
-        ipv6: false,
+        type: InternetAddressType.IPv4,
       );
 
-      singleton.replaceHandler(newHandler, ipv6: false);
+      singleton.replaceHandler(newHandler, type: InternetAddressType.IPv4);
 
       // Should use the new handler
       final socket = singleton.ipv4Handler!.getSocket();
       expect(socket, isNotNull);
     });
 
-    test('setStunServer with ipv6: null sets both handlers', () async {
+    test('setStunServer with type: null sets both handlers', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
@@ -246,10 +246,10 @@ void main() {
       );
 
       // Should not throw
-      singleton.setStunServer(StunServers.googleStun1, 19302, ipv6: null);
+      singleton.setStunServer(StunServers.googleStun1, 19302, type: null);
     });
 
-    test('setStunServer with ipv6: false sets only IPv4', () async {
+    test('setStunServer with type: InternetAddressType.IPv4 sets only IPv4', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
@@ -257,11 +257,11 @@ void main() {
       );
 
       // Should not throw
-      singleton.setStunServer(StunServers.googleStun1, 19302, ipv6: false);
+      singleton.setStunServer(StunServers.googleStun1, 19302, type: InternetAddressType.IPv4);
     });
 
     test(
-      'setStunServer with ipv6: true sets only IPv6 (if available)',
+      'setStunServer with type: InternetAddressType.IPv6 sets only IPv6 (if available)',
       () async {
         final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
@@ -270,37 +270,37 @@ void main() {
         );
 
         // Should not throw even if IPv6 not available
-        singleton.setStunServer(StunServers.googleStun1, 19302, ipv6: true);
+        singleton.setStunServer(StunServers.googleStun1, 19302, type: InternetAddressType.IPv6);
       },
     );
 
-    test('close(ipv6: false) closes IPv4', () async {
+    test('close(type: InternetAddressType.IPv4) closes IPv4', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
       );
 
-      singleton.close(ipv6: false);
+      singleton.close(type: InternetAddressType.IPv4);
 
       // IPv4 should throw
       expect(
-        () => singleton.getSocket(ipv6: false),
+        () => singleton.getSocket(type: InternetAddressType.IPv4),
         throwsA(isA<StateError>()),
       );
     });
 
-    test('close(ipv6: true) closes IPv6 (if available)', () async {
+    test('close(type: InternetAddressType.IPv6) closes IPv6 (if available)', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
       );
 
-      singleton.close(ipv6: true);
+      singleton.close(type: InternetAddressType.IPv6);
 
       // IPv4 should still work
-      final ipv4Socket = singleton.getSocket(ipv6: false);
+      final ipv4Socket = singleton.getSocket(type: InternetAddressType.IPv4);
       expect(ipv4Socket, isNotNull);
 
       // IPv6 should not be accessible
@@ -319,7 +319,7 @@ void main() {
 
       // IPv4 should throw
       expect(
-        () => singleton.getSocket(ipv6: false),
+        () => singleton.getSocket(type: InternetAddressType.IPv4),
         throwsA(isA<StateError>()),
       );
 
@@ -327,19 +327,19 @@ void main() {
       expect(singleton.ipv6Handler, isNull);
     });
 
-    test('getSocket(ipv6: false) returns IPv4 socket', () async {
+    test('getSocket(type: InternetAddressType.IPv4) returns IPv4 socket', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
       );
 
-      final socket = singleton.getSocket(ipv6: false);
+      final socket = singleton.getSocket(type: InternetAddressType.IPv4);
       expect(socket, isNotNull);
       expect(socket.address.type, equals(InternetAddressType.IPv4));
     });
 
-    test('getSocket(ipv6: true) returns IPv6 socket if available', () async {
+    test('getSocket(type: InternetAddressType.IPv6) returns IPv6 socket if available', () async {
       final singleton = DualStunHandlerSingleton.instance;
       try {
         await singleton.initialize(
@@ -348,13 +348,13 @@ void main() {
         );
 
         if (singleton.ipv6Handler != null) {
-          final socket = singleton.getSocket(ipv6: true);
+          final socket = singleton.getSocket(type: InternetAddressType.IPv6);
           expect(socket, isNotNull);
           expect(socket.address.type, equals(InternetAddressType.IPv6));
         } else {
           // Should throw if IPv6 not available
           expect(
-            () => singleton.getSocket(ipv6: true),
+            () => singleton.getSocket(type: InternetAddressType.IPv6),
             throwsA(isA<StateError>()),
           );
         }
@@ -363,18 +363,18 @@ void main() {
       }
     });
 
-    test('pingStunServer(ipv6: false) pings IPv4', () async {
+    test('pingStunServer(type: InternetAddressType.IPv4) pings IPv4', () async {
       final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
       );
 
-      final reachable = await singleton.pingStunServer(ipv6: false);
+      final reachable = await singleton.pingStunServer(type: InternetAddressType.IPv4);
       expect(reachable, isTrue);
     });
 
-    test('pingStunServer(ipv6: true) pings IPv6 if available', () async {
+    test('pingStunServer(type: InternetAddressType.IPv6) pings IPv6 if available', () async {
       final singleton = DualStunHandlerSingleton.instance;
       try {
         await singleton.initialize(
@@ -383,11 +383,11 @@ void main() {
         );
 
         if (singleton.ipv6Handler != null) {
-          final reachable = await singleton.pingStunServer(ipv6: true);
+          final reachable = await singleton.pingStunServer(type: InternetAddressType.IPv6);
           expect(reachable, isTrue);
         } else {
           expect(
-            () => singleton.pingStunServer(ipv6: true),
+            () => singleton.pingStunServer(type: InternetAddressType.IPv6),
             throwsA(isA<StateError>()),
           );
         }

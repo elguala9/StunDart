@@ -400,27 +400,27 @@ void main() {
       expect(dual.ipv6Handler, same(handler));
     });
 
-    test('replaceHandler(ipv6: false) throws ArgumentError given an IPv6 '
+    test('replaceHandler(type: InternetAddressType.IPv4) throws ArgumentError given an IPv6 '
         'socket handler', () async {
       final dual = DualStunHandler();
 
       expect(
         () => dual.replaceHandler(
           _SuccessHandler(ipv6Socket, _ipv6Response, ipVersion: IpVersion.v6),
-          ipv6: false,
+          type: InternetAddressType.IPv4,
         ),
         throwsA(isA<ArgumentError>()),
       );
     });
 
-    test('replaceHandler(ipv6: true) throws ArgumentError given an IPv4 '
+    test('replaceHandler(type: InternetAddressType.IPv6) throws ArgumentError given an IPv4 '
         'socket handler', () async {
       final dual = DualStunHandler();
 
       expect(
         () => dual.replaceHandler(
           _SuccessHandler(ipv4Socket, _ipv4Response, ipVersion: IpVersion.v4),
-          ipv6: true,
+          type: InternetAddressType.IPv6,
         ),
         throwsA(isA<ArgumentError>()),
       );
@@ -503,7 +503,7 @@ void main() {
       );
     });
 
-    test('getSocket(ipv6: false) throws StateError after clearIpv4Handler',
+    test('getSocket(type: InternetAddressType.IPv4) throws StateError after clearIpv4Handler',
         () async {
       final dual = DualStunHandler();
       dual.setIpv4Handler(
@@ -513,12 +513,12 @@ void main() {
       dual.clearIpv4Handler();
 
       expect(
-        () => dual.getSocket(ipv6: false),
+        () => dual.getSocket(type: InternetAddressType.IPv4),
         throwsA(isA<StateError>()),
       );
     });
 
-    test('pingStunServer(ipv6: false) throws StateError after '
+    test('pingStunServer(type: InternetAddressType.IPv4) throws StateError after '
         'clearIpv4Handler', () async {
       final dual = DualStunHandler();
       dual.setIpv4Handler(
@@ -528,7 +528,7 @@ void main() {
       dual.clearIpv4Handler();
 
       expect(
-        () => dual.pingStunServer(ipv6: false),
+        () => dual.pingStunServer(type: InternetAddressType.IPv4),
         throwsA(isA<StateError>()),
       );
     });

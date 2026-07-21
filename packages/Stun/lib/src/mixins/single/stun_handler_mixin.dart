@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:meta/meta.dart';
 
-import '../implementations/request/stun_request_handler.dart';
-import '../implementations/socket/stun_socket_manager.dart';
-import '../implementations/socket/stun_socket_refresh_manager.dart';
-import '../types/stun_types.dart';
+import '../../implementations/single/stun_request_handler.dart';
+import '../../implementations/single/stun_socket_manager.dart';
+import '../../implementations/single/stun_socket_refresh_manager.dart';
+import '../../types/stun_types.dart';
 import 'stun_logger_mixin.dart';
 
 /// Internal-only behavior of `StunHandler`: cached STUN/local requests,

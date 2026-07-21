@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../mixins/nat_detector_mixin.dart';
-import '../../mixins/stun_logger_mixin.dart';
-import '../../mixins/stun_server_resolver_mixin.dart';
-import '../../types/stun_types.dart';
+import 'nat_detector_mixin.dart';
+import '../mixins/single/stun_logger_mixin.dart';
+import '../mixins/single/stun_server_resolver_mixin.dart';
+import '../types/stun_types.dart';
 import '../config/stun_config.dart';
 
 /// NAT Type Detector implementing RFC 5780 NAT Behavior Discovery

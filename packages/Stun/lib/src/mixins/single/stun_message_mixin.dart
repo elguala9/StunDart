@@ -2,8 +2,8 @@ import 'dart:typed_data';
 
 import 'package:meta/meta.dart';
 
-import '../implementations/config/stun_constants.dart';
-import '../implementations/request/stun_message.dart';
+import '../../config/stun_constants.dart';
+import '../../implementations/single/stun_message.dart';
 
 /// Internal-only attribute-parsing behavior of `StunMessage`. The mixing
 /// class provides the raw attributes and transaction ID. Not part of the

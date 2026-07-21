@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:async';
 
 import './stun_message.dart';
-import '../../mixins/stun_logger_mixin.dart';
-import '../../mixins/stun_server_resolver_mixin.dart';
+import '../../mixins/single/stun_logger_mixin.dart';
+import '../../mixins/single/stun_server_resolver_mixin.dart';
 import '../../types/stun_types.dart';
 
 /// Handles core STUN request/response logic
@@ -35,7 +35,7 @@ class StunRequestHandler with StunLoggerMixin, StunServerResolverMixin {
     log('[StunHandler] Local socket: ${socket.address}:${socket.port}');
 
     // Send request to STUN server
-    final targetAddr = await resolveStunServer(stunAddress, ipv6: isIPv6Socket);
+    final targetAddr = await resolveStunServer(stunAddress, type: socket.address.type);
     log('[StunHandler] Sending STUN request to $targetAddr:$stunPort');
 
     socket.send(requestBytes, targetAddr, stunPort);

@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
 
-import '../implementations/singleton/dual_stun_handler_base.dart';
-import '../interfaces/i_dual_callback_handler.dart';
-import '../interfaces/i_dual_stun_handler.dart';
+import '../implementations/dual/dual_stun_handler_base.dart';
+import '../interfaces/dual/i_dual_callback_handler.dart';
+import '../interfaces/dual/i_dual_stun_handler.dart';
 import '../interfaces/i_stun_handler_base.dart';
 import 'stun_builder.dart';
 

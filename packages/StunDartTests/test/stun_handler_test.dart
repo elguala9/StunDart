@@ -380,7 +380,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
-          ipv6: true,
+          type: InternetAddressType.IPv6,
         );
 
         try {
@@ -418,7 +418,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
-          ipv6: false,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -444,7 +444,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
-          ipv6: true,
+          type: InternetAddressType.IPv6,
         );
 
         try {
@@ -888,7 +888,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
-          ipv6: false,
+          type: InternetAddressType.IPv4,
         );
         try {
           final localInfo = await handler.performLocalRequest();
@@ -910,7 +910,7 @@ void main() {
           final handler = await StunHandler.withoutSocket(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
-            ipv6: true,
+            type: InternetAddressType.IPv6,
           );
           try {
             final localInfo = await handler.performLocalRequest();
