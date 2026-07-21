@@ -2,14 +2,14 @@ import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:singleton_manager/singleton_manager.dart';
-import '../../interfaces/i_dual_callback_handler.dart';
-import '../../interfaces/i_dual_stun_handler.dart';
-import '../../interfaces/i_stun_handler.dart';
+import '../../interfaces/dual/i_dual_callback_handler.dart';
+import '../../interfaces/dual/i_dual_stun_handler.dart';
+import '../../interfaces/single/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_base.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
-import '../../mixins/handler_selector_mixin.dart';
-import '../../mixins/dual_handler_delegation_mixin.dart';
-import '../handlers/dual_stun_handler.dart';
+import '../../mixins/dual/handler_selector_mixin.dart';
+import '../../mixins/dual/dual_handler_delegation_mixin.dart';
+import 'dual_stun_handler.dart';
 import 'dual_callback_handler.dart';
 import 'singleton_handler_factory.dart';
 
@@ -47,7 +47,7 @@ class DualStunHandlerBase
     IStunHandler? ipv4;
     try {
       ipv4 = await factory.createHandler(
-        ipv6: false,
+        type: InternetAddressType.IPv4,
         address: address,
         port: port,
         timeout: timeout,
@@ -55,15 +55,15 @@ class DualStunHandlerBase
       );
     } catch (_) {}
     if (ipv4 != null) {
-      dualHandlerProtected.setHandler(ipv4, ipv6: false);
+      dualHandlerProtected.setHandler(ipv4, type: InternetAddressType.IPv4);
     } else {
-      dualHandlerProtected.clearHandler(ipv6: false);
+      dualHandlerProtected.clearHandler(type: InternetAddressType.IPv4);
     }
 
     IStunHandler? ipv6;
     try {
       ipv6 = await factory.createHandler(
-        ipv6: true,
+        type: InternetAddressType.IPv6,
         address: address,
         port: port,
         timeout: timeout,
@@ -71,9 +71,9 @@ class DualStunHandlerBase
       );
     } catch (_) {}
     if (ipv6 != null) {
-      dualHandlerProtected.setHandler(ipv6, ipv6: true);
+      dualHandlerProtected.setHandler(ipv6, type: InternetAddressType.IPv6);
     } else {
-      dualHandlerProtected.clearHandler(ipv6: true);
+      dualHandlerProtected.clearHandler(type: InternetAddressType.IPv6);
     }
 
     if (ipv4 == null && ipv6 == null) {
@@ -88,17 +88,17 @@ class DualStunHandlerBase
     IStunHandler ipv4Handler, {
     IStunHandler? ipv6Handler,
   }) async {
-    dualHandlerProtected.setHandler(ipv4Handler, ipv6: false);
+    dualHandlerProtected.setHandler(ipv4Handler, type: InternetAddressType.IPv4);
     ipv4Handler.addOnSocketRefresh(callbacks.getOn(type: InternetAddressType.IPv4));
     if (ipv6Handler != null) {
       dualHandlerProtected.setHandler(
         ipv6Handler,
-        ipv6: true,
+        type: InternetAddressType.IPv6,
       );
       ipv6Handler
           .addOnSocketRefresh(callbacks.getOn(type: InternetAddressType.IPv6));
     } else {
-      dualHandlerProtected.clearHandler(ipv6: true);
+      dualHandlerProtected.clearHandler(type: InternetAddressType.IPv6);
     }
   }
 }

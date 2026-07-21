@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import '../implementations/handlers/dual_stun_handler.dart';
-import '../implementations/handlers/stun_handler.dart';
-import '../implementations/singleton/dual_callback_handler.dart';
-import '../interfaces/i_dual_callback_handler.dart';
-import '../interfaces/i_dual_stun_handler.dart';
+import '../implementations/dual/dual_stun_handler.dart';
+import '../implementations/single/stun_handler.dart';
+import '../implementations/dual/dual_callback_handler.dart';
+import '../interfaces/dual/i_dual_callback_handler.dart';
+import '../interfaces/dual/i_dual_stun_handler.dart';
 
 /// Builds and wires an [IDualStunHandler] and [IDualCallbackHandler] from
 /// pre-bound sockets. Shared by both the [SingletonDIAccess] and
@@ -28,7 +28,7 @@ buildStunHandlers(
       timeout: timeout,
       onSocketRefresh: dualCallback.getOn(type: InternetAddressType.IPv4),
     ),
-    ipv6: false,
+    type: InternetAddressType.IPv4,
   );
 
   if (ipv6Socket != null) {
@@ -40,7 +40,7 @@ buildStunHandlers(
         timeout: timeout,
         onSocketRefresh: dualCallback.getOn(type: InternetAddressType.IPv6),
       ),
-      ipv6: true,
+      type: InternetAddressType.IPv6,
     );
   }
 

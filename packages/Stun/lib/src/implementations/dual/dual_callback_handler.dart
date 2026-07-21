@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:callback_handler/callback_handler.dart';
 
 import '../../types/stun_types.dart';
-import '../../interfaces/i_dual_callback_handler.dart';
+import '../../interfaces/dual/i_dual_callback_handler.dart';
 
 /// Manages the dual IPv4/IPv6 socket refresh callback dispatchers
 class DualCallbackHandler implements IDualCallbackHandler {

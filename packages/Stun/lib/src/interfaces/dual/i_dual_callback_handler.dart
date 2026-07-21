@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import '../types/stun_types.dart';
+import '../../types/stun_types.dart';
 
 abstract interface class IDualCallbackHandler {
   OnSocketRefresh getOn({InternetAddressType type = InternetAddressType.IPv6});

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
-import 'package:stun/src/implementations/singleton/dual_stun_handler_base.dart';
+import 'package:stun/src/implementations/dual/dual_stun_handler_base.dart';
 import 'package:stun/src/initial_point/initial_point_registry.dart';
 import 'package:stun/src/interfaces/i_stun_handler_base.dart';
 import 'package:test/test.dart';

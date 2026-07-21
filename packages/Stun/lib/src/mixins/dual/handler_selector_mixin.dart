@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:meta/meta.dart';
 
-import '../interfaces/i_stun_handler.dart';
+import '../../interfaces/single/i_stun_handler.dart';
 
 /// Internal-only shared IPv4/IPv6 handler selection behavior.
 ///
@@ -9,16 +11,16 @@ import '../interfaces/i_stun_handler.dart';
 /// API — do not export it from `stun.dart`.
 @internal
 mixin HandlerSelectorMixin {
-  IStunHandler? handler({required bool ipv6});
+  IStunHandler? handler({required InternetAddressType type});
 
   /// Message used by [requireHandler] when the requested handler is missing.
-  String missingHandlerMessage({required bool ipv6});
+  String missingHandlerMessage({required InternetAddressType type});
 
   /// Returns the requested handler, throwing [StateError] when unavailable.
-  IStunHandler requireHandler({required bool ipv6}) {
-    final h = handler(ipv6: ipv6);
+  IStunHandler requireHandler({required InternetAddressType type}) {
+    final h = handler(type: type);
     if (h == null) {
-      throw StateError(missingHandlerMessage(ipv6: ipv6));
+      throw StateError(missingHandlerMessage(type: type));
     }
     return h;
   }

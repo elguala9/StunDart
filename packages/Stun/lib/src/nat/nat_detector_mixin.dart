@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:meta/meta.dart';
 
-import '../implementations/request/stun_message.dart';
+import '../implementations/single/stun_message.dart';
 import '../types/stun_types.dart';
-import 'stun_logger_mixin.dart';
-import 'stun_server_resolver_mixin.dart';
+import '../mixins/single/stun_logger_mixin.dart';
+import '../mixins/single/stun_server_resolver_mixin.dart';
 
 /// Internal result of a single NAT detection test.
 @internal
@@ -84,7 +84,7 @@ mixin NATDetectorMixin on StunLoggerMixin, StunServerResolverMixin {
   /// Whether the server supports RFC 5780 (stored by the mixing class).
   bool get rfc5780Supported;
 
-  bool get _isIPv6Socket => socket.address.type == InternetAddressType.IPv6;
+  InternetAddressType get _socketType => socket.address.type;
 
   /// Test 1: Normal binding request to primary server
   Future<NATTestResult> performTest1() async {
@@ -92,7 +92,7 @@ mixin NATDetectorMixin on StunLoggerMixin, StunServerResolverMixin {
       final request = StunMessage.createBindingRequest();
       final serverAddr = await resolveStunServer(
         primaryServer,
-        ipv6: _isIPv6Socket,
+        type: _socketType,
       );
 
       final response = await sendAndReceive(
@@ -152,7 +152,7 @@ mixin NATDetectorMixin on StunLoggerMixin, StunServerResolverMixin {
       );
       final serverAddr = await resolveStunServer(
         primaryServer,
-        ipv6: _isIPv6Socket,
+        type: _socketType,
       );
 
       final response = await sendAndReceive(
@@ -192,11 +192,11 @@ mixin NATDetectorMixin on StunLoggerMixin, StunServerResolverMixin {
       } else if (secondaryServer != null && secondaryPort != null) {
         serverAddr = await resolveStunServer(
           secondaryServer!,
-          ipv6: _isIPv6Socket,
+          type: _socketType,
         );
         final primaryAddr = await resolveStunServer(
           primaryServer,
-          ipv6: _isIPv6Socket,
+          type: _socketType,
         );
         if (serverAddr.address == primaryAddr.address &&
             secondaryPort == primaryPort) {
@@ -249,7 +249,7 @@ mixin NATDetectorMixin on StunLoggerMixin, StunServerResolverMixin {
       );
       final serverAddr = await resolveStunServer(
         primaryServer,
-        ipv6: _isIPv6Socket,
+        type: _socketType,
       );
 
       final response = await sendAndReceive(

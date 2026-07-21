@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import '../config/stun_config.dart';
-import '../request/stun_request_handler.dart';
-import '../socket/stun_socket_refresh_manager.dart';
-import '../socket/stun_socket_manager.dart';
+import '../../config/stun_config.dart';
+import 'stun_request_handler.dart';
+import 'stun_socket_refresh_manager.dart';
+import 'stun_socket_manager.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
-import '../../mixins/stun_handler_mixin.dart';
-import '../../mixins/stun_logger_mixin.dart';
+import '../../mixins/single/stun_handler_mixin.dart';
+import '../../mixins/single/stun_logger_mixin.dart';
 import '../../types/stun_types.dart';
-import '../../interfaces/i_stun_handler.dart';
+import '../../interfaces/single/i_stun_handler.dart';
 
 /// STUN handler implementation with optional socket and auto-recreation
 class StunHandler
@@ -114,7 +114,7 @@ class StunHandler
   static Future<StunHandler> withoutSocket({
     String? address,
     int? port,
-    bool ipv6 = false,
+    InternetAddressType type = InternetAddressType.IPv4,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
     OnSocketRefresh? onSocketRefresh,
@@ -122,7 +122,7 @@ class StunHandler
     final handler = StunHandler._internal(
       stunAddress: address,
       stunPort: port,
-      bindType: ipv6 ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
+      bindType: type,
       timeout: timeout,
       onLog: onLog,
       onSocketRefresh: onSocketRefresh,

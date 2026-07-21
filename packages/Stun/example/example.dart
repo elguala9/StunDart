@@ -126,7 +126,7 @@ Future<void> _exampleWithInternalSocket() async {
     final handler = await StunHandler.withoutSocket(
       address: 'stun.l.google.com',
       port: 19302,
-      ipv6: false, // Set to true for IPv6
+      type: InternetAddressType.IPv4, // Set to InternetAddressType.IPv6 for IPv6
     );
 
     print('✅ Handler created with automatic socket management\n');

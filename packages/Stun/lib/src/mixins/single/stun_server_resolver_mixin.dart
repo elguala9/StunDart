@@ -11,11 +11,11 @@ mixin StunServerResolverMixin {
   /// Throws [StateError] when the lookup returns no result.
   Future<InternetAddress> resolveStunServer(
     String hostname, {
-    required bool ipv6,
+    required InternetAddressType type,
   }) async {
     final addresses = await InternetAddress.lookup(
       hostname,
-      type: ipv6 ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
+      type: type,
     );
 
     if (addresses.isEmpty) {

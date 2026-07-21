@@ -1,9 +1,11 @@
-﻿import 'package:singleton_manager/singleton_manager.dart';
-import '../../interfaces/i_stun_handler.dart';
-import '../../interfaces/i_dual_stun_handler.dart';
+import 'dart:io';
+
+import 'package:singleton_manager/singleton_manager.dart';
+import '../../interfaces/single/i_stun_handler.dart';
+import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
-import '../../mixins/handler_selector_mixin.dart';
-import '../../mixins/dual_stun_handler_mixin.dart';
+import '../../mixins/dual/handler_selector_mixin.dart';
+import '../../mixins/dual/dual_stun_handler_mixin.dart';
 import '../../types/stun_types.dart';
 
 /// Manages dual IPv4 and IPv6 STUN handlers with parallel request execution
@@ -14,12 +16,12 @@ class DualStunHandler
   IStunHandler? _ipv6Handler;
 
   @override
-  IStunHandler? handler({required bool ipv6}) =>
-      ipv6 ? _ipv6Handler : _ipv4Handler;
+  IStunHandler? handler({required InternetAddressType type}) =>
+      type == InternetAddressType.IPv6 ? _ipv6Handler : _ipv4Handler;
 
   @override
-  void setHandlerSlot(IStunHandler? h, {required bool ipv6}) {
-    if (ipv6) {
+  void setHandlerSlot(IStunHandler? h, {required InternetAddressType type}) {
+    if (type == InternetAddressType.IPv6) {
       _ipv6Handler = h;
     } else {
       _ipv4Handler = h;
@@ -50,23 +52,23 @@ class DualStunHandler
     IStunHandler ipv4Handler, {
     IStunHandler? ipv6Handler,
   }) async {
-    setHandler(ipv4Handler, ipv6: false);
+    setHandler(ipv4Handler, type: InternetAddressType.IPv4);
     if (ipv6Handler != null) {
-      setHandler(ipv6Handler, ipv6: true);
+      setHandler(ipv6Handler, type: InternetAddressType.IPv6);
     } else {
-      clearHandler(ipv6: true);
+      clearHandler(type: InternetAddressType.IPv6);
     }
   }
 
   @override
   void setOnSocketRefresh(
     OnSocketRefresh callback, {
-    bool ipv6 = true,
+    InternetAddressType type = InternetAddressType.IPv6,
   }) {
-    final h = getHandler(ipv6: ipv6);
+    final h = getHandler(type: type);
     if (h == null) {
       throw StateError(
-        'DualStunHandler: ${ipv6 ? 'IPv6' : 'IPv4'} '
+        'DualStunHandler: ${type == InternetAddressType.IPv6 ? 'IPv6' : 'IPv4'} '
         'handler not initialized.',
       );
     }
@@ -75,7 +77,7 @@ class DualStunHandler
 
   @override
   void clearOnSocketRefresh({
-    bool ipv6 = true,
+    InternetAddressType type = InternetAddressType.IPv6,
   }) {
     return;
   }

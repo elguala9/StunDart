@@ -2,16 +2,16 @@
 // ignore_for_file: directives_ordering, library_prefixes, unnecessary_import, unused_import
 
 import 'package:singleton_manager/singleton_manager.dart';
-import '../implementations/singleton/dual_stun_handler_base.dart';
+import '../implementations/dual/dual_stun_handler_base.dart';
 import 'dart:io';
 import 'package:meta/meta.dart';
-import 'package:stun/src/interfaces/i_dual_callback_handler.dart';
+import '../interfaces/dual/i_dual_callback_handler.dart';
 import 'package:stun/stun.dart';
 import '../types/stun_types.dart';
-import '../interfaces/i_stun_handler.dart';
-import '../implementations/handlers/dual_stun_handler.dart';
-import '../implementations/singleton/dual_callback_handler.dart';
-import '../implementations/singleton/singleton_handler_factory.dart';
+import '../interfaces/single/i_stun_handler.dart';
+import '../implementations/dual/dual_stun_handler.dart';
+import '../implementations/dual/dual_callback_handler.dart';
+import '../implementations/dual/singleton_handler_factory.dart';
 
 class DualStunHandlerBaseDI extends DualStunHandlerBase
     implements ISingletonStandardDI {
