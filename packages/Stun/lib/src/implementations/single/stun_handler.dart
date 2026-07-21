@@ -130,4 +130,9 @@ class StunHandler
     await handler._socketMgr.getSocket();
     return handler;
   }
+
+  @override
+  InternetAddressType getIpVersion() {
+    return socketMgr.bindType;
+  }
 }

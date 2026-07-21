@@ -54,6 +54,8 @@ class StunSocketRefreshManager {
     }
   }
 
+  Iterable<OnSocketRefresh> get callbacks => _callbackWrapperMap.keys;
+
   /// Trigger all registered socket refresh callbacks
   ///
   /// Called when the socket is recreated. Passes the new result and

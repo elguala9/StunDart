@@ -36,27 +36,13 @@ class DualStunHandler
   }
 
   @override
-  Future<void> initialize({
-    String? address,
-    int? port,
-    Duration timeout = const Duration(seconds: 5),
-  }) async {
-    throw UnsupportedError(
-      'DualStunHandler is a low-level container. '
-      'Use DualStunHandlerBase.initialize() instead.',
-    );
-  }
-
-  @override
   Future<void> initializeWithHandlers(
-    IStunHandler ipv4Handler, {
-    IStunHandler? ipv6Handler,
+    IStunHandler first, {
+    IStunHandler? second,
   }) async {
-    setHandler(ipv4Handler, type: InternetAddressType.IPv4);
-    if (ipv6Handler != null) {
-      setHandler(ipv6Handler, type: InternetAddressType.IPv6);
-    } else {
-      clearHandler(type: InternetAddressType.IPv6);
+    setHandler(first, type: first.getIpVersion());
+    if (second != null) {
+      setHandler(second, type: second.getIpVersion());
     }
   }
 
@@ -83,20 +69,26 @@ class DualStunHandler
   }
 
   @override
-  void addOnSocketRefresh(OnSocketRefresh callback) {
-    throw UnsupportedError(
-      'DualStunHandler does not support untyped addOnSocketRefresh. '
-      'Use setOnSocketRefresh with an explicit type, or call '
-      'addOnSocketRefresh directly on the individual IStunHandler.',
-    );
+  void addOnSocketRefresh(
+    OnSocketRefresh callback, {
+    InternetAddressType type = InternetAddressType.IPv6,
+  }) {
+    if (type == InternetAddressType.IPv6) {
+      _ipv6Handler?.addOnSocketRefresh(callback);
+    } else {
+      _ipv4Handler?.addOnSocketRefresh(callback);
+    }
   }
 
   @override
-  void removeOnSocketRefresh(OnSocketRefresh callback) {
-    throw UnsupportedError(
-      'DualStunHandler does not support untyped removeOnSocketRefresh. '
-      'Use clearOnSocketRefresh with an explicit type, or call '
-      'removeOnSocketRefresh directly on the individual IStunHandler.',
-    );
+  void removeOnSocketRefresh(
+    OnSocketRefresh callback, {
+    InternetAddressType type = InternetAddressType.IPv6,
+  }) {
+    if (type == InternetAddressType.IPv6) {
+      _ipv6Handler?.removeOnSocketRefresh(callback);
+    } else {
+      _ipv4Handler?.removeOnSocketRefresh(callback);
+    }
   }
 }
