@@ -1,39 +1,39 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 import 'test_constants.dart';
 
 void main() {
-  group('StunHandlerSingleton Tests', () {
+  group('DualStunHandlerSingleton Tests', () {
     tearDown(() async {
       // Clean up after each test
       try {
-        StunHandlerSingleton.instance.close();
+        DualStunHandlerSingleton.instance.close();
       } catch (_) {
         // Ignore errors during cleanup
       }
     });
 
     test('Singleton instance is the same when accessed via constructor', () {
-      final instance1 = StunHandlerSingleton();
-      final instance2 = StunHandlerSingleton();
+      final instance1 = DualStunHandlerSingleton();
+      final instance2 = DualStunHandlerSingleton();
       expect(identical(instance1, instance2), isTrue);
     });
 
     test('Singleton instance is the same when accessed via .instance', () {
-      final instance1 = StunHandlerSingleton.instance;
-      final instance2 = StunHandlerSingleton.instance;
+      final instance1 = DualStunHandlerSingleton.instance;
+      final instance2 = DualStunHandlerSingleton.instance;
       expect(identical(instance1, instance2), isTrue);
     });
 
     test('Constructor and .instance return the same instance', () {
-      final instance1 = StunHandlerSingleton();
-      final instance2 = StunHandlerSingleton.instance;
+      final instance1 = DualStunHandlerSingleton();
+      final instance2 = DualStunHandlerSingleton.instance;
       expect(identical(instance1, instance2), isTrue);
     });
 
     test('initialize() creates IPv4 handler (if available)', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -53,7 +53,7 @@ void main() {
         // initialize(); it is not possible to exercise the "both fail" path
         // without simulating a fully offline system, so this documents the
         // contract exercised indirectly by the other initialize() tests.
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -68,7 +68,7 @@ void main() {
     );
 
     test('initialize() creates IPv6 handler (if available)', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       try {
         await singleton.initialize(
           address: StunServers.googleStun,
@@ -87,7 +87,7 @@ void main() {
     });
 
     test('ipv4Handler getter returns non-null when available', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -103,7 +103,7 @@ void main() {
     });
 
     test('ipv6Handler getter may return null', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -120,7 +120,7 @@ void main() {
     });
 
     test('performStunRequest() executes on both handlers', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -139,7 +139,7 @@ void main() {
 
     test('performStunRequest() returns per-stack results matching each '
         'handler', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -159,7 +159,7 @@ void main() {
     });
 
     test('performLocalRequest() executes on both handlers', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -177,7 +177,7 @@ void main() {
     });
 
     test('performLocalRequest() caches results', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -198,7 +198,7 @@ void main() {
     });
 
     test('replaceHandler(mock, ipv6: true) replaces only IPv6', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -219,7 +219,7 @@ void main() {
     });
 
     test('replaceHandler(mock, ipv6: false) replaces only IPv4', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -239,7 +239,7 @@ void main() {
     });
 
     test('setStunServer with ipv6: null sets both handlers', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -250,7 +250,7 @@ void main() {
     });
 
     test('setStunServer with ipv6: false sets only IPv4', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -263,7 +263,7 @@ void main() {
     test(
       'setStunServer with ipv6: true sets only IPv6 (if available)',
       () async {
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -275,7 +275,7 @@ void main() {
     );
 
     test('close(ipv6: false) closes IPv4', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -291,7 +291,7 @@ void main() {
     });
 
     test('close(ipv6: true) closes IPv6 (if available)', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -309,7 +309,7 @@ void main() {
     });
 
     test('close() with no param closes both handlers', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -328,7 +328,7 @@ void main() {
     });
 
     test('getSocket(ipv6: false) returns IPv4 socket', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -340,7 +340,7 @@ void main() {
     });
 
     test('getSocket(ipv6: true) returns IPv6 socket if available', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       try {
         await singleton.initialize(
           address: StunServers.googleStun,
@@ -364,7 +364,7 @@ void main() {
     });
 
     test('pingStunServer(ipv6: false) pings IPv4', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -375,7 +375,7 @@ void main() {
     });
 
     test('pingStunServer(ipv6: true) pings IPv6 if available', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       try {
         await singleton.initialize(
           address: StunServers.googleStun,
@@ -397,7 +397,7 @@ void main() {
     });
 
     test('initialize() accepts configurable timeout', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
       await singleton.initialize(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
@@ -411,7 +411,7 @@ void main() {
     });
 
     test('initialize() completes without throwing', () async {
-      final singleton = StunHandlerSingleton.instance;
+      final singleton = DualStunHandlerSingleton.instance;
 
       await expectLater(
         singleton.initialize(
@@ -422,14 +422,14 @@ void main() {
       );
     });
 
-    test('StunHandlerSingleton implements IStunHandlerSingleton', () {
-      final IStunHandlerSingleton s = StunHandlerSingleton.instance;
-      expect(s, isA<IStunHandlerSingleton>());
+    test('DualStunHandlerSingleton implements IDualStunHandlerSingleton', () {
+      final IDualStunHandlerSingleton s = DualStunHandlerSingleton.instance;
+      expect(s, isA<IDualStunHandlerSingleton>());
     });
 
     group('Singleton Timestamp tests', () {
       test('ipv4LastStunUpdated is null before performStunRequest()', () async {
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -443,7 +443,7 @@ void main() {
       });
 
       test('ipv4LastStunUpdated is set after performStunRequest()', () async {
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -470,7 +470,7 @@ void main() {
       test(
         'lastStunUpdated returns the most recent timestamp (IPv6 if available)',
         () async {
-          final singleton = StunHandlerSingleton.instance;
+          final singleton = DualStunHandlerSingleton.instance;
           await singleton.initialize(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
@@ -512,7 +512,7 @@ void main() {
       );
 
       test('All timestamp getters return null after close()', () async {
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -568,7 +568,7 @@ void main() {
       test(
         'ipv4LastLocalUpdated and ipv6LastLocalUpdated work similarly to STUN timestamps',
         () async {
-          final singleton = StunHandlerSingleton.instance;
+          final singleton = DualStunHandlerSingleton.instance;
           await singleton.initialize(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
@@ -591,7 +591,7 @@ void main() {
 
     group('Singleton typed callback tests (IPv4/IPv6 specific)', () {
       test('setOnSocketRefreshIpv4 accepts valid IPv4 callback', () async {
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -613,7 +613,7 @@ void main() {
       test(
         'setOnSocketRefreshIpv4 throws StateError if IPv4 handler not initialized',
         () async {
-          final singleton = StunHandlerSingleton.instance;
+          final singleton = DualStunHandlerSingleton.instance;
           // Don't initialize - handler is null
 
           expect(
@@ -627,7 +627,7 @@ void main() {
       test(
         'setOnSocketRefreshIpv6 accepts valid IPv6 callback if available',
         () async {
-          final singleton = StunHandlerSingleton.instance;
+          final singleton = DualStunHandlerSingleton.instance;
           await singleton.initialize(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
@@ -663,7 +663,7 @@ void main() {
       test(
         'setOnSocketRefreshIpv4 validates socket type and rejects IPv6 socket',
         () async {
-          final singleton = StunHandlerSingleton.instance;
+          final singleton = DualStunHandlerSingleton.instance;
           await singleton.initialize(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
@@ -686,7 +686,7 @@ void main() {
       );
 
       test('removeOnSocketRefreshIpv4 works without errors', () async {
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -703,7 +703,7 @@ void main() {
       });
 
       test('removeOnSocketRefreshIpv6 works without errors', () async {
-        final singleton = StunHandlerSingleton.instance;
+        final singleton = DualStunHandlerSingleton.instance;
         await singleton.initialize(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -724,7 +724,7 @@ void main() {
       test(
         'setOnSocketRefreshIpv4 multiple times replaces previous callback',
         () async {
-          final singleton = StunHandlerSingleton.instance;
+          final singleton = DualStunHandlerSingleton.instance;
           await singleton.initialize(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,

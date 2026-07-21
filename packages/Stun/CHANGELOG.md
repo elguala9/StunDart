@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to the StunDart project will be documented in this file.
 
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.6.1] - 2026-07-15
 
 ### Changed
-- **Internal refactor into mixins** (`src/mixins/`): shared logic extracted from `StunHandler`, `DualStunHandler`, `NATDetector`, `StunMessage`, `StunHandlerBase`, `HandlerFactory`, and `StunSocketManager` into reusable mixins (`StunHandlerMixin`, `DualStunHandlerMixin`, `NatDetectorMixin`, `StunMessageMixin`, `StunHandlerBaseMixin`, `HandlerFactoryMixin`, `HandlerSelectorMixin`, `StunServerResolverMixin`, `StunLoggerMixin`, `DestroyableHandlerMixin`). No public API changes — fully backward compatible.
+- **Internal refactor into mixins** (`src/mixins/`): shared logic extracted from `StunHandler`, `DualStunHandler`, `NATDetector`, `StunMessage`, `DualStunHandlerBase`, `HandlerFactory`, and `StunSocketManager` into reusable mixins (`StunHandlerMixin`, `DualStunHandlerMixin`, `NatDetectorMixin`, `StunMessageMixin`, `DualHandlerDelegationMixin`, `HandlerFactoryMixin`, `HandlerSelectorMixin`, `StunServerResolverMixin`, `StunLoggerMixin`, `DestroyableHandlerMixin`). No public API changes — fully backward compatible.
 
 ### Tests
 - 223 tests passing ✅
@@ -22,15 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.6.0] - 2026-07-11
 
 ### Added
-- **IPv4 is now optional**: `DualStunHandler` and `StunHandlerBase`/`Singleton` accept a nullable IPv4 handler, symmetric to IPv6. At least one of the two must be present; either one alone is sufficient.
-- **`IDualHandlerFacade`** (`interfaces/i_dual_handler_facade.dart`): internal shared contract factored out of `IDualStunHandler` and `IStunHandlerBase` to avoid redeclaring the same members in both.
+- **IPv4 is now optional**: `DualStunHandler` and `DualStunHandlerBase`/`Singleton` accept a nullable IPv4 handler, symmetric to IPv6. At least one of the two must be present; either one alone is sufficient.
+- **`IDualHandlerFacade`** (`interfaces/i_dual_handler_facade.dart`): internal shared contract factored out of `IDualStunHandler` and `IDualStunHandlerBase` to avoid redeclaring the same members in both.
 - `clearIpv4Handler()` / `clearIpv6Handler()` to explicitly remove a handler.
 
 ### Changed
 - `replaceHandler()`/`setStunServer()`/`close()` and related APIs updated to handle a possibly-null IPv4 or IPv6 handler consistently.
 
 ### Tests
-- Expanded coverage for optional-IPv4 and handler-clearing scenarios in `dual_stun_handler_fallback_test.dart` and `stun_handler_singleton_test.dart`.
+- Expanded coverage for optional-IPv4 and handler-clearing scenarios in `dual_stun_handler_fallback_test.dart` and `dual_stun_handler_singleton_test.dart`.
 
 ## [1.5.1] - 2026-04-11
 
@@ -43,16 +43,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.5.0] - 2026-03-30
 
 ### Added
-- **`IStunHandlerBase` interface** (`interfaces/i_stun_handler_base.dart`): Full public contract for `StunHandlerBase`, extends `IValueForRegistry` to enable `RegistryAccess` registration
+- **`IDualStunHandlerBase` interface** (`interfaces/i_dual_stun_handler_base.dart`): Full public contract for `DualStunHandlerBase`, extends `IValueForRegistry` to enable `RegistryAccess` registration
 - **`RegistryAccess` initial point** (`initial_point/initial_point_registry.dart`): Named multi-instance support via string keys
   - `initialPointStunWithSocketsRegistry(key, ipv4Socket, {...})` — pre-bound sockets variant
   - `initialPointStunRegistry(key, {...})` — auto-bind variant
-  - Retrieve with `RegistryAccess.getInstance<IStunHandlerBase>(key)`
+  - Retrieve with `RegistryAccess.getInstance<IDualStunHandlerBase>(key)`
   - Re-registering the same key replaces the previous instance
 - **`stun_builder.dart`** shared socket-wiring helper: common logic extracted from initial-point variants, returns `IDualStunHandler`/`IDualCallbackHandler` interfaces
 
 ### Changed
-- `StunHandlerBase` now implements `IStunHandlerBase` and `ValueForRegistry` mixin; exposes `destroy()` (delegates to `close()`)
+- `DualStunHandlerBase` now implements `IDualStunHandlerBase` and `ValueForRegistry` mixin; exposes `destroy()` (delegates to `close()`)
 - `initial_point.dart` refactored to use `stun_builder.dart` and register via interfaces (`IDualStunHandler`, `IDualCallbackHandler`)
 - All initial-point code uses interfaces, never concrete classes
 
@@ -73,14 +73,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.4.0] - 2026-03-21
 
 ### Added
-- **`StunHandlerBase` now part of public API**: Base class for DI-based singleton integrations is now exported from `stun.dart`
+- **`DualStunHandlerBase` now part of public API**: Base class for DI-based singleton integrations is now exported from `stun.dart`
 - **`IDualCallbackHandler` now part of public API**: Interface for managing IPv4/IPv6 socket refresh callbacks is now exported from `stun.dart`
 - **`index_generator` tooling**: Barrel file (`stun.dart`) is now auto-generated via `index_generator`
   - Run `melos run barrels` to regenerate the barrel file after adding new public symbols
   - Configuration in `pubspec.yaml` under `index_generator:` key
 
 ### Fixed
-- **Circular import in `stun_handler_base.dart`**: Replaced `import 'package:stun/stun.dart'` with direct relative imports, enabling `StunHandlerBase` to be safely exported from the public barrel
+- **Circular import in `dual_stun_handler_base.dart`**: Replaced `import 'package:stun/stun.dart'` with direct relative imports, enabling `DualStunHandlerBase` to be safely exported from the public barrel
 
 ### Tooling
 - Added `melos run barrels` script that runs `index_generator` across all packages (excluding test packages)
@@ -92,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.2.1] - 2026-03-10
 
 ### Added
-- **Socket Refresh Callbacks**: StunHandler and StunHandlerSingleton now support callbacks when socket is recreated after network errors
+- **Socket Refresh Callbacks**: StunHandler and DualStunHandlerSingleton now support callbacks when socket is recreated after network errors
   - `CallbackHandler` typedef for StunHandler callbacks
   - `SingletonCallbackHandler` typedef for singleton callbacks with IPv4/IPv6 identification
   - All constructors accept `onSocketRefresh` parameter
@@ -112,13 +112,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [1.3.0] - 2026-03-09
 
 ### Added
-- **New `IStunHandlerSingleton` Interface**: Formal interface defining the contract for singleton with full feature support (timeout, logging, dual IPv4/IPv6)
-- **Configurable Timeout**: StunHandler and StunHandlerSingleton now accept custom `Duration timeout` parameter (default: 5 seconds)
-- **Logging Support**: StunHandler and StunHandlerSingleton accept `void Function(String)? onLog` callback for tracking STUN operations
+- **New `IDualStunHandlerSingleton` Interface**: Formal interface defining the contract for singleton with full feature support (timeout, logging, dual IPv4/IPv6)
+- **Configurable Timeout**: StunHandler and DualStunHandlerSingleton now accept custom `Duration timeout` parameter (default: 5 seconds)
+- **Logging Support**: StunHandler and DualStunHandlerSingleton accept `void Function(String)? onLog` callback for tracking STUN operations
 - **IPv6 Local IP Fix**: `performLocalRequest()` now correctly returns IPv4 addresses in dotted format and IPv6 addresses in colon format
 
 ### Changed
-- `StunHandlerSingleton.initialize()` now accepts `timeout` and `onLog` parameters
+- `DualStunHandlerSingleton.initialize()` now accepts `timeout` and `onLog` parameters
 - All STUN operations now propagate timeout and logging configurations to handlers
 - Replaced all `print()` calls with configurable logging callbacks
 
@@ -131,22 +131,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - 123 tests passing (all tests)
 - 6 new timeout and logging tests
 - IPv6 local IP format tests
-- IStunHandlerSingleton interface contract tests
+- IDualStunHandlerSingleton interface contract tests
 
 ## [1.2.0] - 2026-03-04
 
 ### Added
-- **Dual-Stack StunHandlerSingleton**: Manages both IPv4 and IPv6 STUN handlers simultaneously
+- **Dual-Stack DualStunHandlerSingleton**: Manages both IPv4 and IPv6 STUN handlers simultaneously
 - Parallel execution of STUN requests on both handlers for improved reliability
 - IPv6-first preference in singleton (returns IPv6 result if available, falls back to IPv4)
 - Individual handler access and replacement capabilities
 
 ### Changed
-- StunHandlerSingleton now implements structured dual-handler management
+- DualStunHandlerSingleton now implements structured dual-handler management
 - Handler initialization creates IPv4 (always) and IPv6 (gracefully) handlers
 
 ### Tests
-- Added 24 comprehensive tests for StunHandlerSingleton functionality
+- Added 24 comprehensive tests for DualStunHandlerSingleton functionality
 
 ## [1.1.0] - 2025-12-15
 
@@ -228,7 +228,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 **New Public Symbols:**
 ```dart
-// StunHandlerBase and IDualCallbackHandler are now importable directly
+// DualStunHandlerBase and IDualCallbackHandler are now importable directly
 import 'package:stun/stun.dart';
 
 // Use IDualCallbackHandler for custom callback wiring
@@ -236,8 +236,8 @@ final callbacks = DualCallbackHandler();
 callbacks.registerIpv4((data) => print('IPv4 refresh: ${data.$1.publicIp}'));
 callbacks.registerIpv6((data) => print('IPv6 refresh: ${data.$1.publicIp}'));
 
-// Or subclass StunHandlerBase for custom DI integration
-class MyStunSingleton extends StunHandlerBase { ... }
+// Or subclass DualStunHandlerBase for custom DI integration
+class MyStunSingleton extends DualStunHandlerBase { ... }
 ```
 
 **Developer Tooling:**
@@ -262,7 +262,7 @@ final handler = await StunHandler.withoutSocket(
 );
 
 // Or with singleton
-await StunHandlerSingleton.instance.initialize(
+await DualStunHandlerSingleton.instance.initialize(
   address: 'stun.l.google.com',
   port: 19302,
   onSocketRefresh: (newResponse, oldResponse, ipv6: bool) {
@@ -278,21 +278,21 @@ await StunHandlerSingleton.instance.initialize(
 **New Features:**
 ```dart
 // Use new timeout configuration
-await StunHandlerSingleton.instance.initialize(
+await DualStunHandlerSingleton.instance.initialize(
   address: 'stun.l.google.com',
   port: 19302,
   timeout: const Duration(seconds: 15),  // NEW
 );
 
 // Enable logging
-await StunHandlerSingleton.instance.initialize(
+await DualStunHandlerSingleton.instance.initialize(
   address: 'stun.l.google.com',
   port: 19302,
   onLog: (msg) => print('STUN: $msg'),  // NEW
 );
 
 // Use new interface for DI
-final singleton = StunHandlerSingleton.instance as IStunHandlerSingleton;
+final singleton = DualStunHandlerSingleton.instance as IDualStunHandlerSingleton;
 ```
 
 ### Upgrading from 1.1.0 to 1.2.0
@@ -300,7 +300,7 @@ final singleton = StunHandlerSingleton.instance as IStunHandlerSingleton;
 **Breaking Changes:** None - fully backward compatible
 
 **Migration Path:**
-Existing code using `StunHandlerSingleton` will automatically benefit from dual-stack support without changes. IPv6 handler creation fails gracefully if unavailable.
+Existing code using `DualStunHandlerSingleton` will automatically benefit from dual-stack support without changes. IPv6 handler creation fails gracefully if unavailable.
 
 ### Upgrading from 1.0.0 to 1.1.0
 

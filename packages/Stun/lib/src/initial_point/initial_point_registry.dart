@@ -2,17 +2,17 @@ import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
 
-import '../implementations/singleton/stun_handler_base.dart';
+import '../implementations/singleton/dual_stun_handler_base.dart';
 import '../interfaces/i_dual_callback_handler.dart';
 import '../interfaces/i_dual_stun_handler.dart';
 import '../interfaces/i_stun_handler_base.dart';
 import 'stun_builder.dart';
 
-/// Registry-aware subclass of [StunHandlerBase] that accepts its dependencies
+/// Registry-aware subclass of [DualStunHandlerBase] that accepts its dependencies
 /// directly instead of reading them from [SingletonDIAccess].
 /// Registered under a string [key] via [RegistryAccess] as [IStunHandlerBase].
-class _StunHandlerBaseEntry extends StunHandlerBase {
-  _StunHandlerBaseEntry(IDualStunHandler handler, IDualCallbackHandler cb) {
+class _DualStunHandlerBaseEntry extends DualStunHandlerBase {
+  _DualStunHandlerBaseEntry(IDualStunHandler handler, IDualCallbackHandler cb) {
     dualHandlerProtected = handler;
     callbacks = cb;
   }
@@ -46,7 +46,7 @@ Future<void> initialPointStunWithSocketsRegistry(
   }
   RegistryAccess.register<IStunHandlerBase>(
     key,
-    _StunHandlerBaseEntry(dualHandler, dualCallback),
+    _DualStunHandlerBaseEntry(dualHandler, dualCallback),
   );
 }
 

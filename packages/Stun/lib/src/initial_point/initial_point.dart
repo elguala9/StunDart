@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
-import 'package:stun/src/generated/stun_handler_base_di.dart';
+import 'package:stun/src/generated/dual_stun_handler_base_di.dart';
 import 'package:stun/src/interfaces/i_dual_callback_handler.dart';
 import 'package:stun/src/interfaces/i_dual_stun_handler.dart';
 
@@ -29,7 +29,7 @@ Future<void> initialPointStunWithSockets(
   SingletonDIAccess.addInstanceAs<IDualCallbackHandler, IDualCallbackHandler>(
     dualCallback,
   );
-  SingletonDIAccess.addInstance(StunHandlerBaseDI.initializeDI());
+  SingletonDIAccess.addInstance(DualStunHandlerBaseDI.initializeDI());
 }
 
 /// Binds IPv4 and IPv6 sockets, then initializes all STUN components in the DI container.
