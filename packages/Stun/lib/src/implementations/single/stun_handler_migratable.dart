@@ -5,12 +5,12 @@ import '../../interfaces/single/i_stun_handler_migratable.dart';
 import '../../types/stun_types.dart';
 import 'stun_handler.dart';
 
-class MigratableStunHandler extends StunHandler
+class StunHandlerMigratable extends StunHandler
     with StunHandlerMigratableMixin
     implements IStunHandlerMigratable {
-  MigratableStunHandler(super.input, {super.onSocketRefresh});
+  StunHandlerMigratable(super.input, {super.onSocketRefresh});
 
-  factory MigratableStunHandler.withSocket(
+  factory StunHandlerMigratable.withSocket(
     RawDatagramSocket socket, {
     String? address,
     int? port,
@@ -18,13 +18,13 @@ class MigratableStunHandler extends StunHandler
     void Function(String)? onLog,
     OnSocketRefresh? onSocketRefresh,
   }) {
-    return MigratableStunHandler(
+    return StunHandlerMigratable(
       (address: address, port: port, socket: socket),
       onSocketRefresh: onSocketRefresh,
     );
   }
 
-  static Future<MigratableStunHandler> withoutSocket({
+  static Future<StunHandlerMigratable> withoutSocket({
     String? address,
     int? port,
     InternetAddressType type = InternetAddressType.IPv4,
@@ -32,7 +32,7 @@ class MigratableStunHandler extends StunHandler
     void Function(String)? onLog,
     OnSocketRefresh? onSocketRefresh,
   }) async {
-    final handler = MigratableStunHandler(
+    final handler = StunHandlerMigratable(
       (address: address, port: port, socket: null),
       onSocketRefresh: onSocketRefresh,
     );
