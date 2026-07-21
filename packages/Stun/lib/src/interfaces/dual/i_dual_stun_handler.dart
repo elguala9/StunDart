@@ -9,8 +9,7 @@ import '../../types/stun_types.dart';
 /// Handles parallel request execution and state management
 abstract class IDualStunHandler
     implements IStunHandlerBase, ISingletonStandardDI {
-  Future<void> initialize({String? address, int? port, Duration timeout = const Duration(seconds: 5)});
-  Future<void> initializeWithHandlers(IStunHandler ipv4Handler, {IStunHandler? ipv6Handler});
+  Future<void> initializeWithHandlers(IStunHandler first, {IStunHandler? second});
   void setOnSocketRefresh(OnSocketRefresh callback, {InternetAddressType type = InternetAddressType.IPv6});
   void clearOnSocketRefresh({InternetAddressType type = InternetAddressType.IPv6});
   IStunHandler? getHandler({InternetAddressType type = InternetAddressType.IPv6});

@@ -1,0 +1,62 @@
+import 'dart:io';
+
+import 'i_dual_stun_handler.dart';
+import 'i_dual_stun_handler_profile.dart';
+import '../../implementations/single/stun_handler_profile.dart';
+import '../../types/stun_types.dart';
+
+class DualStunHandlerProfile implements IDualStunHandlerProfile {
+  DualStunHandlerProfile({
+    this.ipv4,
+    this.ipv6,
+    this.ipv4Callbacks = const [],
+    this.ipv6Callbacks = const [],
+  });
+
+  @override
+  final StunHandlerProfile? ipv4;
+  @override
+  final StunHandlerProfile? ipv6;
+  @override
+  final List<OnSocketRefresh> ipv4Callbacks;
+  @override
+  final List<OnSocketRefresh> ipv6Callbacks;
+
+  @override
+  List<OnSocketRefresh> callbacksFor(InternetAddressType type) =>
+      type == InternetAddressType.IPv4 ? ipv4Callbacks : ipv6Callbacks;
+
+  @override
+  StunHandlerProfile? profileFor(InternetAddressType type) =>
+      type == InternetAddressType.IPv4 ? ipv4 : ipv6;
+
+  @override
+  void applyTo(
+    IDualStunHandler target, {
+    InternetAddressType? type,
+  }) {
+    void applyFamily(InternetAddressType family) {
+      final profile = profileFor(family);
+      if (profile != null) {
+        target.setStunServer(
+          profile.stunAddress,
+          profile.stunPort,
+          type: family,
+        );
+      }
+
+      for (final callback in callbacksFor(family)) {
+        try {
+          target.setOnSocketRefresh(callback, type: family);
+        } catch (_) {}
+      }
+    }
+
+    if (type == null) {
+      applyFamily(InternetAddressType.IPv4);
+      applyFamily(InternetAddressType.IPv6);
+    } else {
+      applyFamily(type);
+    }
+  }
+}

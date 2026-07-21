@@ -85,20 +85,17 @@ class DualStunHandlerBase
   }
 
   Future<void> initializeWithHandlers(
-    IStunHandler ipv4Handler, {
-    IStunHandler? ipv6Handler,
+    IStunHandler first, {
+    IStunHandler? second,
   }) async {
-    dualHandlerProtected.setHandler(ipv4Handler, type: InternetAddressType.IPv4);
-    ipv4Handler.addOnSocketRefresh(callbacks.getOn(type: InternetAddressType.IPv4));
-    if (ipv6Handler != null) {
-      dualHandlerProtected.setHandler(
-        ipv6Handler,
-        type: InternetAddressType.IPv6,
-      );
-      ipv6Handler
-          .addOnSocketRefresh(callbacks.getOn(type: InternetAddressType.IPv6));
-    } else {
-      dualHandlerProtected.clearHandler(type: InternetAddressType.IPv6);
+    final firstVersion = first.getIpVersion();
+    dualHandlerProtected.setHandler(first, type: firstVersion);
+    first.addOnSocketRefresh(callbacks.getOn(type: firstVersion));
+
+    if (second != null) {
+      final secondVersion = second.getIpVersion();
+      dualHandlerProtected.setHandler(second, type: secondVersion);
+      second.addOnSocketRefresh(callbacks.getOn(type: secondVersion));
     }
   }
 }
