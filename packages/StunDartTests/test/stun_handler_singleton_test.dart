@@ -128,12 +128,12 @@ void main() {
 
       final response = await singleton.performStunRequest();
       // IPv4 is expected to be available in this test environment
-      expect(response.stunResponseIpv4?.publicIp, isNotEmpty);
-      expect(response.stunResponseIpv4?.publicPort, greaterThan(0));
+      expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+      expect(response.publicPort(InternetAddressType.IPv4), greaterThan(0));
 
       if (singleton.ipv6Handler != null) {
-        expect(response.stunResponseIpv6?.publicIp, isNotEmpty);
-        expect(response.stunResponseIpv6?.publicPort, greaterThan(0));
+        expect(response.publicIp(InternetAddressType.IPv6), isNotEmpty);
+        expect(response.publicPort(InternetAddressType.IPv6), greaterThan(0));
       }
     });
 
@@ -150,10 +150,10 @@ void main() {
       // If IPv6 is available, verify its slot matches a direct request
       if (singleton.ipv6Handler != null) {
         final ipv6Response = await singleton.ipv6Handler!.performStunRequest();
-        expect(response.stunResponseIpv6?.publicIp, equals(ipv6Response.publicIp));
+        expect(response.publicIp(InternetAddressType.IPv6), equals(ipv6Response.publicIp(InternetAddressType.IPv6)));
         expect(
-          response.stunResponseIpv6?.publicPort,
-          equals(ipv6Response.publicPort),
+          response.publicPort(InternetAddressType.IPv6),
+          equals(ipv6Response.publicPort(InternetAddressType.IPv6)),
         );
       }
     });
@@ -167,12 +167,12 @@ void main() {
 
       final info = await singleton.performLocalRequest();
       // IPv4 is expected to be available in this test environment
-      expect(info.localDualInfoIpv4?.localIp, isNotEmpty);
-      expect(info.localDualInfoIpv4?.localPort, greaterThan(0));
+      expect(info.localIpv4, isNotEmpty);
+      expect(info.localPortIpv4, greaterThan(0));
 
       if (singleton.ipv6Handler != null) {
-        expect(info.localDualInfoIpv6?.localIp, isNotEmpty);
-        expect(info.localDualInfoIpv6?.localPort, greaterThan(0));
+        expect(info.localIpv6, isNotEmpty);
+        expect(info.localPortIpv6, greaterThan(0));
       }
     });
 
@@ -188,12 +188,12 @@ void main() {
 
       // Should be identical due to caching
       expect(
-        info1.localDualInfoIpv4?.localIp,
-        equals(info2.localDualInfoIpv4?.localIp),
+        info1.localIpv4,
+        equals(info2.localIpv4),
       );
       expect(
-        info1.localDualInfoIpv4?.localPort,
-        equals(info2.localDualInfoIpv4?.localPort),
+        info1.localPortIpv4,
+        equals(info2.localPortIpv4),
       );
     });
 
@@ -407,7 +407,7 @@ void main() {
       final ipv4Handler = singleton.ipv4Handler;
       expect(ipv4Handler, isNotNull);
       final response = await ipv4Handler!.performStunRequest();
-      expect(response.publicIp, isNotEmpty);
+      expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
     });
 
     test('initialize() completes without throwing', () async {

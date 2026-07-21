@@ -49,6 +49,35 @@ void main() {
       expect(detector, isNotNull);
       socket.close();
     });
+
+    test('withDefaults() should create detector with constant defaults',
+        () async {
+      final detector = await NATDetector.withDefaults();
+
+      expect(detector, isNotNull);
+      expect(detector.primaryServer, StunServers.googleStun);
+      expect(detector.primaryPort, StunServers.defaultPort);
+      expect(detector.secondaryServer, StunServers.googleStun1);
+      expect(detector.secondaryPort, StunServers.defaultPort);
+      expect(detector.socket, isNotNull);
+      detector.socket.close();
+    });
+
+    test(
+      'withDefaults() detector should detect NAT type',
+      () async {
+        final detector = await NATDetector.withDefaults();
+
+        try {
+          final result = await detector.detectNATType();
+          expect(result.natType, isNotNull);
+          print('Detected NAT type: ${result.natType.displayName}');
+        } finally {
+          detector.socket.close();
+        }
+      },
+      timeout: const Timeout(TestTimeouts.extraLong),
+    );
   });
 
   group('NATDetector - Basic Detection', () {
@@ -252,6 +281,130 @@ void main() {
         );
       },
       timeout: const Timeout(TestTimeouts.dualStack),
+    );
+  });
+
+  group('NATDetector - Secondary Server', () {
+    test('should create detector with secondary server', () async {
+      final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+
+      final detector = NATDetector(
+        primaryServer: StunServers.googleStun,
+        primaryPort: StunServers.defaultPort,
+        socket: socket,
+        secondaryServer: StunServers.googleStun1,
+        secondaryPort: StunServers.defaultPort,
+      );
+
+      expect(detector, isNotNull);
+      socket.close();
+    });
+
+    test(
+      'should run Test 3 against secondary server when no alternate address',
+      () async {
+        final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+
+        final detector = NATDetector(
+          primaryServer: StunServers.googleStun,
+          primaryPort: StunServers.defaultPort,
+          socket: socket,
+          secondaryServer: StunServers.googleStun1,
+          secondaryPort: StunServers.defaultPort,
+          timeout: TestTimeouts.medium,
+        );
+
+        try {
+          final result = await detector.detectNATType();
+
+          if (result.natType != NATType.udpBlocked &&
+              result.natType != NATType.openInternet &&
+              result.natType != NATType.fullCone &&
+              result.alternateIp == null) {
+            final test3 =
+                result.diagnostics['test3'] as Map<String, dynamic>?;
+            expect(test3, isNotNull);
+            expect(
+              test3!['skipped'],
+              isNull,
+              reason:
+                  'Test 3 should not be skipped when a secondary server '
+                  'is configured',
+            );
+          }
+
+          print('Detected NAT type: ${result.natType.displayName}');
+          print('Test 3 diagnostics: ${result.diagnostics['test3']}');
+        } finally {
+          socket.close();
+        }
+      },
+      timeout: const Timeout(TestTimeouts.extraLong),
+    );
+
+    test(
+      'should skip Test 3 when no alternate address and no secondary server',
+      () async {
+        final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+
+        final detector = NATDetector(
+          primaryServer: StunServers.googleStun,
+          primaryPort: StunServers.defaultPort,
+          socket: socket,
+          timeout: TestTimeouts.medium,
+        );
+
+        try {
+          final result = await detector.detectNATType();
+
+          if (result.natType != NATType.udpBlocked &&
+              result.natType != NATType.openInternet &&
+              result.natType != NATType.fullCone &&
+              result.alternateIp == null) {
+            final test3 =
+                result.diagnostics['test3'] as Map<String, dynamic>?;
+            expect(test3, isNotNull);
+            expect(test3!['skipped'], isTrue);
+          }
+        } finally {
+          socket.close();
+        }
+      },
+      timeout: const Timeout(TestTimeouts.extraLong),
+    );
+
+    test(
+      'should fail Test 3 when secondary server equals primary endpoint',
+      () async {
+        final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+
+        final detector = NATDetector(
+          primaryServer: StunServers.googleStun,
+          primaryPort: StunServers.defaultPort,
+          socket: socket,
+          secondaryServer: StunServers.googleStun,
+          secondaryPort: StunServers.defaultPort,
+          timeout: TestTimeouts.medium,
+        );
+
+        try {
+          final result = await detector.detectNATType();
+
+          if (result.natType != NATType.udpBlocked &&
+              result.natType != NATType.openInternet &&
+              result.natType != NATType.fullCone &&
+              result.alternateIp == null) {
+            final test3 =
+                result.diagnostics['test3'] as Map<String, dynamic>?;
+            expect(test3, isNotNull);
+            expect(test3!['success'], isFalse);
+            expect(test3['error'], contains('same endpoint'));
+          }
+        } finally {
+          socket.close();
+        }
+      },
+      timeout: const Timeout(TestTimeouts.extraLong),
     );
   });
 

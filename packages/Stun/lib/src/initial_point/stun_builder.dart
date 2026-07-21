@@ -20,25 +20,27 @@ buildStunHandlers(
   final dualHandler = DualStunHandler();
   final dualCallback = DualCallbackHandler();
 
-  dualHandler.setIpv4Handler(
+  dualHandler.setHandler(
     StunHandler.withSocket(
       ipv4Socket,
       address: address,
       port: port,
       timeout: timeout,
-      onSocketRefresh: dualCallback.onIpv4,
+      onSocketRefresh: dualCallback.getOn(type: InternetAddressType.IPv4),
     ),
+    ipv6: false,
   );
 
   if (ipv6Socket != null) {
-    dualHandler.setIpv6Handler(
+    dualHandler.setHandler(
       StunHandler.withSocket(
         ipv6Socket,
         address: address,
         port: port,
         timeout: timeout,
-        onSocketRefresh: dualCallback.onIpv6,
+        onSocketRefresh: dualCallback.getOn(type: InternetAddressType.IPv6),
       ),
+      ipv6: true,
     );
   }
 

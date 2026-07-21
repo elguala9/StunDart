@@ -1,29 +1,28 @@
+import 'dart:io';
+
 import 'package:singleton_manager/singleton_manager.dart';
 
 import '../types/stun_types.dart';
-import 'i_dual_handler_facade.dart';
-import 'i_dual_stun_handler.dart';
-import 'i_stun_handler.dart';
 
-/// Contract for the high-level STUN handler that manages dual IPv4/IPv6 stacks.
-/// Extends [IValueForRegistry] so instances can be registered via [RegistryAccess].
-abstract class IStunHandlerBase
-    implements IDualHandlerFacade, IValueForRegistry {
-  IDualStunHandler get dualHandler;
+/// Basic Stunhandler interfcae for normal and dual
+abstract class IStunHandlerBase implements IValueForRegistry {
+  Future<StunResponse> performStunRequest();
 
-  Future<void> initialize({
-    String? address,
-    int? port,
-    Duration timeout = const Duration(seconds: 5),
-  });
+  Future<LocalInfo> performLocalRequest();
 
-  Future<void> initializeWithHandlers(
-    IStunHandler ipv4Handler, {
-    IStunHandler? ipv6Handler,
-  });
+  Future<bool> pingStunServer();
 
-  void setOnSocketRefreshIpv4(OnSocketRefreshIpv4 callback);
-  void setOnSocketRefreshIpv6(OnSocketRefreshIpv6 callback);
-  void removeOnSocketRefreshIpv4();
-  void removeOnSocketRefreshIpv6();
+  void setStunServer(String address, int port);
+
+  void close();
+
+  DateTime? get lastStunUpdated;
+
+  DateTime? get lastLocalUpdated;
+
+  void addOnSocketRefresh(OnSocketRefresh callback);
+
+  void removeOnSocketRefresh(OnSocketRefresh callback);
+
+  RawDatagramSocket getSocket();
 }

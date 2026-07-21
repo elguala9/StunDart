@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:meta/meta.dart';
 import 'package:singleton_manager/singleton_manager.dart';
 import '../../interfaces/i_dual_callback_handler.dart';
@@ -5,7 +7,7 @@ import '../../interfaces/i_dual_stun_handler.dart';
 import '../../interfaces/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_base.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
-import '../../mixins/dual_handler_selector_mixin.dart';
+import '../../mixins/handler_selector_mixin.dart';
 import '../../mixins/stun_handler_base_mixin.dart';
 import '../handlers/dual_stun_handler.dart';
 import 'dual_callback_handler.dart';
@@ -16,7 +18,7 @@ class StunHandlerBase
     with
         ValueForRegistry,
         DestroyableHandlerMixin,
-        DualHandlerSelectorMixin,
+        HandlerSelectorMixin,
         StunHandlerBaseMixin
     implements IStunHandlerBase {
   @isInjected
@@ -31,9 +33,10 @@ class StunHandlerBase
   @override
   late IDualCallbackHandler callbacks = DualCallbackHandler();
 
-  Future<void> initializeDualHandlerDI() => dualHandlerProtected.initializeDI();
+  Future<void> initializeDualHandlerDI() async {
+    dualHandlerProtected.initializeDI();
+  }
 
-  @override
   Future<void> initialize({
     String? address,
     int? port,
@@ -43,32 +46,34 @@ class StunHandlerBase
 
     IStunHandler? ipv4;
     try {
-      ipv4 = await factory.createIpv4Handler(
+      ipv4 = await factory.createHandler(
+        ipv6: false,
         address: address,
         port: port,
         timeout: timeout,
-        onSocketRefresh: callbacks.onIpv4,
+        onSocketRefresh: callbacks.getOn(type: InternetAddressType.IPv4),
       );
     } catch (_) {}
     if (ipv4 != null) {
-      dualHandlerProtected.setIpv4Handler(ipv4);
+      dualHandlerProtected.setHandler(ipv4, ipv6: false);
     } else {
-      dualHandlerProtected.clearIpv4Handler();
+      dualHandlerProtected.clearHandler(ipv6: false);
     }
 
     IStunHandler? ipv6;
     try {
-      ipv6 = await factory.createIpv6Handler(
+      ipv6 = await factory.createHandler(
+        ipv6: true,
         address: address,
         port: port,
         timeout: timeout,
-        onSocketRefresh: callbacks.onIpv6,
+        onSocketRefresh: callbacks.getOn(type: InternetAddressType.IPv6),
       );
     } catch (_) {}
     if (ipv6 != null) {
-      dualHandlerProtected.setIpv6Handler(ipv6);
+      dualHandlerProtected.setHandler(ipv6, ipv6: true);
     } else {
-      dualHandlerProtected.clearIpv6Handler();
+      dualHandlerProtected.clearHandler(ipv6: true);
     }
 
     if (ipv4 == null && ipv6 == null) {
@@ -79,18 +84,21 @@ class StunHandlerBase
     }
   }
 
-  @override
   Future<void> initializeWithHandlers(
     IStunHandler ipv4Handler, {
     IStunHandler? ipv6Handler,
   }) async {
-    dualHandlerProtected.setIpv4Handler(ipv4Handler);
-    ipv4Handler.addOnSocketRefresh(callbacks.onIpv4);
+    dualHandlerProtected.setHandler(ipv4Handler, ipv6: false);
+    ipv4Handler.addOnSocketRefresh(callbacks.getOn(type: InternetAddressType.IPv4));
     if (ipv6Handler != null) {
-      dualHandlerProtected.setIpv6Handler(ipv6Handler);
-      ipv6Handler.addOnSocketRefresh(callbacks.onIpv6);
+      dualHandlerProtected.setHandler(
+        ipv6Handler,
+        ipv6: true,
+      );
+      ipv6Handler
+          .addOnSocketRefresh(callbacks.getOn(type: InternetAddressType.IPv6));
     } else {
-      dualHandlerProtected.clearIpv6Handler();
+      dualHandlerProtected.clearHandler(ipv6: true);
     }
   }
 }

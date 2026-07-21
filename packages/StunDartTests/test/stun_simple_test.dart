@@ -24,10 +24,10 @@ void main() {
       final response = await handler.performStunRequest();
 
       print('Success!');
-      print('Public IP: ${response.publicIp}');
-      print('Public Port: ${response.publicPort}');
-
-      expect(response.publicIp, isNotEmpty);
+print('Public IP: ${response.publicIp(InternetAddressType.IPv4)}');
+      print('Public Port: ${response.publicPort(InternetAddressType.IPv4)}');
+      // Test assertions
+      expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
     } catch (e, stack) {
       print('Error: $e');
       print('Stack: $stack');

@@ -62,6 +62,13 @@ mixin NATDetectorMixin on StunLoggerMixin, StunServerResolverMixin {
   /// Primary STUN server port provided by the mixing class.
   int get primaryPort;
 
+  /// Optional secondary STUN server hostname used as Test 3 fallback when
+  /// the primary server does not advertise an alternate address.
+  String? get secondaryServer;
+
+  /// Port of the optional secondary STUN server.
+  int? get secondaryPort;
+
   /// Public IP discovered by Test 1 (stored by the mixing class).
   String? get publicIp1;
 
@@ -170,18 +177,44 @@ mixin NATDetectorMixin on StunLoggerMixin, StunServerResolverMixin {
   }
 
   /// Test 3: Request to alternate server
+  ///
+  /// Targets the alternate address advertised by the primary server
+  /// (OTHER-ADDRESS/CHANGED-ADDRESS). When none is available, falls back to
+  /// the configured [secondaryServer], if any.
   Future<NATTestResult> performTest3() async {
-    if (alternateIp == null || alternatePort == null) {
-      return NATTestResult(success: false, error: 'No alternate server');
-    }
-
     try {
+      final InternetAddress serverAddr;
+      final int serverPort;
+
+      if (alternateIp != null && alternatePort != null) {
+        serverAddr = InternetAddress(alternateIp!);
+        serverPort = alternatePort!;
+      } else if (secondaryServer != null && secondaryPort != null) {
+        serverAddr = await resolveStunServer(
+          secondaryServer!,
+          ipv6: _isIPv6Socket,
+        );
+        final primaryAddr = await resolveStunServer(
+          primaryServer,
+          ipv6: _isIPv6Socket,
+        );
+        if (serverAddr.address == primaryAddr.address &&
+            secondaryPort == primaryPort) {
+          return NATTestResult(
+            success: false,
+            error: 'Secondary server resolves to the same endpoint as primary',
+          );
+        }
+        serverPort = secondaryPort!;
+      } else {
+        return NATTestResult(success: false, error: 'No alternate server');
+      }
+
       final request = StunMessage.createBindingRequest();
-      final serverAddr = InternetAddress(alternateIp!);
 
       final response = await sendAndReceive(
         serverAddr: serverAddr,
-        serverPort: alternatePort!,
+        serverPort: serverPort,
         request: request,
       );
 

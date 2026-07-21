@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
+import 'package:stun/src/implementations/singleton/stun_handler_base.dart';
 import 'package:stun/src/initial_point/initial_point_registry.dart';
 import 'package:stun/src/interfaces/i_stun_handler_base.dart';
 import 'package:test/test.dart';
@@ -64,7 +65,7 @@ void main() {
     test('registered handler has IPv4 handler set', () async {
       final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       await initialPointStunWithSocketsRegistry(_key1, ipv4);
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(stun.dualHandler.ipv4Handler, isNotNull);
       ipv4.close();
     });
@@ -72,7 +73,7 @@ void main() {
     test('registered handler has no IPv6 handler when not provided', () async {
       final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       await initialPointStunWithSocketsRegistry(_key1, ipv4);
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(stun.dualHandler.ipv6Handler, isNull);
       ipv4.close();
     });
@@ -81,7 +82,7 @@ void main() {
       final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final ipv6 = await RawDatagramSocket.bind(InternetAddress.anyIPv6, 0);
       await initialPointStunWithSocketsRegistry(_key1, ipv4, ipv6Socket: ipv6);
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(stun.dualHandler.ipv6Handler, isNotNull);
       ipv4.close();
       ipv6.close();
@@ -90,7 +91,7 @@ void main() {
     test('IPv4 socket type is IPv4', () async {
       final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       await initialPointStunWithSocketsRegistry(_key1, ipv4);
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(
         stun.dualHandler.ipv4Handler!.getSocket().address.type,
         InternetAddressType.IPv4,
@@ -102,7 +103,7 @@ void main() {
       final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final ipv6 = await RawDatagramSocket.bind(InternetAddress.anyIPv6, 0);
       await initialPointStunWithSocketsRegistry(_key1, ipv4, ipv6Socket: ipv6);
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(
         stun.dualHandler.ipv6Handler!.getSocket().address.type,
         InternetAddressType.IPv6,
@@ -119,7 +120,7 @@ void main() {
         address: 'stun.example.com',
         port: 3478,
       );
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(stun.dualHandler.ipv4Handler, isNotNull);
       ipv4.close();
     });
@@ -179,13 +180,13 @@ void main() {
 
     test('registered handler has IPv4 handler', () async {
       await initialPointStunRegistry(_key1);
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(stun.dualHandler.ipv4Handler, isNotNull);
     });
 
     test('IPv4 handler socket is IPv4', () async {
       await initialPointStunRegistry(_key1);
-      final stun = RegistryAccess.getInstance<IStunHandlerBase>(_key1);
+      final stun = RegistryAccess.getInstance<StunHandlerBase>(_key1);
       expect(
         stun.dualHandler.ipv4Handler!.getSocket().address.type,
         InternetAddressType.IPv4,

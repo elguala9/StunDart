@@ -44,10 +44,9 @@ mixin StunHandlerMixin on StunLoggerMixin {
     final ipVersion = socket.address.type == InternetAddressType.IPv6
         ? IpVersion.v6
         : IpVersion.v4;
-    socketMgr.cachedLocalInfo = (
-      localIp: localIp,
-      localPort: socket.port,
-      ipVersion: ipVersion,
+    socketMgr.cachedLocalInfo = LocalInfo(
+      (localIp: localIp, localPort: socket.port, ipVersion: ipVersion),
+      null,
     );
     socketMgr.lastLocalUpdated = DateTime.now();
     return socketMgr.cachedLocalInfo!;

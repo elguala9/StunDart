@@ -3,6 +3,9 @@ import 'dart:typed_data';
 import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 
+final _ipv4Type = InternetAddressType.IPv4;
+final _ipv6Type = InternetAddressType.IPv6;
+
 // ---------------------------------------------------------------------------
 // Fake IStunHandler implementations for unit-testing DualStunHandler
 // ---------------------------------------------------------------------------
@@ -32,7 +35,10 @@ class _SuccessHandler implements IStunHandler {
 
   @override
   Future<LocalInfo> performLocalRequest() async =>
-      (localIp: '127.0.0.1', localPort: _socket.port, ipVersion: ipVersion);
+      LocalInfo(
+        (localIp: '127.0.0.1', localPort: _socket.port, ipVersion: ipVersion),
+        null,
+      );
 
   @override
   Future<bool> pingStunServer() async => true;
@@ -114,22 +120,19 @@ class _FailingHandler implements IStunHandler {
 final _emptyId = Uint8List(12);
 final _emptyRaw = Uint8List(0);
 
-final _ipv4Response = (
-  publicIp: '1.2.3.4',
-  publicPort: 5000,
-  ipVersion: IpVersion.v4,
-  transactionId: _emptyId,
-  raw: _emptyRaw,
-  attrs: null,
+final _ipv4Response = createStunResponse(
+  publicIpv4: '1.2.3.4',
+  publicPortIpv4: 5000,
+  transactionIdIpv4: _emptyId,
+  rawIpv4: _emptyRaw,
 );
 
-final _ipv6Response = (
-  publicIp: '2001:db8::1',
-  publicPort: 6000,
-  ipVersion: IpVersion.v6,
-  transactionId: _emptyId,
-  raw: _emptyRaw,
-  attrs: null,
+final _ipv6Response = createStunResponse(
+  publicIpv6: '2001:db8::1',
+  publicPortIpv6: 6000,
+  ipVersionIpv6: IpVersion.v6,
+  transactionIdIpv6: _emptyId,
+  rawIpv6: _emptyRaw,
 );
 
 // ---------------------------------------------------------------------------
@@ -164,8 +167,8 @@ void main() {
       );
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv4?.publicIp, equals('1.2.3.4'));
-      expect(result.stunResponseIpv6, isNull);
+      expect(result.publicIp(_ipv4Type), equals('1.2.3.4'));
+      expect(result.publicIp(_ipv6Type), isNull);
     });
 
     test('returns both slots when both handlers succeed', () async {
@@ -178,8 +181,8 @@ void main() {
       );
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv4?.publicIp, equals('1.2.3.4'));
-      expect(result.stunResponseIpv6?.publicIp, equals('2001:db8::1'));
+      expect(result.publicIp(_ipv4Type), equals('1.2.3.4'));
+      expect(result.publicIp(_ipv6Type), equals('2001:db8::1'));
     });
 
     test('IPv6 slot is null when IPv6 handler throws (SocketException), '
@@ -196,8 +199,8 @@ void main() {
       );
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv4?.publicIp, equals('1.2.3.4'));
-      expect(result.stunResponseIpv6, isNull);
+      expect(result.publicIp(_ipv4Type), equals('1.2.3.4'));
+      expect(result.publicIp(_ipv6Type), isNull);
     });
 
     test('IPv6 slot is null when IPv6 handler throws (generic error)',
@@ -211,8 +214,8 @@ void main() {
       );
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv4?.publicIp, equals('1.2.3.4'));
-      expect(result.stunResponseIpv6, isNull);
+      expect(result.publicIp(_ipv4Type), equals('1.2.3.4'));
+      expect(result.publicIp(_ipv6Type), isNull);
     });
 
     test('both handlers are called in parallel (IPv6 failure does not skip IPv4)',
@@ -247,8 +250,8 @@ void main() {
       );
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv4, isNull);
-      expect(result.stunResponseIpv6, isNull);
+      expect(result.publicIp(_ipv4Type), isNull);
+      expect(result.publicIp(_ipv6Type), isNull);
     });
 
     test('returns only the IPv6 slot when no IPv4 handler is set', () async {
@@ -258,8 +261,8 @@ void main() {
       );
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv6?.publicIp, equals('2001:db8::1'));
-      expect(result.stunResponseIpv4, isNull);
+      expect(result.publicIp(_ipv6Type), equals('2001:db8::1'));
+      expect(result.publicIp(_ipv4Type), isNull);
     });
 
     test('returns null IPv6 slot (not a throw) when IPv6 fails and no '
@@ -270,8 +273,8 @@ void main() {
       );
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv6, isNull);
-      expect(result.stunResponseIpv4, isNull);
+      expect(result.publicIp(_ipv6Type), isNull);
+      expect(result.publicIp(_ipv4Type), isNull);
     });
 
     test('throws StateError when no handler is initialized', () async {
@@ -293,8 +296,8 @@ void main() {
       );
 
       final info = await dual.performLocalRequest();
-      expect(info.localDualInfoIpv4?.localPort, greaterThan(0));
-      expect(info.localDualInfoIpv6, isNull);
+      expect(info.localPortIpv4, greaterThan(0));
+      expect(info.localIpv6, isNull);
     });
 
     test('IPv6 local slot is null when IPv6 performLocalRequest throws, '
@@ -308,8 +311,8 @@ void main() {
       );
 
       final info = await dual.performLocalRequest();
-      expect(info.localDualInfoIpv4?.localPort, equals(ipv4Socket.port));
-      expect(info.localDualInfoIpv6, isNull);
+      expect(info.localPortIpv4, equals(ipv4Socket.port));
+      expect(info.localIpv6, isNull);
     });
 
     test('returns only the IPv6 local slot when no IPv4 handler is set',
@@ -320,8 +323,8 @@ void main() {
       );
 
       final info = await dual.performLocalRequest();
-      expect(info.localDualInfoIpv6?.localPort, equals(ipv6Socket.port));
-      expect(info.localDualInfoIpv4, isNull);
+      expect(info.localPortIpv6, equals(ipv6Socket.port));
+      expect(info.localIpv4, isNull);
     });
   });
 
@@ -476,8 +479,8 @@ void main() {
       dual.clearIpv4Handler();
 
       final result = await dual.performStunRequest();
-      expect(result.stunResponseIpv4, isNull);
-      expect(result.stunResponseIpv6?.publicIp, equals('2001:db8::1'));
+      expect(result.publicIp(_ipv4Type), isNull);
+      expect(result.publicIp(_ipv6Type), equals('2001:db8::1'));
     });
 
     test(

@@ -34,17 +34,17 @@ Future<void> _exampleWithExternalSocket() async {
     // 1. Get local network information
     print('1. Getting local network information...');
     final localInfo = await handler.performLocalRequest();
-    print('   Local IP: ${localInfo.localIp}');
-    print('   Local Port: ${localInfo.localPort}\n');
+    print('   Local IP: ${localInfo.localIpv4}');
+    print('   Local Port: ${localInfo.localPortIpv4}\n');
 
     // 2. Perform STUN request to get public IP
     print('2. Performing STUN request...');
     final response = await handler.performStunRequest();
     print('   ✅ Success!');
-    print('   Public IP: ${response.publicIp}');
-    print('   Public Port: ${response.publicPort}');
-    print('   IP Version: ${response.ipVersion.value}');
-    print('   Port Mapping: ${localInfo.localPort} → ${response.publicPort}');
+    print('   Public IP: ${response.publicIp(InternetAddressType.IPv4)}');
+    print('   Public Port: ${response.publicPort(InternetAddressType.IPv4)}');
+    print('   IP Version: IPv4');
+    print('   Port Mapping: ${localInfo.localPortIpv4} → ${response.publicPort(InternetAddressType.IPv4)}');
 
     // 3. Try different STUN server with NEW socket
     // (RawDatagramSocket streams are single-subscription, so create a new socket)
@@ -57,10 +57,10 @@ Future<void> _exampleWithExternalSocket() async {
       socket: socket2,
     ));
     final response2 = await handler2.performStunRequest();
-    print('   Public IP from second server: ${response2.publicIp}');
+    print('   Public IP from second server: ${response2.publicIp(InternetAddressType.IPv4)}');
 
     // Verify both servers report the same IP
-    if (response.publicIp == response2.publicIp) {
+    if (response.publicIp(InternetAddressType.IPv4) == response2.publicIp(InternetAddressType.IPv4)) {
       print('   ✅ Both servers agree on public IP');
     }
 
@@ -88,32 +88,28 @@ Future<void> _exampleWithDI() async {
 
     // Register a socket refresh callback via IDualCallbackHandler
     final callbacks = SingletonDIAccess.get<IDualCallbackHandler>();
-    callbacks.registerIpv4((data) {
+    callbacks.register((data) {
       final (newResponse, _) = data;
-      print('   [callback] IPv4 socket refreshed → ${newResponse.publicIp}');
-    });
+      print('   [callback] IPv4 socket refreshed → ${newResponse.publicIp(InternetAddressType.IPv4)}');
+    }, type: InternetAddressType.IPv4);
 
     // Perform requests through the injected singleton
     print('1. Performing STUN request via DI singleton...');
     final response = await stun.performStunRequest();
-    final stunIpv4 = response.stunResponseIpv4;
-    final stunIpv6 = response.stunResponseIpv6;
-    if (stunIpv4 != null) {
-      print('   IPv4 Public IP: ${stunIpv4.publicIp}');
+    if (response.publicIp(InternetAddressType.IPv4) != null) {
+      print('   IPv4 Public IP: ${response.publicIp(InternetAddressType.IPv4)}');
     }
-    if (stunIpv6 != null) {
-      print('   IPv6 Public IP: ${stunIpv6.publicIp}');
+    if (response.publicIp(InternetAddressType.IPv6) != null) {
+      print('   IPv6 Public IP: ${response.publicIp(InternetAddressType.IPv6)}');
     }
 
     print('2. Performing local request...');
     final localInfo = await stun.performLocalRequest();
-    final localIpv4 = localInfo.localDualInfoIpv4;
-    final localIpv6 = localInfo.localDualInfoIpv6;
-    if (localIpv4 != null) {
-      print('   IPv4 Local: ${localIpv4.localIp}:${localIpv4.localPort}');
+    if (localInfo.localIpv4 != null) {
+      print('   IPv4 Local: ${localInfo.localIpv4}:${localInfo.localPortIpv4}');
     }
-    if (localIpv6 != null) {
-      print('   IPv6 Local: ${localIpv6.localIp}:${localIpv6.localPort}');
+    if (localInfo.localIpv6 != null) {
+      print('   IPv6 Local: ${localInfo.localIpv6}:${localInfo.localPortIpv6}');
     }
 
     stun.close();
@@ -138,8 +134,8 @@ Future<void> _exampleWithInternalSocket() async {
     // 1. Get local network information
     print('1. Getting local network information...');
     final localInfo = await handler.performLocalRequest();
-    print('   Local IP: ${localInfo.localIp}');
-    print('   Local Port: ${localInfo.localPort}\n');
+    print('   Local IP: ${localInfo.localIpv4}');
+    print('   Local Port: ${localInfo.localPortIpv4}\n');
 
     // 2. Ping STUN server
     print('2. Pinging STUN server...');
@@ -150,10 +146,10 @@ Future<void> _exampleWithInternalSocket() async {
     print('3. Performing STUN request...');
     final response = await handler.performStunRequest();
     print('   ✅ Success!');
-    print('   Public IP: ${response.publicIp}');
-    print('   Public Port: ${response.publicPort}');
-    print('   IP Version: ${response.ipVersion.value}');
-    print('   Port Mapping: ${localInfo.localPort} → ${response.publicPort}');
+    print('   Public IP: ${response.publicIp(InternetAddressType.IPv4)}');
+    print('   Public Port: ${response.publicPort(InternetAddressType.IPv4)}');
+    print('   IP Version: IPv4');
+    print('   Port Mapping: ${localInfo.localPortIpv4} → ${response.publicPort(InternetAddressType.IPv4)}');
 
     handler.close();
   } catch (e) {

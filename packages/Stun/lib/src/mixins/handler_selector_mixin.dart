@@ -8,22 +8,18 @@ import '../interfaces/i_stun_handler.dart';
 /// when the requested handler is missing. Not part of the package's public
 /// API — do not export it from `stun.dart`.
 @internal
-mixin DualHandlerSelectorMixin {
-  /// IPv4 handler (optional, null if unavailable or after close)
-  IStunHandler? get ipv4Handler;
-
-  /// IPv6 handler (optional, null if unavailable or after close)
-  IStunHandler? get ipv6Handler;
+mixin HandlerSelectorMixin {
+  IStunHandler? handler({required bool ipv6});
 
   /// Message used by [requireHandler] when the requested handler is missing.
   String missingHandlerMessage({required bool ipv6});
 
   /// Returns the requested handler, throwing [StateError] when unavailable.
   IStunHandler requireHandler({required bool ipv6}) {
-    final handler = ipv6 ? ipv6Handler : ipv4Handler;
-    if (handler == null) {
+    final h = handler(ipv6: ipv6);
+    if (h == null) {
       throw StateError(missingHandlerMessage(ipv6: ipv6));
     }
-    return handler;
+    return h;
   }
 }
