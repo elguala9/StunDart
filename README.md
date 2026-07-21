@@ -1,4 +1,4 @@
-# StunDart Monorepo
+﻿# StunDart Monorepo
 
 A Dart monorepo workspace for STUN (Session Traversal Utilities for NAT) protocol implementation.
 
@@ -70,7 +70,7 @@ dart test
 - **Dual-stack Support**: IPv4 and IPv6 with parallel request execution
 - **NAT Detection**: Complete RFC 5780 NAT type detection (7 types, filtering & mapping behaviors)
 - **Performance**: Response caching eliminates redundant network calls
-- **Singleton Pattern**: Global instance management via `StunHandlerSingleton`
+- **Singleton Pattern**: Global instance management via `DualStunHandlerSingleton`
 - **Flexible Socket Management**: Internal socket management with `StunHandler.withoutSocket()` or external socket ownership
 - **Dependency Injection**: ISingletonStandardDI compliance for DI container integration
 - **Socket Refresh Callbacks**: IPv4/IPv6-specific typed callbacks for socket recreation events

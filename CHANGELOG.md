@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.0] - 2026-03-30
 
 ### Added
-- `IStunHandlerBase` interface: full public contract for `StunHandlerBase`, extends `IValueForRegistry`
+- `IDualStunHandlerBase` interface: full public contract for `DualStunHandlerBase`, extends `IValueForRegistry`
 - `RegistryAccess` initial point: named multi-instance STUN registration via string keys
 - Shared `stun_builder.dart` helper: common socket-wiring logic for both initial-point variants
 
 ### Changed
-- `StunHandlerBase` implements `IStunHandlerBase` + `ValueForRegistry`, adds `destroy()`
+- `DualStunHandlerBase` implements `IDualStunHandlerBase` + `ValueForRegistry`, adds `destroy()`
 - Initial-point code uses interfaces throughout (no concrete type leakage)
 
 ### Tests
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical Details
 - `SingletonHandlerFactory.initializeDI()` - registers factory in DI container
-- `StunHandlerSingleton.initializeDI()` - initializes complete DI setup for singleton pattern
+- `DualStunHandlerSingleton.initializeDI()` - initializes complete DI setup for singleton pattern
 - `DualStunHandler.initializeDI()` - registers dual handler in DI container
 - All handlers implement proper `destroy()` for resource cleanup
 

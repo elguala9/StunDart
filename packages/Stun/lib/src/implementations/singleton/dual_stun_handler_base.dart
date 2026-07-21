@@ -8,18 +8,18 @@ import '../../interfaces/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_base.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/handler_selector_mixin.dart';
-import '../../mixins/stun_handler_base_mixin.dart';
+import '../../mixins/dual_handler_delegation_mixin.dart';
 import '../handlers/dual_stun_handler.dart';
 import 'dual_callback_handler.dart';
 import 'singleton_handler_factory.dart';
 
 @isSingleton
-class StunHandlerBase
+class DualStunHandlerBase
     with
         ValueForRegistry,
         DestroyableHandlerMixin,
         HandlerSelectorMixin,
-        StunHandlerBaseMixin
+        DualHandlerDelegationMixin
     implements IStunHandlerBase {
   @isInjected
   @protected
@@ -78,7 +78,7 @@ class StunHandlerBase
 
     if (ipv4 == null && ipv6 == null) {
       throw StateError(
-        'StunHandlerSingleton: failed to initialize any handler '
+        'DualStunHandlerSingleton: failed to initialize any handler '
         '(IPv4 and IPv6 both unavailable).',
       );
     }

@@ -1,14 +1,14 @@
 import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
-import 'package:stun/src/generated/stun_handler_base_di.dart';
+import 'package:stun/src/generated/dual_stun_handler_base_di.dart';
 import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 
 void _diCleanup() {
   SingletonDIAccess.remove<IDualStunHandler>();
   SingletonDIAccess.remove<IDualCallbackHandler>();
-  SingletonDIAccess.remove<StunHandlerBaseDI>();
+  SingletonDIAccess.remove<DualStunHandlerBaseDI>();
 }
 
 void main() {
@@ -106,7 +106,7 @@ void main() {
         address: 'stun.example.com',
         port: 3478,
       );
-      // No exception thrown â€” address/port accepted
+      // No exception thrown — address/port accepted
       expect(SingletonDIAccess.get<IDualStunHandler>().ipv4Handler, isNotNull);
       ipv4.close();
     });

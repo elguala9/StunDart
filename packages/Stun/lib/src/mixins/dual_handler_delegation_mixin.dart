@@ -8,12 +8,12 @@ import '../interfaces/i_stun_handler.dart';
 import '../types/stun_types.dart';
 import 'handler_selector_mixin.dart';
 
-/// Internal-only behavior of `StunHandlerBase`: pure delegation to the dual
+/// Internal-only behavior of `DualStunHandlerBase`: pure delegation to the dual
 /// handler and socket-refresh callback management. The mixing class provides
 /// the DI-wired state ([dualHandler] and [callbacks]). Not part of the
-/// package's public API — do not export it from `stun.dart`.
+/// package's public API � do not export it from `stun.dart`.
 @internal
-mixin StunHandlerBaseMixin on HandlerSelectorMixin {
+mixin DualHandlerDelegationMixin on HandlerSelectorMixin {
   /// Dual handler provided by the mixing class.
   IDualStunHandler get dualHandler;
 
@@ -26,7 +26,7 @@ mixin StunHandlerBaseMixin on HandlerSelectorMixin {
 
   @override
   String missingHandlerMessage({required bool ipv6}) =>
-      'StunHandlerSingleton: ${ipv6 ? 'IPv6' : 'IPv4'} handler not initialized or not available. Call initialize() first.';
+      'DualStunHandlerSingleton: ${ipv6 ? 'IPv6' : 'IPv4'} handler not initialized or not available. Call initialize() first.';
 
   void replaceHandler(
     IStunHandler handler, {
@@ -94,7 +94,7 @@ mixin StunHandlerBaseMixin on HandlerSelectorMixin {
     final handler = dualHandler.getHandler(ipv6: ipv6);
     if (handler == null) {
       throw StateError(
-        'StunHandlerSingleton: ${ipv6 ? 'IPv6' : 'IPv4'} handler not '
+        'DualStunHandlerSingleton: ${ipv6 ? 'IPv6' : 'IPv4'} handler not '
         'initialized or not available. Call initialize() first and ensure '
         '${ipv6 ? 'IPv6' : 'IPv4'} is available on this system.',
       );

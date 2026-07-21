@@ -1,4 +1,4 @@
-import 'package:singleton_manager/singleton_manager.dart';
+﻿import 'package:singleton_manager/singleton_manager.dart';
 import '../../interfaces/i_stun_handler.dart';
 import '../../interfaces/i_dual_stun_handler.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
@@ -41,7 +41,7 @@ class DualStunHandler
   }) async {
     throw UnsupportedError(
       'DualStunHandler is a low-level container. '
-      'Use StunHandlerBase.initialize() instead.',
+      'Use DualStunHandlerBase.initialize() instead.',
     );
   }
 

@@ -1,4 +1,4 @@
-# StunDart
+﻿# StunDart
 
 [![pub package](https://img.shields.io/pub/v/stun.svg)](https://pub.dev/packages/stun)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
@@ -235,12 +235,12 @@ typedef NATDetectionResult = ({
 });
 ```
 
-### `IStunHandlerSingleton` Interface 🆕
+### `IDualStunHandlerSingleton` Interface 🆕
 
 Singleton interface for managing dual IPv4/IPv6 STUN handlers:
 
 ```dart
-abstract interface class IStunHandlerSingleton {
+abstract interface class IDualStunHandlerSingleton {
   Future<void> initialize({
     String? address,
     int? port,
@@ -265,13 +265,13 @@ abstract interface class IStunHandlerSingleton {
 }
 ```
 
-### `StunHandlerSingleton` Class 🆕
+### `DualStunHandlerSingleton` Class 🆕
 
 Global singleton instance managing dual IPv4/IPv6 STUN handlers:
 
 ```dart
-class StunHandlerSingleton implements IStunHandlerSingleton {
-  static StunHandlerSingleton get instance => _instance;
+class DualStunHandlerSingleton implements IDualStunHandlerSingleton {
+  static DualStunHandlerSingleton get instance => _instance;
 
   /// Initialize with both IPv4 and IPv6 handlers
   Future<void> initialize({
@@ -304,17 +304,17 @@ class StunHandlerSingleton implements IStunHandlerSingleton {
 **Example:**
 ```dart
 // Initialize global singleton with both IPv4 and IPv6
-await StunHandlerSingleton.instance.initialize(
+await DualStunHandlerSingleton.instance.initialize(
   address: 'stun.l.google.com',
   port: 19302,
 );
 
 // Use automatically (prefers IPv6 if available)
-final response = await StunHandlerSingleton.instance.performStunRequest();
+final response = await DualStunHandlerSingleton.instance.performStunRequest();
 
 // Access specific handler
-final ipv4Response = await StunHandlerSingleton.instance.ipv4Handler.performStunRequest();
-final ipv6Response = await StunHandlerSingleton.instance.ipv6Handler?.performStunRequest();
+final ipv4Response = await DualStunHandlerSingleton.instance.ipv4Handler.performStunRequest();
+final ipv6Response = await DualStunHandlerSingleton.instance.ipv6Handler?.performStunRequest();
 
 // Replace specific handler
 final customHandler = await StunHandler.withoutSocket(
@@ -322,7 +322,7 @@ final customHandler = await StunHandler.withoutSocket(
   port: 3478,
   ipv6: true,
 );
-StunHandlerSingleton.instance.replaceHandler(
+DualStunHandlerSingleton.instance.replaceHandler(
   customHandler,
   ipv6: true,
 );
@@ -376,7 +376,7 @@ final handler = await StunHandler.withoutSocket(
 );
 
 // Custom timeout for singleton
-await StunHandlerSingleton.instance.initialize(
+await DualStunHandlerSingleton.instance.initialize(
   address: 'stun.l.google.com',
   port: 19302,
   timeout: const Duration(seconds: 10),
@@ -414,7 +414,7 @@ try {
 }
 
 // With singleton
-await StunHandlerSingleton.instance.initialize(
+await DualStunHandlerSingleton.instance.initialize(
   address: 'stun.l.google.com',
   port: 19302,
   onLog: (msg) => logger.info(msg),  // Your logger
@@ -627,25 +627,25 @@ import 'package:stun/stun.dart';
 
 void main() async {
   // Initialize global singleton with IPv4 and IPv6
-  await StunHandlerSingleton.instance.initialize(
+  await DualStunHandlerSingleton.instance.initialize(
     address: 'stun.l.google.com',
     port: 19302,
   );
 
   // Use anywhere in your app (prefers IPv6 if available)
-  final response = await StunHandlerSingleton.instance.performStunRequest();
+  final response = await DualStunHandlerSingleton.instance.performStunRequest();
   print('Public IP: ${response.publicIp}');
 
   // Switch servers without creating new handler
-  StunHandlerSingleton.instance.setStunServer('stun1.l.google.com', 19302);
-  final response2 = await StunHandlerSingleton.instance.performStunRequest();
+  DualStunHandlerSingleton.instance.setStunServer('stun1.l.google.com', 19302);
+  final response2 = await DualStunHandlerSingleton.instance.performStunRequest();
 
   // Access specific handler if needed
-  final ipv4Handler = StunHandlerSingleton.instance.ipv4Handler;
-  final ipv6Handler = StunHandlerSingleton.instance.ipv6Handler;
+  final ipv4Handler = DualStunHandlerSingleton.instance.ipv4Handler;
+  final ipv6Handler = DualStunHandlerSingleton.instance.ipv6Handler;
 
   // Cleanup
-  StunHandlerSingleton.instance.close();
+  DualStunHandlerSingleton.instance.close();
 }
 ```
 
@@ -697,7 +697,7 @@ dart test
 ```
 
 The test suite includes:
-- **24 tests** for StunHandlerSingleton (dual stack management, handler replacement, IPv6 preference, timeout, logging)
+- **24 tests** for DualStunHandlerSingleton (dual stack management, handler replacement, IPv6 preference, timeout, logging)
 - **16 tests** for NAT type enums and typedefs
 - **24 tests** for STUN message parsing and encoding
 - **18 tests** for NAT detector integration
@@ -712,9 +712,9 @@ The test suite includes:
 
 **Total: 198 tests - All passing ✅**
 
-### `StunHandlerBase` & DI Integration
+### `DualStunHandlerBase` & DI Integration
 
-`StunHandlerBase` implements `IStunHandlerBase` and can be registered in two DI systems.
+`DualStunHandlerBase` implements `IDualStunHandlerBase` and can be registered in two DI systems.
 
 #### `SingletonDIAccess` — one global instance
 
@@ -729,7 +729,7 @@ await initialPointStun(
 );
 
 // Retrieve the singleton
-final stun = SingletonDIAccess.get<StunHandlerBase>();
+final stun = SingletonDIAccess.get<DualStunHandlerBase>();
 final response = await stun.performStunRequest();
 print('Public IP: ${response.publicIp}');
 
@@ -747,16 +747,16 @@ Use `initialPointStunRegistry` when you need more than one independent STUN stac
 
 ```dart
 import 'package:stun/src/initial_point/initial_point_registry.dart';
-import 'package:stun/src/interfaces/i_stun_handler_base.dart';
+import 'package:stun/src/interfaces/i_dual_stun_handler_base.dart';
 import 'package:singleton_manager/singleton_manager.dart';
 
 // Register two independent STUN stacks
 await initialPointStunRegistry('primary',   address: 'stun.l.google.com', port: 19302);
 await initialPointStunRegistry('secondary', address: 'stun1.l.google.com', port: 19302);
 
-// Retrieve by key — typed as IStunHandlerBase
-final primary   = RegistryAccess.getInstance<IStunHandlerBase>('primary');
-final secondary = RegistryAccess.getInstance<IStunHandlerBase>('secondary');
+// Retrieve by key — typed as IDualStunHandlerBase
+final primary   = RegistryAccess.getInstance<IDualStunHandlerBase>('primary');
+final secondary = RegistryAccess.getInstance<IDualStunHandlerBase>('secondary');
 
 final r1 = await primary.performStunRequest();
 final r2 = await secondary.performStunRequest();
@@ -773,7 +773,7 @@ If you already have bound sockets, use the `WithSockets` variant:
 ```dart
 final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
 await initialPointStunWithSocketsRegistry('my-stun', ipv4);
-final stun = RegistryAccess.getInstance<IStunHandlerBase>('my-stun');
+final stun = RegistryAccess.getInstance<IDualStunHandlerBase>('my-stun');
 ```
 
 ## Architecture
@@ -786,8 +786,8 @@ packages/Stun/lib/src/
 │   └── stun_types.dart
 ├── interfaces/                   # Abstract interfaces
 │   ├── i_stun_handler.dart
-│   ├── i_stun_handler_base.dart       # Contract for StunHandlerBase (IValueForRegistry)
-│   ├── i_stun_handler_singleton.dart
+│   ├── i_dual_stun_handler_base.dart       # Contract for DualStunHandlerBase (IValueForRegistry)
+│   ├── i_dual_stun_handler_singleton.dart
 │   ├── i_dual_stun_handler.dart
 │   └── i_dual_callback_handler.dart
 ├── initial_point/                # DI entry points
@@ -799,8 +799,8 @@ packages/Stun/lib/src/
     │   ├── stun_handler.dart          # Main STUN handler
     │   └── dual_stun_handler.dart     # Dual IPv4/IPv6 handler
     ├── singleton/
-    │   ├── stun_handler_base.dart     # Injectable base class (implements IStunHandlerBase)
-    │   └── stun_handler_singleton.dart
+    │   ├── dual_stun_handler_base.dart     # Injectable base class (implements IDualStunHandlerBase)
+    │   └── dual_stun_handler_singleton.dart
     ├── nat/
     │   └── nat_detector.dart          # NAT type detection
     ├── socket/                        # Socket lifecycle management
