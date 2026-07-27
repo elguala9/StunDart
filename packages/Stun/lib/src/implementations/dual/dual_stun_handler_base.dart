@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:singleton_manager/singleton_manager.dart';
-import '../../interfaces/dual/i_dual_callback_handler.dart';
 import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../interfaces/single/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_base.dart';
@@ -10,7 +9,6 @@ import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/dual/handler_selector_mixin.dart';
 import '../../mixins/dual/dual_handler_delegation_mixin.dart';
 import 'dual_stun_handler.dart';
-import 'dual_callback_handler.dart';
 import 'singleton_handler_factory.dart';
 
 @isSingleton
@@ -27,11 +25,6 @@ class DualStunHandlerBase
 
   @override
   IDualStunHandler get dualHandler => dualHandlerProtected;
-
-  @isInjected
-  @protected
-  @override
-  late IDualCallbackHandler callbacks = DualCallbackHandler();
 
   Future<void> initializeDualHandlerDI() async {
     dualHandlerProtected.initializeDI();
@@ -51,7 +44,6 @@ class DualStunHandlerBase
         address: address,
         port: port,
         timeout: timeout,
-        onSocketRefresh: callbacks.getOn(type: InternetAddressType.IPv4),
       );
     } catch (_) {}
     if (ipv4 != null) {
@@ -67,7 +59,6 @@ class DualStunHandlerBase
         address: address,
         port: port,
         timeout: timeout,
-        onSocketRefresh: callbacks.getOn(type: InternetAddressType.IPv6),
       );
     } catch (_) {}
     if (ipv6 != null) {
@@ -90,12 +81,10 @@ class DualStunHandlerBase
   }) async {
     final firstVersion = first.getIpVersion();
     dualHandlerProtected.setHandler(first, type: firstVersion);
-    first.addOnSocketRefresh(callbacks.getOn(type: firstVersion));
 
     if (second != null) {
       final secondVersion = second.getIpVersion();
       dualHandlerProtected.setHandler(second, type: secondVersion);
-      second.addOnSocketRefresh(callbacks.getOn(type: secondVersion));
     }
   }
 }

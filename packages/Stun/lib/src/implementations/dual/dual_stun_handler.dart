@@ -6,7 +6,6 @@ import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/dual/handler_selector_mixin.dart';
 import '../../mixins/dual/dual_stun_handler_mixin.dart';
-import '../../types/stun_types.dart';
 
 /// Manages dual IPv4 and IPv6 STUN handlers with parallel request execution
 class DualStunHandler
@@ -43,52 +42,6 @@ class DualStunHandler
     setHandler(first, type: first.getIpVersion());
     if (second != null) {
       setHandler(second, type: second.getIpVersion());
-    }
-  }
-
-  @override
-  void setOnSocketRefresh(
-    OnSocketRefresh callback, {
-    InternetAddressType type = InternetAddressType.IPv6,
-  }) {
-    final h = getHandler(type: type);
-    if (h == null) {
-      throw StateError(
-        'DualStunHandler: ${type == InternetAddressType.IPv6 ? 'IPv6' : 'IPv4'} '
-        'handler not initialized.',
-      );
-    }
-    h.addOnSocketRefresh(callback);
-  }
-
-  @override
-  void clearOnSocketRefresh({
-    InternetAddressType type = InternetAddressType.IPv6,
-  }) {
-    return;
-  }
-
-  @override
-  void addOnSocketRefresh(
-    OnSocketRefresh callback, {
-    InternetAddressType type = InternetAddressType.IPv6,
-  }) {
-    if (type == InternetAddressType.IPv6) {
-      _ipv6Handler?.addOnSocketRefresh(callback);
-    } else {
-      _ipv4Handler?.addOnSocketRefresh(callback);
-    }
-  }
-
-  @override
-  void removeOnSocketRefresh(
-    OnSocketRefresh callback, {
-    InternetAddressType type = InternetAddressType.IPv6,
-  }) {
-    if (type == InternetAddressType.IPv6) {
-      _ipv6Handler?.removeOnSocketRefresh(callback);
-    } else {
-      _ipv4Handler?.removeOnSocketRefresh(callback);
     }
   }
 }

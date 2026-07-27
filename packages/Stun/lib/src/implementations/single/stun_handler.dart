@@ -2,7 +2,6 @@ import 'dart:io';
 
 import '../../config/stun_config.dart';
 import 'stun_request_handler.dart';
-import 'stun_socket_refresh_manager.dart';
 import 'stun_socket_manager.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/single/stun_handler_mixin.dart';
@@ -15,7 +14,7 @@ class StunHandler
     with StunLoggerMixin, DestroyableHandlerMixin, StunHandlerMixin
     implements IStunHandler {
   /// Creates a STUN handler with the provided configuration (backward compatible)
-  StunHandler(StunHandlerInput input, {OnSocketRefresh? onSocketRefresh})
+  StunHandler(StunHandlerInput input)
     : _stunAddress = input.address ?? defaultStunConfig.address,
       _stunPort = input.port ?? defaultStunConfig.port,
       _timeout = const Duration(seconds: 5),
@@ -26,7 +25,6 @@ class StunHandler
         onLog: null,
       ) {
     if (input.socket != null) _socketMgr.socket = input.socket;
-    _registerSocketRefreshCallback(onSocketRefresh);
   }
 
   /// Factory constructor for explicit socket ownership
@@ -36,7 +34,6 @@ class StunHandler
     int? port,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    OnSocketRefresh? onSocketRefresh,
   }) {
     final handler = StunHandler._internal(
       stunAddress: address,
@@ -45,7 +42,6 @@ class StunHandler
       bindPort: null,
       timeout: timeout,
       onLog: onLog,
-      onSocketRefresh: onSocketRefresh,
     );
     handler._socketMgr.socket = socket;
     return handler;
@@ -59,7 +55,6 @@ class StunHandler
     int? bindPort = 0,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    OnSocketRefresh? onSocketRefresh,
   }) : _stunAddress = stunAddress ?? defaultStunConfig.address,
        _stunPort = stunPort ?? defaultStunConfig.port,
        _timeout = timeout,
@@ -68,16 +63,13 @@ class StunHandler
          bindType: bindType,
          bindPort: bindPort,
          onLog: onLog,
-       ) {
-    _registerSocketRefreshCallback(onSocketRefresh);
-  }
+       );
 
   String _stunAddress;
   int _stunPort;
   final Duration _timeout;
   final void Function(String)? _onLog;
   final StunSocketManager _socketMgr;
-  final StunSocketRefreshManager _refreshManager = StunSocketRefreshManager();
 
   late final StunRequestHandler _requestHandler = StunRequestHandler(
     stunAddress: _stunAddress,
@@ -96,14 +88,6 @@ class StunHandler
   StunRequestHandler get requestHandler => _requestHandler;
 
   @override
-  StunSocketRefreshManager get refreshManager => _refreshManager;
-
-  void _registerSocketRefreshCallback(OnSocketRefresh? callback) {
-    if (callback == null) return;
-    _refreshManager.register(callback);
-  }
-
-  @override
   void setStunServer(String address, int port) {
     _stunAddress = address.trim().isNotEmpty
         ? address
@@ -117,7 +101,6 @@ class StunHandler
     InternetAddressType type = InternetAddressType.IPv4,
     Duration timeout = const Duration(seconds: 5),
     void Function(String)? onLog,
-    OnSocketRefresh? onSocketRefresh,
   }) async {
     final handler = StunHandler._internal(
       stunAddress: address,
@@ -125,7 +108,6 @@ class StunHandler
       bindType: type,
       timeout: timeout,
       onLog: onLog,
-      onSocketRefresh: onSocketRefresh,
     );
     await handler._socketMgr.getSocket();
     return handler;

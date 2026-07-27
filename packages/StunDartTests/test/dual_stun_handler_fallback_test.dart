@@ -61,11 +61,6 @@ class _SuccessHandler implements IStunHandler {
   @override
   DateTime? get lastLocalUpdated => null;
 
-  @override
-  void addOnSocketRefresh(OnSocketRefresh callback) {}
-
-  @override
-  void removeOnSocketRefresh(OnSocketRefresh callback) {}
 }
 
 /// A fake handler that always throws on performStunRequest / performLocalRequest.
@@ -106,11 +101,6 @@ class _FailingHandler implements IStunHandler {
   @override
   DateTime? get lastLocalUpdated => null;
 
-  @override
-  void addOnSocketRefresh(OnSocketRefresh callback) {}
-
-  @override
-  void removeOnSocketRefresh(OnSocketRefresh callback) {}
 }
 
 // ---------------------------------------------------------------------------

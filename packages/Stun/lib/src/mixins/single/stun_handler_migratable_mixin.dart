@@ -14,7 +14,6 @@ mixin StunHandlerMigratableMixin on StunHandlerMixin, StunLoggerMixin
     final profile = StunHandlerProfile(
       stunAddress: requestHandler.stunAddress,
       stunPort: requestHandler.stunPort,
-      callbacks: refreshManager.callbacks.toList(),
       ipVersion: socketMgr.bindType,
       timeout: requestHandler.timeout,
       onLog: onLog,

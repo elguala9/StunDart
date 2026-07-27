@@ -37,7 +37,6 @@ mixin DualStunHandlerMigratableMixin on DualStunHandlerMixin
     return StunHandlerProfile(
       stunAddress: mixin.requestHandler.stunAddress,
       stunPort: mixin.requestHandler.stunPort,
-      callbacks: mixin.refreshManager.callbacks.toList(),
       ipVersion: mixin.socketMgr.bindType,
       timeout: mixin.requestHandler.timeout,
       onLog: mixin.onLog,

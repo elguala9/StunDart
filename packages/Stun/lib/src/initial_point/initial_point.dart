@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
 import '../generated/dual_stun_handler_base_di.dart';
-import '../interfaces/dual/i_dual_callback_handler.dart';
 import '../interfaces/dual/i_dual_stun_handler.dart';
 
 import 'stun_builder.dart';
@@ -15,7 +14,7 @@ Future<void> initialPointStunWithSockets(
   int? port,
   Duration timeout = const Duration(seconds: 5),
 }) async {
-  final (:dualHandler, :dualCallback) = buildStunHandlers(
+  final dualHandler = buildStunHandlers(
     ipv4Socket,
     ipv6Socket: ipv6Socket,
     address: address,
@@ -25,9 +24,6 @@ Future<void> initialPointStunWithSockets(
 
   SingletonDIAccess.addInstanceAs<IDualStunHandler, IDualStunHandler>(
     dualHandler,
-  );
-  SingletonDIAccess.addInstanceAs<IDualCallbackHandler, IDualCallbackHandler>(
-    dualCallback,
   );
   SingletonDIAccess.addInstance(DualStunHandlerBaseDI.initializeDI());
 }
