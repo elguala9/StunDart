@@ -7,7 +7,6 @@ import 'package:test/test.dart';
 
 void _diCleanup() {
   SingletonDIAccess.remove<IDualStunHandler>();
-  SingletonDIAccess.remove<IDualCallbackHandler>();
   SingletonDIAccess.remove<DualStunHandlerBaseDI>();
 }
 
@@ -36,16 +35,6 @@ void main() {
       final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       await initialPointStunWithSockets(ipv4);
       expect(() => SingletonDIAccess.get<IDualStunHandler>(), returnsNormally);
-      ipv4.close();
-    });
-
-    test('registers IDualCallbackHandler in DI', () async {
-      final ipv4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-      await initialPointStunWithSockets(ipv4);
-      expect(
-        () => SingletonDIAccess.get<IDualCallbackHandler>(),
-        returnsNormally,
-      );
       ipv4.close();
     });
 
@@ -106,7 +95,7 @@ void main() {
         address: 'stun.example.com',
         port: 3478,
       );
-      // No exception thrown — address/port accepted
+      // No exception thrown ï¿½ address/port accepted
       expect(SingletonDIAccess.get<IDualStunHandler>().ipv4Handler, isNotNull);
       ipv4.close();
     });
@@ -122,14 +111,6 @@ void main() {
     test('registers IDualStunHandler in DI', () async {
       await initialPointStun();
       expect(() => SingletonDIAccess.get<IDualStunHandler>(), returnsNormally);
-    });
-
-    test('registers IDualCallbackHandler in DI', () async {
-      await initialPointStun();
-      expect(
-        () => SingletonDIAccess.get<IDualCallbackHandler>(),
-        returnsNormally,
-      );
     });
 
     test('DI dual handler has IPv4 handler', () async {

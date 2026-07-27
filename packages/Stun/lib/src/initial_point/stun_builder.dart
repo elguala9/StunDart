@@ -2,15 +2,12 @@ import 'dart:io';
 
 import '../implementations/dual/dual_stun_handler.dart';
 import '../implementations/single/stun_handler.dart';
-import '../implementations/dual/dual_callback_handler.dart';
-import '../interfaces/dual/i_dual_callback_handler.dart';
 import '../interfaces/dual/i_dual_stun_handler.dart';
 
-/// Builds and wires an [IDualStunHandler] and [IDualCallbackHandler] from
-/// pre-bound sockets. Shared by both the [SingletonDIAccess] and
-/// [RegistryAccess] initial-point variants.
-({IDualStunHandler dualHandler, IDualCallbackHandler dualCallback})
-buildStunHandlers(
+/// Builds and wires an [IDualStunHandler] from pre-bound sockets.
+/// Shared by both the [SingletonDIAccess] and [RegistryAccess] initial-point
+/// variants.
+IDualStunHandler buildStunHandlers(
   RawDatagramSocket ipv4Socket, {
   RawDatagramSocket? ipv6Socket,
   String? address,
@@ -18,7 +15,6 @@ buildStunHandlers(
   Duration timeout = const Duration(seconds: 5),
 }) {
   final dualHandler = DualStunHandler();
-  final dualCallback = DualCallbackHandler();
 
   dualHandler.setHandler(
     StunHandler.withSocket(
@@ -26,7 +22,6 @@ buildStunHandlers(
       address: address,
       port: port,
       timeout: timeout,
-      onSocketRefresh: dualCallback.getOn(type: InternetAddressType.IPv4),
     ),
     type: InternetAddressType.IPv4,
   );
@@ -38,11 +33,10 @@ buildStunHandlers(
         address: address,
         port: port,
         timeout: timeout,
-        onSocketRefresh: dualCallback.getOn(type: InternetAddressType.IPv6),
       ),
       type: InternetAddressType.IPv6,
     );
   }
 
-  return (dualHandler: dualHandler, dualCallback: dualCallback);
+  return dualHandler;
 }

@@ -5,14 +5,13 @@ import 'package:meta/meta.dart';
 
 import '../../implementations/single/stun_request_handler.dart';
 import '../../implementations/single/stun_socket_manager.dart';
-import '../../implementations/single/stun_socket_refresh_manager.dart';
 import '../../types/stun_types.dart';
 import 'stun_logger_mixin.dart';
 
-/// Internal-only behavior of `StunHandler`: cached STUN/local requests,
-/// socket error recovery and refresh-callback plumbing. The mixing class
-/// provides the collaborators as state. Not part of the package's public
-/// API — do not export it from `stun.dart`.
+/// Internal-only behavior of `StunHandler`: cached STUN/local requests
+/// and socket error recovery. The mixing class provides the collaborators
+/// as state. Not part of the package's public API — do not export it from
+/// `stun.dart`.
 @internal
 mixin StunHandlerMixin on StunLoggerMixin {
   /// Socket manager provided by the mixing class.
@@ -20,15 +19,6 @@ mixin StunHandlerMixin on StunLoggerMixin {
 
   /// Request handler provided by the mixing class.
   StunRequestHandler get requestHandler;
-
-  /// Refresh callback manager provided by the mixing class.
-  StunSocketRefreshManager get refreshManager;
-
-  void addOnSocketRefresh(OnSocketRefresh callback) =>
-      refreshManager.register(callback);
-
-  void removeOnSocketRefresh(OnSocketRefresh callback) =>
-      refreshManager.unregister(callback);
 
   DateTime? get lastStunUpdated => socketMgr.lastStunUpdated;
 
@@ -97,11 +87,9 @@ mixin StunHandlerMixin on StunLoggerMixin {
 
   Future<StunResponse> _handleSocketError(String logMessage) async {
     log(logMessage);
-    final oldResponse = socketMgr.cachedStunResponse;
     await socketMgr.recreateSocket();
     socketMgr.cachedStunResponse = await _doStunRequest();
     socketMgr.lastStunUpdated = DateTime.now();
-    refreshManager.fire(socketMgr.cachedStunResponse!, oldResponse);
     return socketMgr.cachedStunResponse!;
   }
 

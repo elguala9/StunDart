@@ -3,15 +3,12 @@ import 'dart:io';
 import 'package:singleton_manager/singleton_manager.dart';
 import '../single/i_stun_handler.dart';
 import '../i_stun_handler_base.dart';
-import '../../types/stun_types.dart';
 
 /// Interface for managing dual IPv4 and IPv6 STUN handlers
 /// Handles parallel request execution and state management
 abstract class IDualStunHandler
     implements IStunHandlerBase, ISingletonStandardDI {
   Future<void> initializeWithHandlers(IStunHandler first, {IStunHandler? second});
-  void setOnSocketRefresh(OnSocketRefresh callback, {InternetAddressType type = InternetAddressType.IPv6});
-  void clearOnSocketRefresh({InternetAddressType type = InternetAddressType.IPv6});
   IStunHandler? getHandler({InternetAddressType type = InternetAddressType.IPv6});
   void setHandler(IStunHandler handler, {InternetAddressType type = InternetAddressType.IPv6});
   void clearHandler({InternetAddressType type = InternetAddressType.IPv6});

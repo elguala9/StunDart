@@ -5,12 +5,10 @@ import 'package:singleton_manager/singleton_manager.dart';
 import '../implementations/dual/dual_stun_handler_base.dart';
 import 'dart:io';
 import 'package:meta/meta.dart';
-import '../interfaces/dual/i_dual_callback_handler.dart';
 import 'package:stun/stun.dart';
 import '../types/stun_types.dart';
 import '../interfaces/single/i_stun_handler.dart';
 import '../implementations/dual/dual_stun_handler.dart';
-import '../implementations/dual/dual_callback_handler.dart';
 import '../implementations/dual/singleton_handler_factory.dart';
 
 class DualStunHandlerBaseDI extends DualStunHandlerBase
@@ -26,6 +24,5 @@ class DualStunHandlerBaseDI extends DualStunHandlerBase
   @override
   void initializeDI() {
     dualHandlerProtected = SingletonDIAccess.get<IDualStunHandler>();
-    callbacks = SingletonDIAccess.get<IDualCallbackHandler>();
   }
 }

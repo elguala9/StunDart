@@ -72,7 +72,7 @@ Future<void> _exampleWithExternalSocket() async {
   }
 }
 
-/// Example 3: DI-based singleton using DualStunHandlerBase and IDualCallbackHandler
+/// Example 3: DI-based singleton using DualStunHandlerBase
 Future<void> _exampleWithDI() async {
   try {
     // Initialize the DI container with IPv4 (+ IPv6 if available)
@@ -85,13 +85,6 @@ Future<void> _exampleWithDI() async {
 
     // Retrieve the singleton from the container
     final stun = SingletonDIAccess.get<DualStunHandlerBase>();
-
-    // Register a socket refresh callback via IDualCallbackHandler
-    final callbacks = SingletonDIAccess.get<IDualCallbackHandler>();
-    callbacks.register((data) {
-      final (newResponse, _) = data;
-      print('   [callback] IPv4 socket refreshed → ${newResponse.publicIp(InternetAddressType.IPv4)}');
-    }, type: InternetAddressType.IPv4);
 
     // Perform requests through the injected singleton
     print('1. Performing STUN request via DI singleton...');

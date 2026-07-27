@@ -13,7 +13,5 @@ abstract class IStunHandlerBase implements IValueForRegistry {
   void close();
   DateTime? get lastStunUpdated;
   DateTime? get lastLocalUpdated;
-  void addOnSocketRefresh(OnSocketRefresh callback);
-  void removeOnSocketRefresh(OnSocketRefresh callback);
   RawDatagramSocket getSocket();
 }
