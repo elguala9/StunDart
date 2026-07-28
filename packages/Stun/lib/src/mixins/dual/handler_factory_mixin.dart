@@ -10,12 +10,14 @@ import '../../interfaces/single/i_stun_handler.dart';
 /// `stun.dart`.
 @internal
 mixin HandlerFactoryMixin {
-  /// Creates a handler without socket for the requested IP family
+  /// Creates a handler without socket for the requested IP family.
+  ///
+  /// Unset arguments fall back to `stunConfig`.
   Future<IStunHandler> createHandler({
     required InternetAddressType type,
     String? address,
     int? port,
-    Duration timeout = const Duration(seconds: 5),
+    Duration? timeout,
   }) => StunHandler.withoutSocket(
     address: address,
     port: port,

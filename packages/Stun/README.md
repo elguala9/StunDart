@@ -59,6 +59,133 @@ Then run:
 dart pub get
 ```
 
+## Configuration
+
+Every default (STUN server, port, timeout, IP family, NAT detector servers)
+lives in the `stun` sector of
+[`config_manager`](https://pub.dev/packages/config_manager). Set them once at
+startup and every constructor picks them up — no need to repeat the same
+arguments at each call site.
+
+```dart
+import 'package:stun/stun.dart';
+
+void main() async {
+  initStunConfig({
+    'server': {'address': 'stun.cloudflare.com', 'port': 3478},
+    'ipVersion': 'IPv6',
+    'timeoutSeconds': 3,
+  });
+
+  // Uses the configured server, port, IP family and timeout.
+  final handler = await StunHandler.withoutSocket();
+}
+```
+
+`initStunConfig` deep-merges its argument onto `defaultStunConfig`, so a
+partial map is enough: everything you leave out keeps its built-in value, and
+the package works with no configuration at all. The full shape:
+
+```json
+{
+  "server": { "address": "stun.l.google.com", "port": 19302, "localPort": 49152 },
+  "ipVersion": "IPv4",
+  "timeoutSeconds": 5,
+  "nat": {
+    "primaryServer": "stun.l.google.com",
+    "primaryPort": 19302,
+    "secondaryServer": "stun1.l.google.com",
+    "secondaryPort": 19302,
+    "timeoutSeconds": 5
+  }
+}
+```
+
+The same values can come from a JSON file or string, loaded straight into the
+sector:
+
+```dart
+ConfigManagerSingleton().loadFromJson('stun.json', sector: stunConfigSector);
+```
+
+Explicit constructor arguments always win over the configured defaults, and
+`initStunConfig()` with no argument restores the built-in ones.
+
+### Named configurations
+
+The package ships a few ready-made alternatives. None of them is active until
+you select it:
+
+| Preset | Servers | Use it when |
+| --- | --- | --- |
+| `chinaStunConfig` | `stun.miwifi.com` (Xiaomi) + `stun.chat.bilibili.com` | The default Google servers are blocked by the Great Firewall |
+| `cloudflareStunConfig` | `stun.cloudflare.com` + Google as NAT secondary | You would rather not depend on Google for the main request path |
+| `europeStunConfig` | `stun.nextcloud.com:443` + `stun.sipgate.net` | You want EU-hosted servers, or a primary on port 443 to get through HTTPS-only firewalls |
+
+```dart
+initStunConfig(chinaStunConfig);  // by value
+useStunConfig('china');           // by name
+```
+
+Each preset pairs its NAT-detector primary and secondary across two
+independent operators, because RFC 5780 Test 3 needs the secondary to resolve
+to a different IP than the primary.
+
+#### Registering your own
+
+Your application can put its own configurations next to the built-in ones and
+then pick any of them at runtime from a single string — an environment
+variable, a CLI flag, a field in your own config file:
+
+```dart
+registerStunConfig('acme', {
+  'server': {'address': 'stun.acme.internal', 'port': 3478},
+  'timeoutSeconds': 2,
+});
+
+useStunConfig(Platform.environment['STUN_PRESET'] ?? 'acme');
+```
+
+Registering does not apply anything; only `useStunConfig` does. Reusing a name
+replaces that entry, so you can also re-tune a built-in preset under your own
+name.
+
+| | |
+| --- | --- |
+| `registerStunConfig(name, config)` | Add (or replace) a named configuration |
+| `unregisterStunConfig(name)` | Remove one; returns it, or `null` if absent |
+| `useStunConfig(name, {overrides})` | Apply it, with optional ad-hoc overrides merged on top |
+| `stunConfigNamed(name)` | Tolerant lookup: `null` for an unknown or `null` name |
+| `stunConfigNames` / `stunConfigPresets` | What is available (read-only) |
+| `resetStunConfigPresets()` | Drop every custom registration |
+
+`useStunConfig` throws an `ArgumentError` listing the available names when it
+does not recognise one, so a typo in a deployment variable fails at startup
+instead of silently falling back to servers that may be unreachable from where
+the app runs. When you want the opposite — an unset variable meaning "just use
+the defaults" — go through the tolerant lookup, which `initStunConfig` accepts
+as `null`:
+
+```dart
+initStunConfig(stunConfigNamed(Platform.environment['STUN_PRESET']));
+```
+
+Your own classes can read the same defaults by mixing in `StunConfigExtension`
+on top of `ConfigExtension`, which pins the sector and exposes the values
+already coerced to their Dart types:
+
+```dart
+class MyProbe with ConfigExtension, StunConfigExtension {
+  MyProbe({String? address}) {
+    // Resolve in the body: the getters are instance members, so they are not
+    // available in an initializer list.
+    _address = address ?? defaultStunAddress;
+  }
+
+  late final String _address;
+}
+```
+
 ## Quick Start
 
 ### Basic STUN Request

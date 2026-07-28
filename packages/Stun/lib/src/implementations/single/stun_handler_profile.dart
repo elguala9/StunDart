@@ -1,25 +1,36 @@
 import 'dart:io';
 
+import 'package:config_manager/config_manager.dart';
+
+import '../../config/stun_config.dart';
 import '../../interfaces/single/i_stun_handler.dart';
 import '../../interfaces/single/i_stun_handler_profile.dart';
 
-class StunHandlerProfile implements IStunHandlerProfile {
+class StunHandlerProfile
+    with ConfigExtension, StunConfigExtension
+    implements IStunHandlerProfile {
+  /// Unset arguments fall back to the STUN configuration.
   StunHandlerProfile({
-    required this.stunAddress,
-    required this.stunPort,
-    this.ipVersion = InternetAddressType.IPv4,
-    this.timeout = const Duration(seconds: 5),
+    String? stunAddress,
+    int? stunPort,
+    InternetAddressType? ipVersion,
+    Duration? timeout,
     this.onLog,
-  });
+  }) {
+    this.stunAddress = stunAddress ?? defaultStunAddress;
+    this.stunPort = stunPort ?? defaultStunPort;
+    this.ipVersion = ipVersion ?? defaultIpVersion;
+    this.timeout = timeout ?? defaultTimeout;
+  }
 
   @override
-  final String stunAddress;
+  late final String stunAddress;
   @override
-  final int stunPort;
+  late final int stunPort;
   @override
-  final InternetAddressType ipVersion;
+  late final InternetAddressType ipVersion;
   @override
-  final Duration timeout;
+  late final Duration timeout;
   @override
   final void Function(String)? onLog;
 

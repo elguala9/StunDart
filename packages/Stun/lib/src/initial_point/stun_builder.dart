@@ -12,7 +12,7 @@ IDualStunHandler buildStunHandlers(
   RawDatagramSocket? ipv6Socket,
   String? address,
   int? port,
-  Duration timeout = const Duration(seconds: 5),
+  Duration? timeout,
 }) {
   final dualHandler = DualStunHandler();
 

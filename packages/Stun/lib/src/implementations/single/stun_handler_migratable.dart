@@ -9,28 +9,34 @@ class StunHandlerMigratable extends StunHandler
     implements IStunHandlerMigratable {
   StunHandlerMigratable(super.input);
 
+  /// Unset arguments fall back to [stunConfig].
   factory StunHandlerMigratable.withSocket(
     RawDatagramSocket socket, {
     String? address,
     int? port,
-    Duration timeout = const Duration(seconds: 5),
+    Duration? timeout,
     void Function(String)? onLog,
   }) {
-    return StunHandlerMigratable(
-      (address: address, port: port, socket: socket),
-    );
+    return StunHandlerMigratable((
+      address: address,
+      port: port,
+      socket: socket,
+    ));
   }
 
+  /// Unset arguments fall back to [stunConfig].
   static Future<StunHandlerMigratable> withoutSocket({
     String? address,
     int? port,
-    InternetAddressType type = InternetAddressType.IPv4,
-    Duration timeout = const Duration(seconds: 5),
+    InternetAddressType? type,
+    Duration? timeout,
     void Function(String)? onLog,
   }) async {
-    final handler = StunHandlerMigratable(
-      (address: address, port: port, socket: null),
-    );
+    final handler = StunHandlerMigratable((
+      address: address,
+      port: port,
+      socket: null,
+    ));
     await handler.socketMgr.getSocket();
     return handler;
   }

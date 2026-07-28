@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:config_manager/config_manager.dart';
+
 import '../../config/stun_config.dart';
 import 'stun_request_handler.dart';
 import 'stun_socket_manager.dart';
@@ -11,28 +13,34 @@ import '../../interfaces/single/i_stun_handler.dart';
 
 /// STUN handler implementation with optional socket and auto-recreation
 class StunHandler
-    with StunLoggerMixin, DestroyableHandlerMixin, StunHandlerMixin
+    with
+        StunLoggerMixin,
+        DestroyableHandlerMixin,
+        StunHandlerMixin,
+        ConfigExtension,
+        StunConfigExtension
     implements IStunHandler {
   /// Creates a STUN handler with the provided configuration (backward compatible)
-  StunHandler(StunHandlerInput input)
-    : _stunAddress = input.address ?? defaultStunConfig.address,
-      _stunPort = input.port ?? defaultStunConfig.port,
-      _timeout = const Duration(seconds: 5),
-      _onLog = null,
-      _socketMgr = StunSocketManager(
-        bindType: input.socket?.address.type ?? InternetAddressType.IPv4,
-        bindPort: null,
-        onLog: null,
-      ) {
+  StunHandler(StunHandlerInput input) : _onLog = null {
+    _stunAddress = input.address ?? defaultStunAddress;
+    _stunPort = input.port ?? defaultStunPort;
+    _timeout = defaultTimeout;
+    _socketMgr = StunSocketManager(
+      bindType: input.socket?.address.type ?? defaultIpVersion,
+      bindPort: null,
+      onLog: null,
+    );
     if (input.socket != null) _socketMgr.socket = input.socket;
   }
 
   /// Factory constructor for explicit socket ownership
+  ///
+  /// Unset arguments fall back to the STUN configuration.
   factory StunHandler.withSocket(
     RawDatagramSocket socket, {
     String? address,
     int? port,
-    Duration timeout = const Duration(seconds: 5),
+    Duration? timeout,
     void Function(String)? onLog,
   }) {
     final handler = StunHandler._internal(
@@ -51,25 +59,26 @@ class StunHandler
   StunHandler._internal({
     String? stunAddress,
     int? stunPort,
-    required InternetAddressType bindType,
+    InternetAddressType? bindType,
     int? bindPort = 0,
-    Duration timeout = const Duration(seconds: 5),
+    Duration? timeout,
     void Function(String)? onLog,
-  }) : _stunAddress = stunAddress ?? defaultStunConfig.address,
-       _stunPort = stunPort ?? defaultStunConfig.port,
-       _timeout = timeout,
-       _onLog = onLog,
-       _socketMgr = StunSocketManager(
-         bindType: bindType,
-         bindPort: bindPort,
-         onLog: onLog,
-       );
+  }) : _onLog = onLog {
+    _stunAddress = stunAddress ?? defaultStunAddress;
+    _stunPort = stunPort ?? defaultStunPort;
+    _timeout = timeout ?? defaultTimeout;
+    _socketMgr = StunSocketManager(
+      bindType: bindType ?? defaultIpVersion,
+      bindPort: bindPort,
+      onLog: onLog,
+    );
+  }
 
-  String _stunAddress;
-  int _stunPort;
-  final Duration _timeout;
+  late String _stunAddress;
+  late int _stunPort;
+  late final Duration _timeout;
   final void Function(String)? _onLog;
-  final StunSocketManager _socketMgr;
+  late final StunSocketManager _socketMgr;
 
   late final StunRequestHandler _requestHandler = StunRequestHandler(
     stunAddress: _stunAddress,
@@ -89,17 +98,18 @@ class StunHandler
 
   @override
   void setStunServer(String address, int port) {
-    _stunAddress = address.trim().isNotEmpty
-        ? address
-        : defaultStunConfig.address;
-    _stunPort = (port > 0 && port < 65536) ? port : defaultStunConfig.port;
+    _stunAddress = address.trim().isNotEmpty ? address : defaultStunAddress;
+    _stunPort = (port > 0 && port < 65536) ? port : defaultStunPort;
   }
 
+  /// Creates a handler that binds its own socket.
+  ///
+  /// Unset arguments fall back to the STUN configuration.
   static Future<StunHandler> withoutSocket({
     String? address,
     int? port,
-    InternetAddressType type = InternetAddressType.IPv4,
-    Duration timeout = const Duration(seconds: 5),
+    InternetAddressType? type,
+    Duration? timeout,
     void Function(String)? onLog,
   }) async {
     final handler = StunHandler._internal(

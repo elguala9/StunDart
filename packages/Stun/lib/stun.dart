@@ -2,6 +2,8 @@
 
 library;
 
+export 'src/config/stun_config.dart';
+export 'src/config/stun_config_presets.dart';
 export 'src/initial_point/initial_point.dart';
 export 'src/implementations/dual/dual_stun_handler.dart';
 export 'src/implementations/dual/dual_stun_handler_migratable.dart';
