@@ -12,7 +12,7 @@ Future<void> initialPointStunWithSockets(
   RawDatagramSocket? ipv6Socket,
   String? address,
   int? port,
-  Duration timeout = const Duration(seconds: 5),
+  Duration? timeout,
 }) async {
   final dualHandler = buildStunHandlers(
     ipv4Socket,
@@ -32,7 +32,7 @@ Future<void> initialPointStunWithSockets(
 Future<void> initialPointStun({
   String? address,
   int? port,
-  Duration timeout = const Duration(seconds: 5),
+  Duration? timeout,
 }) async {
   final ipv4Socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
   RawDatagramSocket? ipv6Socket;

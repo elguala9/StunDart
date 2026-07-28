@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:config_manager/config_manager.dart';
+
 import 'nat_detector_mixin.dart';
 import '../mixins/single/stun_logger_mixin.dart';
 import '../mixins/single/stun_server_resolver_mixin.dart';
@@ -26,7 +28,12 @@ import '../config/stun_config.dart';
 /// socket.close();
 /// ```
 class NATDetector
-    with StunLoggerMixin, StunServerResolverMixin, NATDetectorMixin {
+    with
+        StunLoggerMixin,
+        StunServerResolverMixin,
+        NATDetectorMixin,
+        ConfigExtension,
+        StunConfigExtension {
   /// Creates a NAT detector
   ///
   /// - [primaryServer]: STUN server hostname or IP address
@@ -40,20 +47,23 @@ class NATDetector
   /// - [timeout]: Maximum time to wait for each test response
   /// - [onLog]: Optional logging callback
   NATDetector({
-    required this.primaryServer,
-    required this.primaryPort,
+    String? primaryServer,
+    int? primaryPort,
     required this.socket,
     this.secondaryServer,
     this.secondaryPort,
-    this.timeout = const Duration(seconds: 5),
+    Duration? timeout,
     this.onLog,
   }) {
+    this.primaryServer = primaryServer ?? defaultNatPrimaryServer;
+    this.primaryPort = primaryPort ?? defaultNatPrimaryPort;
+    this.timeout = timeout ?? defaultNatTimeout;
     // Convert to broadcast stream to allow multiple listeners
     socketStream = socket.asBroadcastStream();
   }
 
-  /// Creates a NAT detector with default constant configuration
-  /// ([defaultNatDetectorConfig]) and a self-bound IPv4 socket.
+  /// Creates a NAT detector with the configured STUN defaults and a
+  /// self-bound IPv4 socket.
   ///
   /// The detector owns the socket: call `detector.socket.close()` when done.
   ///
@@ -67,20 +77,17 @@ class NATDetector
   static Future<NATDetector> withDefaults() async {
     final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
     return NATDetector(
-      primaryServer: defaultNatDetectorConfig.primaryServer,
-      primaryPort: defaultNatDetectorConfig.primaryPort,
       socket: socket,
-      secondaryServer: defaultNatDetectorConfig.secondaryServer,
-      secondaryPort: defaultNatDetectorConfig.secondaryPort,
-      timeout: defaultNatDetectorConfig.timeout,
+      secondaryServer: stunConfigValue('nat.secondaryServer') as String?,
+      secondaryPort: (stunConfigValue('nat.secondaryPort') as num?)?.toInt(),
     );
   }
 
   @override
-  final String primaryServer;
+  late final String primaryServer;
 
   @override
-  final int primaryPort;
+  late final int primaryPort;
 
   @override
   final String? secondaryServer;
@@ -92,7 +99,7 @@ class NATDetector
   final RawDatagramSocket socket;
 
   @override
-  final Duration timeout;
+  late final Duration timeout;
 
   @override
   final void Function(String)? onLog;

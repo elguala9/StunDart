@@ -33,7 +33,7 @@ class DualStunHandlerBase
   Future<void> initialize({
     String? address,
     int? port,
-    Duration timeout = const Duration(seconds: 5),
+    Duration? timeout,
   }) async {
     const factory = SingletonHandlerFactory();
 

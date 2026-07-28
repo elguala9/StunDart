@@ -9,6 +9,7 @@ environment:
 
 dev_dependencies:
   build_runner: ^2.13.0
+  config_manager: any
   lints: ^6.0.0
   test: ^1.31.0
   stun: any
