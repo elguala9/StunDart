@@ -11,24 +11,18 @@ import '../../mixins/dual/dual_handler_delegation_mixin.dart';
 import 'dual_stun_handler.dart';
 import 'singleton_handler_factory.dart';
 
-@isSingleton
+@dependencyInjectable
 class DualStunHandlerBase
     with
-        ValueForRegistry,
         DestroyableHandlerMixin,
         HandlerSelectorMixin,
         DualHandlerDelegationMixin
     implements IStunHandlerBase {
-  @isInjected
   @protected
   late IDualStunHandler dualHandlerProtected = DualStunHandler();
 
   @override
   IDualStunHandler get dualHandler => dualHandlerProtected;
-
-  Future<void> initializeDualHandlerDI() async {
-    dualHandlerProtected.initializeDI();
-  }
 
   Future<void> initialize({
     String? address,

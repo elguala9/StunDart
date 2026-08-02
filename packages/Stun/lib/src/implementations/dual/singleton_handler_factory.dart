@@ -1,17 +1,10 @@
+import 'handler_factory.dart';
 import 'package:singleton_manager/singleton_manager.dart';
 
-import 'handler_factory.dart';
-
+@dependencyInjectable
 /// Singleton-registered factory for creating STUN handler instances
-class SingletonHandlerFactory extends HandlerFactory
-    implements ISingletonStandardDI {
+class SingletonHandlerFactory extends HandlerFactory {
   const SingletonHandlerFactory();
-
-  @override
-  Future<void> initializeDI() async {
-    SingletonDI.registerFactory<SingletonHandlerFactory>(() => this);
-    SingletonDIAccess.add<SingletonHandlerFactory>();
-  }
 
   void destroy() {
     // No-op: factory doesn't manage resources that need cleanup
