@@ -20,7 +20,8 @@ class DualStunHandler
     _ipv6Handler = ipv6Handler;
   }
 
-  factory DualStunHandler.dependencyInjectionFactory({String key = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
+  // ignore: avoid_unused_constructor_parameters, // GENERATED CODE - DO NOT MODIFY BY HAND
+  factory DualStunHandler.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
     final ipv4Handler = RegistryManager.instance.getInstanceNullable<IStunHandler>(key: key, subkey: 'ipv4'); // GENERATED CODE - DO NOT MODIFY BY HAND
     final ipv6Handler = RegistryManager.instance.getInstanceNullable<IStunHandler>(key: key, subkey: 'ipv6'); // GENERATED CODE - DO NOT MODIFY BY HAND
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:config_manager/config_manager.dart';
+import 'package:singleton_manager/singleton_manager.dart';
 
 import '../../config/stun_config.dart';
 import 'stun_request_handler.dart';
@@ -12,6 +13,7 @@ import '../../types/stun_types.dart';
 import '../../interfaces/single/i_stun_handler.dart';
 
 /// STUN handler implementation with optional socket and auto-recreation
+@dependencyInjectable
 class StunHandler
     with
         StunLoggerMixin,
@@ -21,7 +23,7 @@ class StunHandler
         StunConfigExtension
     implements IStunHandler {
   /// Creates a STUN handler with the provided configuration (backward compatible)
-  StunHandler(StunHandlerInput input) : _onLog = null {
+  StunHandler(@Subkey.inherited() StunHandlerInput input) : _onLog = null {
     _stunAddress = input.address ?? defaultStunAddress;
     _stunPort = input.port ?? defaultStunPort;
     _timeout = defaultTimeout;
@@ -32,6 +34,14 @@ class StunHandler
     );
     if (input.socket != null) _socketMgr.socket = input.socket;
   }
+
+  factory StunHandler.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
+    final input = RegistryManager.instance.getInstance<StunHandlerInput>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
+
+    return StunHandler( // GENERATED CODE - DO NOT MODIFY BY HAND
+      input, // GENERATED CODE - DO NOT MODIFY BY HAND
+    ); // GENERATED CODE - DO NOT MODIFY BY HAND
+  } // GENERATED CODE - DO NOT MODIFY BY HAND
 
   /// Factory constructor for explicit socket ownership
   ///

@@ -268,7 +268,9 @@ void main() {
     test('StunHandler binds the configured IP family by default', () async {
       initStunConfig({'ipVersion': 'IPv6'});
 
-      final handler = StunHandler((address: null, port: null, socket: null));
+      final handler = StunHandler(
+        StunHandlerInput(address: null, port: null, socket: null),
+      );
 
       expect(handler.getIpVersion(), InternetAddressType.IPv6);
     });

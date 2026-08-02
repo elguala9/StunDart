@@ -26,7 +26,11 @@ Future<void> _exampleWithExternalSocket() async {
   print('Local socket created on port: ${socket.port}\n');
 
   // Configure STUN handler with external socket
-  final input = (address: 'stun.l.google.com', port: 19302, socket: socket);
+  final input = StunHandlerInput(
+    address: 'stun.l.google.com',
+    port: 19302,
+    socket: socket,
+  );
 
   final handler = StunHandler(input);
 
@@ -51,7 +55,7 @@ Future<void> _exampleWithExternalSocket() async {
     print('\n3. Trying different STUN server with new socket...');
     handler.close();
     final socket2 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    final handler2 = StunHandler((
+    final handler2 = StunHandler(StunHandlerInput(
       address: 'stun1.l.google.com',
       port: 19302,
       socket: socket2,

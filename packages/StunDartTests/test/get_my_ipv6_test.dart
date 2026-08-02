@@ -20,7 +20,7 @@ void main() {
       print('Socket address: ${socket.address}');
 
       // Use Google's IPv6 STUN server
-      final input = (
+      final input = StunHandlerInput(
         address:
             StunServers.googleStun, // Google STUN supports both IPv4 and IPv6
         port: StunServers.defaultPort,
@@ -79,7 +79,7 @@ void main() {
           InternetAddress.anyIPv4,
           0,
         );
-        final input4 = (
+        final input4 = StunHandlerInput(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
           socket: socket4,
@@ -102,7 +102,7 @@ void main() {
           InternetAddress.anyIPv6,
           0,
         );
-        final input6 = (
+        final input6 = StunHandlerInput(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
           socket: socket6,

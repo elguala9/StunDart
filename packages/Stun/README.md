@@ -202,7 +202,7 @@ void main() async {
   );
 
   // Configure STUN handler
-  final input = (
+  final input = StunHandlerInput(
     address: 'stun.l.google.com',
     port: 19302,
     socket: socket,
@@ -274,7 +274,7 @@ final socket = await RawDatagramSocket.bind(
   0,
 );
 
-final input = (
+final input = StunHandlerInput(
   address: 'stun.l.google.com',
   port: 19302,
   socket: socket,
@@ -461,7 +461,7 @@ Multiple ways to create STUN handlers:
 
 ```dart
 // Traditional: You manage the socket
-final handler = StunHandler((
+final handler = StunHandler(StunHandlerInput(
   address: 'stun.l.google.com',
   port: 19302,
   socket: socket,  // External socket ownership
@@ -706,7 +706,7 @@ import 'package:stun/stun.dart';
 Future<void> dualStackExample() async {
   // Test IPv4
   final socket4 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-  final input4 = (address: 'stun.l.google.com', port: 19302, socket: socket4);
+  final input4 = StunHandlerInput(address: 'stun.l.google.com', port: 19302, socket: socket4);
   final handler4 = StunHandler(input4);
 
   final response4 = await handler4.performStunRequest();
@@ -715,7 +715,7 @@ Future<void> dualStackExample() async {
 
   // Test IPv6
   final socket6 = await RawDatagramSocket.bind(InternetAddress.anyIPv6, 0);
-  final input6 = (address: 'stun.l.google.com', port: 19302, socket: socket6);
+  final input6 = StunHandlerInput(address: 'stun.l.google.com', port: 19302, socket: socket6);
   final handler6 = StunHandler(input6);
 
   final response6 = await handler6.performStunRequest();

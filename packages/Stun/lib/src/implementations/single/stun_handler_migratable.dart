@@ -1,13 +1,25 @@
 import 'dart:io';
 
+import 'package:singleton_manager/singleton_manager.dart';
+
 import '../../mixins/single/stun_handler_migratable_mixin.dart';
 import '../../interfaces/single/i_stun_handler_migratable.dart';
+import '../../types/stun_types.dart';
 import 'stun_handler.dart';
 
+@dependencyInjectable
 class StunHandlerMigratable extends StunHandler
     with StunHandlerMigratableMixin
     implements IStunHandlerMigratable {
-  StunHandlerMigratable(super.input);
+  StunHandlerMigratable(@Subkey.inherited() super.input);
+
+  factory StunHandlerMigratable.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
+    final input = RegistryManager.instance.getInstance<StunHandlerInput>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
+
+    return StunHandlerMigratable( // GENERATED CODE - DO NOT MODIFY BY HAND
+      input, // GENERATED CODE - DO NOT MODIFY BY HAND
+    ); // GENERATED CODE - DO NOT MODIFY BY HAND
+  } // GENERATED CODE - DO NOT MODIFY BY HAND
 
   /// Unset arguments fall back to [stunConfig].
   factory StunHandlerMigratable.withSocket(
@@ -17,7 +29,7 @@ class StunHandlerMigratable extends StunHandler
     Duration? timeout,
     void Function(String)? onLog,
   }) {
-    return StunHandlerMigratable((
+    return StunHandlerMigratable(StunHandlerInput(
       address: address,
       port: port,
       socket: socket,
@@ -32,7 +44,7 @@ class StunHandlerMigratable extends StunHandler
     Duration? timeout,
     void Function(String)? onLog,
   }) async {
-    final handler = StunHandlerMigratable((
+    final handler = StunHandlerMigratable(StunHandlerInput(
       address: address,
       port: port,
       socket: null,
