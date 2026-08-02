@@ -18,6 +18,8 @@ class DualStunHandlerBase
         HandlerSelectorMixin,
         DualHandlerDelegationMixin
     implements IStunHandlerBase {
+  DualStunHandlerBase();
+
   @protected
   late IDualStunHandler dualHandlerProtected = DualStunHandler();
 
