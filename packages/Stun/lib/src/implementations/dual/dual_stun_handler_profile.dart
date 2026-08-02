@@ -3,14 +3,9 @@ import 'dart:io';
 import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../interfaces/dual/i_dual_stun_handler_profile.dart';
 import '../single/stun_handler_profile.dart';
-import 'package:singleton_manager/singleton_manager.dart';
 
-@dependencyInjectable
 class DualStunHandlerProfile implements IDualStunHandlerProfile {
-  DualStunHandlerProfile({
-    this.ipv4,
-    this.ipv6,
-  });
+  DualStunHandlerProfile({this.ipv4, this.ipv6});
 
   @override
   final StunHandlerProfile? ipv4;

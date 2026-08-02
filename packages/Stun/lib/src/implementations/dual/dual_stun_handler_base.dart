@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:meta/meta.dart';
-import 'package:singleton_manager/singleton_manager.dart';
 import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../interfaces/single/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_base.dart';
@@ -11,7 +10,6 @@ import '../../mixins/dual/dual_handler_delegation_mixin.dart';
 import 'dual_stun_handler.dart';
 import 'singleton_handler_factory.dart';
 
-@dependencyInjectable
 class DualStunHandlerBase
     with
         DestroyableHandlerMixin,

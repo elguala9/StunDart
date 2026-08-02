@@ -1,7 +1,5 @@
 import 'handler_factory.dart';
-import 'package:singleton_manager/singleton_manager.dart';
 
-@dependencyInjectable
 /// Singleton-registered factory for creating STUN handler instances
 class SingletonHandlerFactory extends HandlerFactory {
   const SingletonHandlerFactory();

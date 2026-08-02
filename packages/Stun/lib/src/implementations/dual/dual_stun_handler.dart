@@ -12,10 +12,23 @@ import 'package:singleton_manager/singleton_manager.dart';
 class DualStunHandler
     with DestroyableHandlerMixin, HandlerSelectorMixin, DualStunHandlerMixin
     implements IDualStunHandler {
-  DualStunHandler({IStunHandler? ipv4Handler, IStunHandler? ipv6Handler}) {
+  DualStunHandler({
+    @Subkey('ipv4') IStunHandler? ipv4Handler,
+    @Subkey('ipv6') IStunHandler? ipv6Handler,
+  }) {
     _ipv4Handler = ipv4Handler;
     _ipv6Handler = ipv6Handler;
   }
+
+  factory DualStunHandler.dependencyInjectionFactory({String key = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
+    final ipv4Handler = RegistryManager.instance.getInstanceNullable<IStunHandler>(key: key, subkey: 'ipv4'); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final ipv6Handler = RegistryManager.instance.getInstanceNullable<IStunHandler>(key: key, subkey: 'ipv6'); // GENERATED CODE - DO NOT MODIFY BY HAND
+
+    return DualStunHandler( // GENERATED CODE - DO NOT MODIFY BY HAND
+      ipv4Handler: ipv4Handler, // GENERATED CODE - DO NOT MODIFY BY HAND
+      ipv6Handler: ipv6Handler, // GENERATED CODE - DO NOT MODIFY BY HAND
+    ); // GENERATED CODE - DO NOT MODIFY BY HAND
+  } // GENERATED CODE - DO NOT MODIFY BY HAND
 
   IStunHandler? _ipv4Handler;
   IStunHandler? _ipv6Handler;

@@ -1,11 +1,13 @@
-import '../../interfaces/dual/i_dual_stun_handler_migratable.dart';
-import '../../mixins/dual/dual_stun_handler_migratable_mixin.dart';
-import 'dual_stun_handler.dart';
 import 'package:singleton_manager/singleton_manager.dart';
+import 'package:stun/stun.dart';
 
-@dependencyInjectable
+import '../../mixins/dual/dual_stun_handler_migratable_mixin.dart';
+
 class DualStunHandlerMigratable extends DualStunHandler
     with DualStunHandlerMigratableMixin
     implements IDualStunHandlerMigratable {
-  DualStunHandlerMigratable() : super();
+  DualStunHandlerMigratable({
+    @Subkey('ipv4') IStunHandlerMigratable? ipv4Handler,
+    @Subkey('ipv6') IStunHandlerMigratable? ipv6Handler,
+  }) : super(ipv4Handler: ipv4Handler, ipv6Handler: ipv6Handler);
 }
