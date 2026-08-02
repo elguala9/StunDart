@@ -21,7 +21,7 @@ void main() {
 
         print('  Socket created on port ${socket.port}');
 
-        final input = (
+        final input = StunHandlerInput(
           address: server.address,
           port: server.port,
           socket: socket,
@@ -82,7 +82,7 @@ void main() {
             InternetAddress.anyIPv4,
             0,
           );
-          final input4 = (
+          final input4 = StunHandlerInput(
             address: server,
             port: StunServers.defaultPort,
             socket: socket4,
@@ -108,7 +108,7 @@ void main() {
             InternetAddress.anyIPv6,
             0,
           );
-          final input6 = (
+          final input6 = StunHandlerInput(
             address: server,
             port: StunServers.defaultPort,
             socket: socket6,

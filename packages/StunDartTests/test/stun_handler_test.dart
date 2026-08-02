@@ -29,7 +29,7 @@ void main() {
           reuseAddress: true,
         );
 
-        final input = (
+        final input = StunHandlerInput(
           address: server.address,
           port: server.port,
           socket: testSocket,
@@ -97,7 +97,7 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final input = StunHandlerInput(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
         socket: socket,
@@ -119,7 +119,7 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final input = StunHandlerInput(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
         socket: socket,
@@ -145,7 +145,7 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final input = StunHandlerInput(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
         socket: socket,
@@ -170,7 +170,7 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final input = StunHandlerInput(
         address: StunServers.testNet1, // TEST-NET-1, should not respond
         port: StunServers.defaultPort,
         socket: socket,
@@ -196,7 +196,7 @@ void main() {
           reuseAddress: true,
         );
 
-        final input = (
+        final input = StunHandlerInput(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
           socket: socket,
@@ -233,7 +233,7 @@ void main() {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final originalPort = socket.port;
 
-      final input = (
+      final input = StunHandlerInput(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
         socket: socket,
@@ -258,7 +258,7 @@ void main() {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final port = socket.port;
 
-      final input = (
+      final input = StunHandlerInput(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
         socket: socket,
@@ -335,10 +335,10 @@ void main() {
     );
 
     test('getSocket throws StateError when socket not initialized', () async {
-      final input = (
+      final input = StunHandlerInput(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
-        socket: null as RawDatagramSocket?,
+        socket: null,
       );
 
       final handler = StunHandler(input);

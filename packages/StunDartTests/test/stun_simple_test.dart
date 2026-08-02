@@ -10,7 +10,7 @@ void main() {
     print('Socket created on port: ${socket.port}');
     print('Socket address: ${socket.address}');
 
-    final input = (
+    final input = StunHandlerInput(
       address: StunServers.googleStun,
       port: StunServers.defaultPort,
       socket: socket,
