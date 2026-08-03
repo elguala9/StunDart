@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
 
+import '../../main_injection.dart';
+
 /// Binds a real IPv4 and a real IPv6 socket and registers each
 /// `RawDatagramSocket` under the matching `'ipv4'`/`'ipv6'` subkey.
 ///
@@ -47,4 +49,17 @@ Future<void> connectDualStunHandlerSockets({String key = 'default'}) async {
       key: key,
       subkey: 'ipv6',
     );
+}
+
+/// [MainInjectionStunMixin] host that wires [connectDualStunHandlerSockets]
+/// into `beforeRegisterAllSingletonsStunAsync`, so a single call to
+/// `registerAllSingletonsStunAsync` binds the ipv4/ipv6 sockets and connects
+/// every `@dependencyInjectable` singleton, instead of calling
+/// `connectDualStunHandlerSockets` and `registerAllSingletonsStun` separately.
+class DualStunInjector with MainInjectionStunMixin {
+  const DualStunInjector();
+
+  @override
+  Future<void> beforeRegisterAllSingletonsStunAsync({String key = 'default'}) =>
+      connectDualStunHandlerSockets(key: key);
 }
