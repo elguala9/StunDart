@@ -83,6 +83,68 @@ void main() {
       expect(stunConfigValue('nat.secondaryPort'), 19302);
       expect(stunConfigValue('nope.missing'), isNull);
     });
+
+    test('defaultStunIpVersion() mirrors the instance getter statically', () {
+      initStunConfig({'ipVersion': 'any'});
+
+      expect(defaultStunIpVersion(), InternetAddressType.any);
+    });
+
+    test('ensureStunConfig() seeds the defaults only when empty', () {
+      ConfigManagerSingleton().clear([], sector: stunConfigSector);
+      ensureStunConfig();
+      expect(_ConfigProbe().defaultStunAddress, 'stun.l.google.com');
+
+      _ConfigProbe().set(['server', 'address'], 'stun.seeded.test');
+      ensureStunConfig();
+      expect(_ConfigProbe().defaultStunAddress, 'stun.seeded.test');
+    });
+  });
+
+  group('unwrapStunConfig()', () {
+    test('returns the map itself when it has no stunConfigKey wrapper', () {
+      final config = {'server': {'address': 'stun.direct.test'}};
+
+      expect(unwrapStunConfig(config), same(config));
+    });
+
+    test('unwraps the section nested under stunConfigKey', () {
+      final inner = {'server': {'address': 'stun.nested.test'}};
+
+      expect(unwrapStunConfig({stunConfigKey: inner}), same(inner));
+    });
+
+    test('passes through null', () {
+      expect(unwrapStunConfig(null), isNull);
+    });
+  });
+
+  group('mergeStunConfig()', () {
+    test('deep-merges overrides onto base without mutating either', () {
+      final base = {
+        'server': {'address': 'stun.base.test', 'port': 1},
+        'ipVersion': 'IPv6',
+      };
+      final overrides = {'server': {'port': 2}};
+
+      final merged = mergeStunConfig(base, overrides);
+
+      expect(merged, {
+        'server': {'address': 'stun.base.test', 'port': 2},
+        'ipVersion': 'IPv6',
+      });
+      expect(base['server'], {'address': 'stun.base.test', 'port': 1});
+      expect(overrides['server'], {'port': 2});
+    });
+
+    test('returns an equivalent copy when overrides is null', () {
+      final base = {'server': {'address': 'stun.base.test'}};
+
+      final merged = mergeStunConfig(base);
+
+      expect(merged, base);
+      expect(merged, isNot(same(base)));
+    });
   });
 
   group('named configurations', () {
