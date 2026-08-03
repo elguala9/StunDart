@@ -36,7 +36,7 @@ dev_dependencies:
   index_generator: ^4.1.0
   lints: ^6.0.0
   test: ^1.31.0
-  singleton_manager_generator: ^2.2.2
+  singleton_manager_generator: ^2.2.3
 
 index_generator:
   exclude:

@@ -1,5 +1,7 @@
 ﻿import 'dart:io';
 import 'package:singleton_manager/singleton_manager.dart';
+import 'package:stun/main_injection.dart';
+import 'package:stun/src/factories/dual_stun_registry_wiring.dart';
 import 'package:stun/stun.dart';
 
 void main() async {
@@ -76,19 +78,34 @@ Future<void> _exampleWithExternalSocket() async {
   }
 }
 
-/// Example 3: DI-based singleton using DualStunHandlerBase
+/// Example 3: DI-based singleton using `main_injection.dart` and
+/// `RegistryManager` from `singleton_manager`
 Future<void> _exampleWithDI() async {
   try {
-    // Initialize the DI container with IPv4 (+ IPv6 if available)
-    await initialPointStun(
+    const injector = MainInjectionStun();
+    const key = 'example';
+
+    // StunHandlerInput isn't `@dependencyInjectable` itself, so it has to be
+    // wired manually before the generated factories can build IStunHandler
+    // (ipv4/ipv6) — connectDualStunHandlerSockets binds the real sockets and
+    // registers a StunHandlerInput per subkey.
+    await connectDualStunHandlerSockets(
+      key: key,
       address: 'stun.l.google.com',
       port: 19302,
     );
 
+    // Connects every @dependencyInjectable class (DualStunHandler,
+    // DualStunHandlerMigratable, StunHandler, StunHandlerMigratable) to
+    // RegistryManager.instance under `key`.
+    injector.registerAllSingletonsStun(key: key);
+
     print('✅ DI container initialized\n');
 
-    // Retrieve the singleton from the container
-    final stun = SingletonDIAccess.get<DualStunHandlerBase>();
+    // Retrieve the singleton from the registry
+    final stun = RegistryManager.instance.getInstance<IDualStunHandler>(
+      key: key,
+    );
 
     // Perform requests through the injected singleton
     print('1. Performing STUN request via DI singleton...');

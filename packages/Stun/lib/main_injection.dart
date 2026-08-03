@@ -33,8 +33,10 @@ mixin MainInjectionStunMixin { // GENERATED CODE - DO NOT MODIFY BY HAND
     RegistryManager.instance // GENERATED CODE - DO NOT MODIFY BY HAND
       ..connectInstance<IDualStunHandler, DualStunHandler>(() => DualStunHandler.dependencyInjectionFactory(key: key), key: key) // GENERATED CODE - DO NOT MODIFY BY HAND
       ..connectInstance<IDualStunHandlerMigratable, DualStunHandlerMigratable>(() => DualStunHandlerMigratable.dependencyInjectionFactory(key: key), key: key) // GENERATED CODE - DO NOT MODIFY BY HAND
-      ..connectInstance<IStunHandler, StunHandler>(() => StunHandler.dependencyInjectionFactory(key: key), key: key) // GENERATED CODE - DO NOT MODIFY BY HAND
-      ..connectInstance<IStunHandlerMigratable, StunHandlerMigratable>(() => StunHandlerMigratable.dependencyInjectionFactory(key: key), key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+      ..connectInstance<IStunHandler, StunHandler>(() => StunHandler.dependencyInjectionFactory(key: key, subkey: 'ipv4'), key: key, subkey: 'ipv4') // GENERATED CODE - DO NOT MODIFY BY HAND
+      ..connectInstance<IStunHandler, StunHandler>(() => StunHandler.dependencyInjectionFactory(key: key, subkey: 'ipv6'), key: key, subkey: 'ipv6') // GENERATED CODE - DO NOT MODIFY BY HAND
+      ..connectInstance<IStunHandlerMigratable, StunHandlerMigratable>(() => StunHandlerMigratable.dependencyInjectionFactory(key: key, subkey: 'ipv4'), key: key, subkey: 'ipv4') // GENERATED CODE - DO NOT MODIFY BY HAND
+      ..connectInstance<IStunHandlerMigratable, StunHandlerMigratable>(() => StunHandlerMigratable.dependencyInjectionFactory(key: key, subkey: 'ipv6'), key: key, subkey: 'ipv6'); // GENERATED CODE - DO NOT MODIFY BY HAND
     afterRegisterAllSingletonsStun(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
   } // GENERATED CODE - DO NOT MODIFY BY HAND
 
