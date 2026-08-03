@@ -6,6 +6,7 @@ import '../../interfaces/single/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_base.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/dual/handler_selector_mixin.dart';
+import '../../mixins/dual/dual_stun_handler_mixin.dart';
 import '../../mixins/dual/dual_handler_delegation_mixin.dart';
 import 'dual_stun_handler.dart';
 import 'singleton_handler_factory.dart';
@@ -14,6 +15,7 @@ class DualStunHandlerBase
     with
         DestroyableHandlerMixin,
         HandlerSelectorMixin,
+        DualStunHandlerMixin,
         DualHandlerDelegationMixin
     implements IStunHandlerBase {
   DualStunHandlerBase();
