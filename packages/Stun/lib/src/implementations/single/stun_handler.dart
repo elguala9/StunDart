@@ -57,13 +57,6 @@ class StunHandler
   final void Function(String)? _onLog;
   late final StunSocketManager _socketMgr;
 
-  late final StunRequestHandler _requestHandler = StunRequestHandler(
-    stunAddress: _stunAddress,
-    stunPort: _stunPort,
-    timeout: _timeout,
-    onLog: _onLog,
-  );
-
   @override
   void Function(String)? get onLog => _onLog;
 
@@ -71,7 +64,12 @@ class StunHandler
   StunSocketManager get socketMgr => _socketMgr;
 
   @override
-  StunRequestHandler get requestHandler => _requestHandler;
+  StunRequestHandler get requestHandler => StunRequestHandler(
+        stunAddress: _stunAddress,
+        stunPort: _stunPort,
+        timeout: _timeout,
+        onLog: _onLog,
+      );
 
   @override
   void setStunServer(String address, int port) {
