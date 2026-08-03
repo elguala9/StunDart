@@ -29,13 +29,11 @@ void main() {
           reuseAddress: true,
         );
 
-        final input = (
+        final handler = StunHandler(
+          testSocket,
           address: server.address,
           port: server.port,
-          socket: testSocket,
         );
-
-        final handler = StunHandler(input);
 
         try {
           // Perform STUN request
@@ -97,13 +95,11 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final handler = StunHandler(
+        socket,
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
-        socket: socket,
       );
-
-      final handler = StunHandler(input);
 
       final result = await handler.pingStunServer();
 
@@ -119,13 +115,11 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final handler = StunHandler(
+        socket,
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
-        socket: socket,
       );
-
-      final handler = StunHandler(input);
 
       final localInfo = await handler.performLocalRequest();
 
@@ -145,13 +139,11 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final handler = StunHandler(
+        socket,
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
-        socket: socket,
       );
-
-      final handler = StunHandler(input);
 
       // Change to a different STUN server (use Google stun1)
       handler.setStunServer(StunServers.googleStun1, StunServers.defaultPort);
@@ -170,13 +162,11 @@ void main() {
         reuseAddress: true,
       );
 
-      final input = (
+      final handler = StunHandler(
+        socket,
         address: StunServers.testNet1, // TEST-NET-1, should not respond
         port: StunServers.defaultPort,
-        socket: socket,
       );
-
-      final handler = StunHandler(input);
 
       // Expect timeout exception
       expect(
@@ -196,13 +186,11 @@ void main() {
           reuseAddress: true,
         );
 
-        final input = (
+        final handler = StunHandler(
+          socket,
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
-          socket: socket,
         );
-
-        final handler = StunHandler(input);
 
         print('\n--- Testing IPv6 STUN ---');
 
@@ -233,13 +221,11 @@ void main() {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final originalPort = socket.port;
 
-      final input = (
+      final handler = StunHandler(
+        socket,
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
-        socket: socket,
       );
-
-      final handler = StunHandler(input);
       final returnedSocket = handler.getSocket();
 
       // Verify it returns the same socket
@@ -258,13 +244,11 @@ void main() {
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
       final port = socket.port;
 
-      final input = (
+      final handler = StunHandler(
+        socket,
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
-        socket: socket,
       );
-
-      final handler = StunHandler(input);
 
       // Verify socket is usable before close
       expect(handler.getSocket().port, equals(port));
@@ -312,12 +296,12 @@ void main() {
     );
 
     test(
-      'StunHandler.withSocket() creates handler from external socket',
+      'StunHandler() creates handler from external socket',
       () async {
         final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
         final originalPort = socket.port;
 
-        final handler = StunHandler.withSocket(
+        final handler = StunHandler(
           socket,
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
@@ -333,19 +317,6 @@ void main() {
         }
       },
     );
-
-    test('getSocket throws StateError when socket not initialized', () async {
-      final input = (
-        address: StunServers.googleStun,
-        port: StunServers.defaultPort,
-        socket: null as RawDatagramSocket?,
-      );
-
-      final handler = StunHandler(input);
-
-      // Should throw StateError
-      expect(() => handler.getSocket(), throwsA(isA<StateError>()));
-    });
 
     test(
       'performStunRequest handles socket errors and recreates socket',
@@ -865,7 +836,7 @@ void main() {
         final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
         try {
           final messages = <String>[];
-          final handler = StunHandler.withSocket(
+          final handler = StunHandler(
             socket,
             address: StunServers.googleStun,
             port: StunServers.defaultPort,

@@ -1,30 +1,36 @@
 import 'dart:io';
 
+import 'package:singleton_manager/singleton_manager.dart';
+
+import '../../config/stun_config.dart';
 import '../../mixins/single/stun_handler_migratable_mixin.dart';
 import '../../interfaces/single/i_stun_handler_migratable.dart';
 import 'stun_handler.dart';
+import 'stun_socket_manager.dart';
 
+@dependencyInjectable
 class StunHandlerMigratable extends StunHandler
     with StunHandlerMigratableMixin
     implements IStunHandlerMigratable {
-  StunHandlerMigratable(super.input);
+  StunHandlerMigratable(
+    @Subkey.inherited() super.socket, {
+    super.address,
+    super.port,
+    super.timeout,
+    super.onLog,
+  });
 
-  /// Unset arguments fall back to [stunConfig].
-  factory StunHandlerMigratable.withSocket(
-    RawDatagramSocket socket, {
-    String? address,
-    int? port,
-    Duration? timeout,
-    void Function(String)? onLog,
-  }) {
-    return StunHandlerMigratable((
-      address: address,
-      port: port,
-      socket: socket,
-    ));
-  }
+  factory StunHandlerMigratable.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
+    final socket = RegistryManager.instance.getInstance<RawDatagramSocket>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
 
-  /// Unset arguments fall back to [stunConfig].
+    return StunHandlerMigratable( // GENERATED CODE - DO NOT MODIFY BY HAND
+      socket, // GENERATED CODE - DO NOT MODIFY BY HAND
+    ); // GENERATED CODE - DO NOT MODIFY BY HAND
+  } // GENERATED CODE - DO NOT MODIFY BY HAND
+
+  /// Creates a handler that binds its own socket.
+  ///
+  /// Unset arguments fall back to the STUN configuration.
   static Future<StunHandlerMigratable> withoutSocket({
     String? address,
     int? port,
@@ -32,12 +38,16 @@ class StunHandlerMigratable extends StunHandler
     Duration? timeout,
     void Function(String)? onLog,
   }) async {
-    final handler = StunHandlerMigratable((
+    final socket = await StunSocketManager.bindSocket(
+      bindType: type ?? defaultStunIpVersion(),
+      onLog: onLog,
+    );
+    return StunHandlerMigratable(
+      socket,
       address: address,
       port: port,
-      socket: null,
-    ));
-    await handler.socketMgr.getSocket();
-    return handler;
+      timeout: timeout,
+      onLog: onLog,
+    );
   }
 }

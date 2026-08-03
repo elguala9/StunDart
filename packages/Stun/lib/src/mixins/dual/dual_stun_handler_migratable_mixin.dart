@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 
 import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../interfaces/dual/i_dual_stun_handler_migratable.dart';
-import '../../interfaces/dual/dual_stun_handler_profile.dart';
+import '../../implementations/dual/dual_stun_handler_profile.dart';
 import '../../implementations/single/stun_handler_profile.dart';
 import '../single/stun_handler_mixin.dart';
 import 'dual_stun_handler_mixin.dart';
@@ -15,7 +15,7 @@ mixin DualStunHandlerMigratableMixin on DualStunHandlerMixin
   @override
   void migrateTo(
     IDualStunHandler stunHandler, {
-    InternetAddressType type = InternetAddressType.IPv6,
+    InternetAddressType? type,
   }) {
     final profile = _buildProfile();
     profile.applyTo(stunHandler, type: type);

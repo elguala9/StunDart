@@ -13,8 +13,15 @@ workspace:
 dev_dependencies:
   melos: ^7.3.0
 
+dependency_overrides:
+  singleton_manager_generator:
+    path: ../SingletonManager/packages/singleton_manager_generator
+
 melos:
   scripts:
     barrels:
       run: melos exec --ignore=stundart_tests -- dart pub global run index_generator
       description: Generate barrel/index files for all packages using index_generator.
+    registry:
+      run: melos exec --scope=stun -- dart run singleton_manager_generator --input lib --registry-output lib/main_injection.dart
+      description: Regenerate the singleton registry (lib/main_injection.dart) for the stun package.
