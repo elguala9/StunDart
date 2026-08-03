@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
@@ -233,6 +234,10 @@ void main() {
 
         expect(() => source.migrateTo(target), returnsNormally);
 
+        // Post-migration, the target must remain usable via the interface
+        // it was resolved as (not just "didn't throw during the copy").
+        expect(() => target.getSocket(), returnsNormally);
+
         source.close();
         target.close();
       },
@@ -245,16 +250,40 @@ void main() {
 
         final migratable = RegistryManager.instance
             .getInstance<IStunHandlerMigratable>(key: key, subkey: 'ipv6');
-        final ipv6Socket = await RawDatagramSocket.bind(
-          InternetAddress.anyIPv6,
+        // The migratable's own socket family is irrelevant here: applyTo
+        // only ever copies stunAddress/stunPort onto the target (see
+        // StunHandlerProfile.applyTo), so the target is free to be IPv4 —
+        // that also keeps this regression check independent of IPv6
+        // reachability in the test environment.
+        final ipv4Socket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv4,
           0,
         );
-        final target = StunHandler(ipv6Socket);
+        final target = StunHandler(
+          ipv4Socket,
+          address: '192.0.2.1', // reserved, never responds
+          port: 3478,
+          timeout: const Duration(seconds: 2),
+        );
+
+        // Forces the target to build/use its request handler once against
+        // the unreachable server, before migration overwrites it.
+        await expectLater(
+          target.performStunRequest(),
+          throwsA(isA<TimeoutException>()),
+        );
 
         expect(() => migratable.migrateTo(target), returnsNormally);
 
+        // Regression guard: if the target's request handler had frozen the
+        // pre-migration server on its first access above, this would time
+        // out again instead of succeeding with the migrated server.
+        final response = await target.performStunRequest();
+        expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+
         target.close();
       },
+      timeout: const Timeout(Duration(seconds: 10)),
     );
 
     test(

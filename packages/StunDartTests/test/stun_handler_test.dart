@@ -155,6 +155,84 @@ void main() {
       handler.close();
     });
 
+    group('setStunServer after first use (requestHandler must not freeze)', () {
+      test(
+        'setStunServer takes effect on the request made right after it, '
+        'even if the handler already made a failed request before that '
+        '(regression: StunRequestHandler must be rebuilt from the current '
+        'server on every access, not cached from the first access)',
+        () async {
+          final handler = await StunHandler.withoutSocket(
+            address: StunServers.testNet1, // reserved, never responds
+            port: StunServers.defaultPort,
+            timeout: const Duration(seconds: 2),
+            type: InternetAddressType.IPv4,
+          );
+
+          try {
+            // Forces the handler to build/use its request handler once
+            // against a server that will never answer.
+            await expectLater(
+              handler.performStunRequest(),
+              throwsA(isA<TimeoutException>()),
+            );
+
+            handler.setStunServer(
+              StunServers.googleStun,
+              StunServers.defaultPort,
+            );
+
+            // If the request handler had frozen the old (bad) server on its
+            // first access above, this would time out again instead of
+            // succeeding against the new server.
+            final response = await handler.performStunRequest();
+            expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          } finally {
+            handler.close();
+          }
+        },
+        timeout: const Timeout(TestTimeouts.medium),
+      );
+
+      test(
+        'StunHandlerMigratable.migrateTo changes the server used by the '
+        'target for the request made right after migration, even if the '
+        'target already made a failed request before that',
+        () async {
+          final source = await StunHandlerMigratable.withoutSocket(
+            address: StunServers.googleStun,
+            port: StunServers.defaultPort,
+            type: InternetAddressType.IPv4,
+          );
+          final target = await StunHandler.withoutSocket(
+            address: StunServers.testNet1,
+            port: StunServers.defaultPort,
+            timeout: const Duration(seconds: 2),
+            type: InternetAddressType.IPv4,
+          );
+
+          try {
+            await expectLater(
+              target.performStunRequest(),
+              throwsA(isA<TimeoutException>()),
+            );
+
+            source.migrateTo(target);
+
+            // If migrateTo's setStunServer call were ignored because the
+            // target's request handler was already frozen on the testNet1
+            // address, this would time out again instead of succeeding.
+            final response = await target.performStunRequest();
+            expect(response.publicIp(InternetAddressType.IPv4), isNotEmpty);
+          } finally {
+            source.close();
+            target.close();
+          }
+        },
+        timeout: const Timeout(TestTimeouts.medium),
+      );
+    });
+
     test('Handle STUN request timeout', () async {
       final socket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
