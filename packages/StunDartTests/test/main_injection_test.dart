@@ -88,7 +88,7 @@ void main() {
     );
 
     test(
-      'resolving IDualStunHandler without wiring StunHandlerInput first throws RegistryNotFoundError',
+      'resolving IDualStunHandler without wiring the socket first throws RegistryNotFoundError',
       () {
         final key = uniqueKey('dual-unwired');
         injector.registerAllSingletonsStun(key: key);
@@ -104,7 +104,7 @@ void main() {
     );
 
     test(
-      'resolving IStunHandler without wiring StunHandlerInput first throws RegistryNotFoundError',
+      'resolving IStunHandler without wiring the socket first throws RegistryNotFoundError',
       () {
         final key = uniqueKey('single-unwired');
         injector.registerAllSingletonsStun(key: key);
@@ -249,7 +249,7 @@ void main() {
           InternetAddress.anyIPv6,
           0,
         );
-        final target = StunHandler.withSocket(ipv6Socket);
+        final target = StunHandler(ipv6Socket);
 
         expect(() => migratable.migrateTo(target), returnsNormally);
 

@@ -4,50 +4,48 @@ import '../../types/stun_types.dart';
 
 /// Manages socket lifecycle, caching, and local IP resolution
 class StunSocketManager with StunLoggerMixin {
-  StunSocketManager({
-    required this.bindType,
-    required this.bindPort,
-    required this.onLog,
-  });
+  StunSocketManager({required this.socket, required this.onLog})
+      : bindType = socket.address.type;
 
+  /// Family the current (and any recreated) socket binds to.
   final InternetAddressType bindType;
-  final int? bindPort;
 
   @override
   final void Function(String)? onLog;
 
-  RawDatagramSocket? socket;
+  RawDatagramSocket socket;
   StunResponse? cachedStunResponse;
   LocalInfo? cachedLocalInfo;
   DateTime? lastStunUpdated;
   DateTime? lastLocalUpdated;
 
-  // Socket operations
-  Future<RawDatagramSocket> getSocket() async {
-    if (socket != null) return socket!;
-
+  /// Binds a fresh socket for [bindType], logging via [onLog] when given.
+  static Future<RawDatagramSocket> bindSocket({
+    required InternetAddressType bindType,
+    void Function(String)? onLog,
+  }) async {
     final bindAddr = bindType == InternetAddressType.IPv6
         ? InternetAddress.anyIPv6
         : InternetAddress.anyIPv4;
 
-    socket = await RawDatagramSocket.bind(
+    final socket = await RawDatagramSocket.bind(
       bindAddr,
-      bindPort ?? 0,
+      0,
       reuseAddress: true,
     );
-    log('[StunHandler] Socket created: ${socket!.address}:${socket!.port}');
-    return socket!;
+    onLog?.call('[StunHandler] Socket created: ${socket.address}:${socket.port}');
+    return socket;
   }
 
+  // Socket operations
   Future<void> recreateSocket() async {
     resetCache();
-    socket?.close();
-    socket = null;
-    await getSocket();
+    socket.close();
+    socket = await bindSocket(bindType: bindType, onLog: onLog);
     log('[StunHandler] Socket recreated with new port');
   }
 
-  void closeSocket() => socket?.close();
+  void closeSocket() => socket.close();
 
   Future<String> getLocalIp() async {
     final interfaces = await NetworkInterface.list(

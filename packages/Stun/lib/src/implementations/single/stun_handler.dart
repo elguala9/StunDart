@@ -9,10 +9,9 @@ import 'stun_socket_manager.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/single/stun_handler_mixin.dart';
 import '../../mixins/single/stun_logger_mixin.dart';
-import '../../types/stun_types.dart';
 import '../../interfaces/single/i_stun_handler.dart';
 
-/// STUN handler implementation with optional socket and auto-recreation
+/// STUN handler implementation with auto-recreation on socket errors
 @dependencyInjectable
 class StunHandler
     with
@@ -22,67 +21,29 @@ class StunHandler
         ConfigExtension,
         StunConfigExtension
     implements IStunHandler {
-  /// Creates a STUN handler with the provided configuration (backward compatible)
-  StunHandler(@Subkey.inherited() StunHandlerInput input) : _onLog = null {
-    _stunAddress = input.address ?? defaultStunAddress;
-    _stunPort = input.port ?? defaultStunPort;
-    _timeout = defaultTimeout;
-    _socketMgr = StunSocketManager(
-      bindType: input.socket?.address.type ?? defaultIpVersion,
-      bindPort: null,
-      onLog: null,
-    );
-    if (input.socket != null) _socketMgr.socket = input.socket;
-  }
-
-  factory StunHandler.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
-    final input = RegistryManager.instance.getInstance<StunHandlerInput>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
-
-    return StunHandler( // GENERATED CODE - DO NOT MODIFY BY HAND
-      input, // GENERATED CODE - DO NOT MODIFY BY HAND
-    ); // GENERATED CODE - DO NOT MODIFY BY HAND
-  } // GENERATED CODE - DO NOT MODIFY BY HAND
-
-  /// Factory constructor for explicit socket ownership
+  /// Creates a STUN handler backed by an already-bound [socket].
   ///
   /// Unset arguments fall back to the STUN configuration.
-  factory StunHandler.withSocket(
-    RawDatagramSocket socket, {
+  StunHandler(
+    @Subkey.inherited() RawDatagramSocket socket, {
     String? address,
     int? port,
     Duration? timeout,
     void Function(String)? onLog,
-  }) {
-    final handler = StunHandler._internal(
-      stunAddress: address,
-      stunPort: port,
-      bindType: socket.address.type,
-      bindPort: null,
-      timeout: timeout,
-      onLog: onLog,
-    );
-    handler._socketMgr.socket = socket;
-    return handler;
+  }) : _onLog = onLog {
+    _stunAddress = address ?? defaultStunAddress;
+    _stunPort = port ?? defaultStunPort;
+    _timeout = timeout ?? defaultTimeout;
+    _socketMgr = StunSocketManager(socket: socket, onLog: onLog);
   }
 
-  /// Private constructor for factory use
-  StunHandler._internal({
-    String? stunAddress,
-    int? stunPort,
-    InternetAddressType? bindType,
-    int? bindPort = 0,
-    Duration? timeout,
-    void Function(String)? onLog,
-  }) : _onLog = onLog {
-    _stunAddress = stunAddress ?? defaultStunAddress;
-    _stunPort = stunPort ?? defaultStunPort;
-    _timeout = timeout ?? defaultTimeout;
-    _socketMgr = StunSocketManager(
-      bindType: bindType ?? defaultIpVersion,
-      bindPort: bindPort,
-      onLog: onLog,
-    );
-  }
+  factory StunHandler.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
+    final socket = RegistryManager.instance.getInstance<RawDatagramSocket>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
+
+    return StunHandler( // GENERATED CODE - DO NOT MODIFY BY HAND
+      socket, // GENERATED CODE - DO NOT MODIFY BY HAND
+    ); // GENERATED CODE - DO NOT MODIFY BY HAND
+  } // GENERATED CODE - DO NOT MODIFY BY HAND
 
   late String _stunAddress;
   late int _stunPort;
@@ -122,15 +83,17 @@ class StunHandler
     Duration? timeout,
     void Function(String)? onLog,
   }) async {
-    final handler = StunHandler._internal(
-      stunAddress: address,
-      stunPort: port,
-      bindType: type,
+    final socket = await StunSocketManager.bindSocket(
+      bindType: type ?? defaultStunIpVersion(),
+      onLog: onLog,
+    );
+    return StunHandler(
+      socket,
+      address: address,
+      port: port,
       timeout: timeout,
       onLog: onLog,
     );
-    await handler._socketMgr.getSocket();
-    return handler;
   }
 
   @override

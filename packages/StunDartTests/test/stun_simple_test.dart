@@ -10,14 +10,12 @@ void main() {
     print('Socket created on port: ${socket.port}');
     print('Socket address: ${socket.address}');
 
-    final input = StunHandlerInput(
+    print('Creating STUN handler...');
+    final handler = StunHandler(
+      socket,
       address: StunServers.googleStun,
       port: StunServers.defaultPort,
-      socket: socket,
     );
-
-    print('Creating STUN handler...');
-    final handler = StunHandler(input);
 
     try {
       print('Performing STUN request...');
