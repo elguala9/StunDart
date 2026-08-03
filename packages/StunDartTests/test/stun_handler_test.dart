@@ -277,6 +277,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -325,6 +326,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -442,6 +444,7 @@ void main() {
       final handler = await StunHandler.withoutSocket(
         address: StunServers.googleStun1,
         port: StunServers.defaultPort,
+        type: InternetAddressType.IPv4,
       );
 
       try {
@@ -482,6 +485,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -507,6 +511,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -557,6 +562,7 @@ void main() {
       final handler = await StunHandler.withoutSocket(
         address: StunServers.googleStun,
         port: StunServers.defaultPort,
+        type: InternetAddressType.IPv4,
       );
 
       try {
@@ -578,6 +584,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -606,6 +613,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -634,6 +642,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -674,6 +683,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
 
         try {
@@ -711,6 +721,7 @@ void main() {
           final handler = await StunHandler.withoutSocket(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
+            type: InternetAddressType.IPv4,
           );
 
           try {
@@ -748,6 +759,7 @@ void main() {
           final handler = await StunHandler.withoutSocket(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
+            type: InternetAddressType.IPv4,
           );
 
           try {
@@ -789,6 +801,7 @@ void main() {
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
           timeout: const Duration(seconds: 1),
+          type: InternetAddressType.IPv4,
         );
         try {
           // This should work fine with a 1-second timeout for a real STUN server
@@ -821,6 +834,7 @@ void main() {
         final handler = await StunHandler.withoutSocket(
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
+          type: InternetAddressType.IPv4,
         );
         try {
           // Should not throw
@@ -1021,6 +1035,7 @@ void main() {
           final handler = await StunHandler.withoutSocket(
             address: StunServers.googleStun,
             port: StunServers.defaultPort,
+            type: InternetAddressType.IPv4,
           );
 
           try {
