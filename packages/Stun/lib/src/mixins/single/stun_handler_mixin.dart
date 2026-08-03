@@ -29,7 +29,7 @@ mixin StunHandlerMixin on StunLoggerMixin {
       return socketMgr.cachedLocalInfo!;
     }
 
-    final socket = await socketMgr.getSocket();
+    final socket = socketMgr.socket;
     final localIp = await socketMgr.getLocalIp();
     final ipVersion = socket.address.type == InternetAddressType.IPv6
         ? IpVersion.v6
@@ -42,14 +42,7 @@ mixin StunHandlerMixin on StunLoggerMixin {
     return socketMgr.cachedLocalInfo!;
   }
 
-  RawDatagramSocket getSocket() {
-    if (socketMgr.socket == null) {
-      throw StateError(
-        'Socket not yet initialized. Use StunHandler.create() for automatic socket management.',
-      );
-    }
-    return socketMgr.socket!;
-  }
+  RawDatagramSocket getSocket() => socketMgr.socket;
 
   void close() => socketMgr.closeSocket();
 
@@ -93,8 +86,6 @@ mixin StunHandlerMixin on StunLoggerMixin {
     return socketMgr.cachedStunResponse!;
   }
 
-  Future<StunResponse> _doStunRequest() async {
-    final socket = await socketMgr.getSocket();
-    return requestHandler.performStunRequest(socket);
-  }
+  Future<StunResponse> _doStunRequest() =>
+      requestHandler.performStunRequest(socketMgr.socket);
 }

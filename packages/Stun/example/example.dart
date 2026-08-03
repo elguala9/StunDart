@@ -28,13 +28,11 @@ Future<void> _exampleWithExternalSocket() async {
   print('Local socket created on port: ${socket.port}\n');
 
   // Configure STUN handler with external socket
-  final input = StunHandlerInput(
+  final handler = StunHandler(
+    socket,
     address: 'stun.l.google.com',
     port: 19302,
-    socket: socket,
   );
-
-  final handler = StunHandler(input);
 
   try {
     // 1. Get local network information
@@ -57,11 +55,11 @@ Future<void> _exampleWithExternalSocket() async {
     print('\n3. Trying different STUN server with new socket...');
     handler.close();
     final socket2 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    final handler2 = StunHandler(StunHandlerInput(
+    final handler2 = StunHandler(
+      socket2,
       address: 'stun1.l.google.com',
       port: 19302,
-      socket: socket2,
-    ));
+    );
     final response2 = await handler2.performStunRequest();
     print('   Public IP from second server: ${response2.publicIp(InternetAddressType.IPv4)}');
 
@@ -85,15 +83,12 @@ Future<void> _exampleWithDI() async {
     const injector = MainInjectionStun();
     const key = 'example';
 
-    // StunHandlerInput isn't `@dependencyInjectable` itself, so it has to be
+    // RawDatagramSocket isn't `@dependencyInjectable` itself, so it has to be
     // wired manually before the generated factories can build IStunHandler
     // (ipv4/ipv6) — connectDualStunHandlerSockets binds the real sockets and
-    // registers a StunHandlerInput per subkey.
-    await connectDualStunHandlerSockets(
-      key: key,
-      address: 'stun.l.google.com',
-      port: 19302,
-    );
+    // registers one per subkey. DI-resolved handlers use the STUN config
+    // defaults for the server; call setStunServer afterwards for a custom one.
+    await connectDualStunHandlerSockets(key: key);
 
     // Connects every @dependencyInjectable class (DualStunHandler,
     // DualStunHandlerMigratable, StunHandler, StunHandlerMigratable) to

@@ -22,12 +22,12 @@ void main() {
 
       RegistryManager.instance
         ..connectInstance<IStunHandler, StunHandler>(
-          () => StunHandler.withSocket(ipv4Socket),
+          () => StunHandler(ipv4Socket),
           key: key,
           subkey: 'ipv4',
         )
         ..connectInstance<IStunHandler, StunHandler>(
-          () => StunHandler.withSocket(ipv6Socket),
+          () => StunHandler(ipv6Socket),
           key: key,
           subkey: 'ipv6',
         );
@@ -58,7 +58,7 @@ void main() {
       );
 
       RegistryManager.instance.connectInstance<IStunHandler, StunHandler>(
-        () => StunHandler.withSocket(ipv4Socket),
+        () => StunHandler(ipv4Socket),
         key: key,
         subkey: 'ipv4',
       );
