@@ -13,9 +13,9 @@ workspace:
 dev_dependencies:
   melos: ^7.3.0
 
-dependency_overrides:
-  singleton_manager_generator:
-    path: ../SingletonManager/packages/singleton_manager_generator
+#dependency_overrides:
+#  singleton_manager_generator:
+#    path: ../SingletonManager/packages/singleton_manager_generator
 
 melos:
   scripts:

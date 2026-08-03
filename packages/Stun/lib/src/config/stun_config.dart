@@ -24,40 +24,54 @@ const Map<String, dynamic> defaultStunConfig = {
   },
 };
 
-/// Loads [defaultStunConfig] into the [stunConfigSector] sector, with
-/// [overrides] merged on top (deep merge, so partial sub-maps are allowed).
+/// Loads [defaultStunConfig] into the [stunConfigSector] sector of the
+/// shared [ConfigManagerSingleton], with [overrides] merged on top (deep
+/// merge, so partial sub-maps are allowed). Always replaces whatever was
+/// loaded there before — use [ensureStunConfig] instead to seed the sector
+/// only if it's still empty.
 ///
-/// Call once at startup to change the package-wide defaults:
+/// Construct once at startup to change the package-wide defaults:
 ///
 /// ```dart
-/// initStunConfig({
+/// StunConfig({
 ///   'server': {'address': 'stun.cloudflare.com', 'port': 3478},
 ///   'timeoutSeconds': 3,
 /// });
 /// ```
 ///
-/// Calling it is optional: the defaults are seeded lazily on first read.
-void initStunConfig([Map<String, dynamic>? overrides]) {
-  ConfigManagerSingleton().loadFromMap(
-    _merge(defaultStunConfig, overrides),
-    sector: stunConfigSector,
-  );
+/// Constructing one is optional: the defaults are seeded lazily on first
+/// read via [ensureStunConfig].
+class StunConfig {
+  StunConfig([Map<String, dynamic>? overrides]) {
+    ConfigManagerSingleton().loadFromMap(
+      _merge(defaultStunConfig, overrides),
+      sector: stunConfigSector,
+    );
+  }
 }
+
+/// Equivalent to `StunConfig(overrides)`, for call sites that don't need
+/// the instance.
+void initStunConfig([Map<String, dynamic>? overrides]) => StunConfig(overrides);
 
 /// Deep-merges [overrides] onto [base], returning a new mutable map.
 ///
 /// Useful to combine two configurations before handing the result to
-/// [initStunConfig], which only takes a single map.
+/// [StunConfig], which only takes a single map.
 Map<String, dynamic> mergeStunConfig(
   Map<String, dynamic> base, [
   Map<String, dynamic>? overrides,
 ]) => _merge(base, overrides);
 
-/// Seeds the defaults unless the [stunConfigSector] sector is already loaded.
+/// Seeds [defaultStunConfig] into the [stunConfigSector] sector, but only if
+/// it isn't already loaded — unlike [StunConfig], never overwrites an
+/// existing configuration.
 void ensureStunConfig() {
-  if (ConfigManagerSingleton().config(sector: stunConfigSector) == null) {
-    initStunConfig();
-  }
+  ConfigManagerSingleton().loadFromMap(
+    defaultStunConfig,
+    sector: stunConfigSector,
+    force: false,
+  );
 }
 
 /// Reads a configured value by dot-notation [key], falling back to the
@@ -67,7 +81,7 @@ void ensureStunConfig() {
 /// hatch for static contexts, which cannot mix the extension in.
 dynamic stunConfigValue(String key) {
   ensureStunConfig();
-  return ConfigManagerSingleton().get(key, sector: stunConfigSector) ??
+  return ConfigManagerSingleton().get(_path(key), sector: stunConfigSector) ??
       _lookup(defaultStunConfig, key);
 }
 
@@ -130,7 +144,7 @@ mixin StunConfigExtension on ConfigExtension {
   /// loaded configuration does not define it.
   dynamic configValue(String key) {
     ensureStunConfig();
-    return get(key) ?? _lookup(defaultStunConfig, key);
+    return get(_path(key)) ?? _lookup(defaultStunConfig, key);
   }
 
   String _string(String key) => _asString(configValue(key), key);
@@ -172,6 +186,10 @@ InternetAddressType _asIpVersion(dynamic value, String key) {
     _ => _asIpVersion(_lookup(defaultStunConfig, key), 'ipVersion'),
   };
 }
+
+/// Splits a dot-notation [key] into the `List<String>` path config_manager
+/// expects.
+List<String> _path(String key) => key.split('.');
 
 /// Walks [map] following the dot-notation [key].
 dynamic _lookup(Map<String, dynamic> map, String key) {

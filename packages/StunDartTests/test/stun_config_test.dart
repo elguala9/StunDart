@@ -46,7 +46,7 @@ void main() {
       initStunConfig({
         'server': {'address': 'stun.example.org'},
       });
-      _ConfigProbe().set('server.port', 1);
+      _ConfigProbe().set(['server', 'port'], 1);
 
       expect(
         (defaultStunConfig['server'] as Map)['address'],

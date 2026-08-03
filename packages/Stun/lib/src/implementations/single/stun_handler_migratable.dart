@@ -22,9 +22,15 @@ class StunHandlerMigratable extends StunHandler
 
   factory StunHandlerMigratable.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
     final socket = RegistryManager.instance.getInstance<RawDatagramSocket>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final address = RegistryManager.instance.getInstanceNullable<String>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final port = RegistryManager.instance.getInstanceNullable<int>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final timeout = RegistryManager.instance.getInstanceNullable<Duration>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
 
     return StunHandlerMigratable( // GENERATED CODE - DO NOT MODIFY BY HAND
       socket, // GENERATED CODE - DO NOT MODIFY BY HAND
+      address: address, // GENERATED CODE - DO NOT MODIFY BY HAND
+      port: port, // GENERATED CODE - DO NOT MODIFY BY HAND
+      timeout: timeout, // GENERATED CODE - DO NOT MODIFY BY HAND
     ); // GENERATED CODE - DO NOT MODIFY BY HAND
   } // GENERATED CODE - DO NOT MODIFY BY HAND
 

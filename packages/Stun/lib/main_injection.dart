@@ -43,6 +43,23 @@ mixin MainInjectionStunMixin { // GENERATED CODE - DO NOT MODIFY BY HAND
   /// Called by [registerAllSingletonsStun] right after it finishes connecting
   /// everything. Override to customize. // GENERATED CODE - DO NOT MODIFY BY HAND
   void afterRegisterAllSingletonsStun({String key = 'default'}) {} // GENERATED CODE - DO NOT MODIFY BY HAND
+
+  /// Called by [registerAllSingletonsStunAsync] right before it connects anything.
+  /// Override to customize. // GENERATED CODE - DO NOT MODIFY BY HAND
+  Future<void> beforeRegisterAllSingletonsStunAsync({String key = 'default'}) async {} // GENERATED CODE - DO NOT MODIFY BY HAND
+
+  /// Async twin of [registerAllSingletonsStun] — use this when [beforeRegisterAllSingletonsStunAsync]
+  /// or [afterRegisterAllSingletonsStunAsync] need to await work (e.g. loading remote
+  /// config) before or after connecting. // GENERATED CODE - DO NOT MODIFY BY HAND
+  Future<void> registerAllSingletonsStunAsync({String key = 'default'}) async { // GENERATED CODE - DO NOT MODIFY BY HAND
+    await beforeRegisterAllSingletonsStunAsync(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    registerAllSingletonsStun(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    await afterRegisterAllSingletonsStunAsync(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+  } // GENERATED CODE - DO NOT MODIFY BY HAND
+
+  /// Called by [registerAllSingletonsStunAsync] right after it finishes connecting
+  /// everything. Override to customize. // GENERATED CODE - DO NOT MODIFY BY HAND
+  Future<void> afterRegisterAllSingletonsStunAsync({String key = 'default'}) async {} // GENERATED CODE - DO NOT MODIFY BY HAND
 } // GENERATED CODE - DO NOT MODIFY BY HAND
 
 /// Ready-to-use [MainInjectionStunMixin] host — instantiate this directly, or
