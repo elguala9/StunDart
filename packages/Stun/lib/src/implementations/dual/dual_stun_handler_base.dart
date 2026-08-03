@@ -1,34 +1,30 @@
 import 'dart:io';
 
 import 'package:meta/meta.dart';
-import 'package:singleton_manager/singleton_manager.dart';
 import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../interfaces/single/i_stun_handler.dart';
 import '../../interfaces/i_stun_handler_base.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/dual/handler_selector_mixin.dart';
+import '../../mixins/dual/dual_stun_handler_mixin.dart';
 import '../../mixins/dual/dual_handler_delegation_mixin.dart';
 import 'dual_stun_handler.dart';
 import 'singleton_handler_factory.dart';
 
-@isSingleton
 class DualStunHandlerBase
     with
-        ValueForRegistry,
         DestroyableHandlerMixin,
         HandlerSelectorMixin,
+        DualStunHandlerMixin,
         DualHandlerDelegationMixin
     implements IStunHandlerBase {
-  @isInjected
+  DualStunHandlerBase();
+
   @protected
   late IDualStunHandler dualHandlerProtected = DualStunHandler();
 
   @override
   IDualStunHandler get dualHandler => dualHandlerProtected;
-
-  Future<void> initializeDualHandlerDI() async {
-    dualHandlerProtected.initializeDI();
-  }
 
   Future<void> initialize({
     String? address,

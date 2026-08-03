@@ -7,6 +7,6 @@ import 'package:stun/stun.dart';
 abstract class IDualStunHandlerMigratable implements IDualStunHandler {
   void migrateTo(
     IDualStunHandler stunHandler, {
-    InternetAddressType type = InternetAddressType.IPv6,
+    InternetAddressType? type,
   });
 }

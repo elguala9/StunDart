@@ -1,5 +1,7 @@
 ﻿import 'dart:io';
 import 'package:singleton_manager/singleton_manager.dart';
+import 'package:stun/main_injection.dart';
+import 'package:stun/src/factories/dual_stun_registry_wiring.dart';
 import 'package:stun/stun.dart';
 
 void main() async {
@@ -26,9 +28,11 @@ Future<void> _exampleWithExternalSocket() async {
   print('Local socket created on port: ${socket.port}\n');
 
   // Configure STUN handler with external socket
-  final input = (address: 'stun.l.google.com', port: 19302, socket: socket);
-
-  final handler = StunHandler(input);
+  final handler = StunHandler(
+    socket,
+    address: 'stun.l.google.com',
+    port: 19302,
+  );
 
   try {
     // 1. Get local network information
@@ -51,11 +55,11 @@ Future<void> _exampleWithExternalSocket() async {
     print('\n3. Trying different STUN server with new socket...');
     handler.close();
     final socket2 = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    final handler2 = StunHandler((
+    final handler2 = StunHandler(
+      socket2,
       address: 'stun1.l.google.com',
       port: 19302,
-      socket: socket2,
-    ));
+    );
     final response2 = await handler2.performStunRequest();
     print('   Public IP from second server: ${response2.publicIp(InternetAddressType.IPv4)}');
 
@@ -72,19 +76,31 @@ Future<void> _exampleWithExternalSocket() async {
   }
 }
 
-/// Example 3: DI-based singleton using DualStunHandlerBase
+/// Example 3: DI-based singleton using `main_injection.dart` and
+/// `RegistryManager` from `singleton_manager`
 Future<void> _exampleWithDI() async {
   try {
-    // Initialize the DI container with IPv4 (+ IPv6 if available)
-    await initialPointStun(
-      address: 'stun.l.google.com',
-      port: 19302,
-    );
+    const injector = MainInjectionStun();
+    const key = 'example';
+
+    // RawDatagramSocket isn't `@dependencyInjectable` itself, so it has to be
+    // wired manually before the generated factories can build IStunHandler
+    // (ipv4/ipv6) — connectDualStunHandlerSockets binds the real sockets and
+    // registers one per subkey. DI-resolved handlers use the STUN config
+    // defaults for the server; call setStunServer afterwards for a custom one.
+    await connectDualStunHandlerSockets(key: key);
+
+    // Connects every @dependencyInjectable class (DualStunHandler,
+    // DualStunHandlerMigratable, StunHandler, StunHandlerMigratable) to
+    // RegistryManager.instance under `key`.
+    injector.registerAllSingletonsStun(key: key);
 
     print('✅ DI container initialized\n');
 
-    // Retrieve the singleton from the container
-    final stun = SingletonDIAccess.get<DualStunHandlerBase>();
+    // Retrieve the singleton from the registry
+    final stun = RegistryManager.instance.getInstance<IDualStunHandler>(
+      key: key,
+    );
 
     // Perform requests through the injected singleton
     print('1. Performing STUN request via DI singleton...');

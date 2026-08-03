@@ -21,13 +21,11 @@ void main() {
 
         print('  Socket created on port ${socket.port}');
 
-        final input = (
+        final handler = StunHandler(
+          socket,
           address: server.address,
           port: server.port,
-          socket: socket,
         );
-
-        final handler = StunHandler(input);
 
         try {
           final response = await handler.performStunRequest().timeout(
@@ -82,12 +80,11 @@ void main() {
             InternetAddress.anyIPv4,
             0,
           );
-          final input4 = (
+          final handler4 = StunHandler(
+            socket4,
             address: server,
             port: StunServers.defaultPort,
-            socket: socket4,
           );
-          final handler4 = StunHandler(input4);
 
           final response4 = await handler4.performStunRequest().timeout(
             TestTimeouts.short,
@@ -108,12 +105,11 @@ void main() {
             InternetAddress.anyIPv6,
             0,
           );
-          final input6 = (
+          final handler6 = StunHandler(
+            socket6,
             address: server,
             port: StunServers.defaultPort,
-            socket: socket6,
           );
-          final handler6 = StunHandler(input6);
 
           final response6 = await handler6.performStunRequest().timeout(
             TestTimeouts.medium,

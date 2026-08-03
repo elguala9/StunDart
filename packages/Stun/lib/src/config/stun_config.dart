@@ -71,6 +71,12 @@ dynamic stunConfigValue(String key) {
       _lookup(defaultStunConfig, key);
 }
 
+/// [StunConfigExtension.defaultIpVersion], usable from a static context that
+/// cannot mix the extension in (e.g. picking a socket family before any
+/// handler instance exists to bind it to).
+InternetAddressType defaultStunIpVersion() =>
+    _asIpVersion(stunConfigValue('ipVersion'), 'ipVersion');
+
 /// Configuration access for the STUN components.
 ///
 /// Mixed into every class that needs a default value, on top of

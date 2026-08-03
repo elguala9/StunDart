@@ -209,14 +209,6 @@ typedef LocalInfoInput = ({
   int localPort,
 });
 
-/// Input parameters for StunHandler constructor
-typedef StunHandlerInput = ({
-  String? address, // stun server address
-  int? port, // stun server port
-  RawDatagramSocket?
-  socket, // optional socket; if null, will be created internally
-});
-
 /// NAT type classifications per RFC 5780 and RFC 3489
 enum NATType {
   openInternet('Open Internet'),

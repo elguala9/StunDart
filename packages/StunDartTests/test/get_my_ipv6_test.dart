@@ -20,14 +20,12 @@ void main() {
       print('Socket address: ${socket.address}');
 
       // Use Google's IPv6 STUN server
-      final input = (
+      final handler = StunHandler(
+        socket,
         address:
             StunServers.googleStun, // Google STUN supports both IPv4 and IPv6
         port: StunServers.defaultPort,
-        socket: socket,
       );
-
-      final handler = StunHandler(input);
 
       try {
         print('\nSending STUN request to discover public IPv6...');
@@ -79,12 +77,11 @@ void main() {
           InternetAddress.anyIPv4,
           0,
         );
-        final input4 = (
+        final handler4 = StunHandler(
+          socket4,
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
-          socket: socket4,
         );
-        final handler4 = StunHandler(input4);
 
         final response4 = await handler4.performStunRequest();
         ipv4Address = response4.publicIp(InternetAddressType.IPv4);
@@ -102,12 +99,11 @@ void main() {
           InternetAddress.anyIPv6,
           0,
         );
-        final input6 = (
+        final handler6 = StunHandler(
+          socket6,
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
-          socket: socket6,
         );
-        final handler6 = StunHandler(input6);
 
         final response6 = await handler6.performStunRequest();
         ipv6Address = response6.publicIp(InternetAddressType.IPv6);
