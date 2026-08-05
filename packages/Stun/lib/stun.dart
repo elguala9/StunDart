@@ -21,3 +21,5 @@ export 'src/interfaces/dual/i_dual_stun_handler_profile.dart';
 export 'src/implementations/single/stun_handler_profile.dart';
 export 'src/implementations/dual/dual_stun_handler_profile.dart';
 export 'src/types/stun_types.dart';
+export 'src/migration/stun_handler_socket_migration.dart';
+export 'src/migration/dual_stun_handler_socket_migration.dart';
