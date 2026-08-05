@@ -120,8 +120,14 @@ void main() {
       print('  IPv6: ${ipv6Address ?? 'Not available'}');
       print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
+      if (ipv4Address == null && ipv6Address == null) {
+        fail('Neither IPv4 nor IPv6 STUN request succeeded');
+      }
       if (ipv4Address != null) {
         expect(ipv4Address, isNotEmpty);
+      }
+      if (ipv6Address != null) {
+        expect(ipv6Address, contains(':'), reason: 'IPv6 addresses contain colons');
       }
     },
     timeout: const Timeout(Duration(seconds: 20)),
