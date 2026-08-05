@@ -78,8 +78,10 @@ class NATDetector
     final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
     return NATDetector(
       socket: socket,
-      secondaryServer: stunConfigValue('nat.secondaryServer') as String?,
-      secondaryPort: (stunConfigValue('nat.secondaryPort') as num?)?.toInt(),
+      secondaryServer:
+          stunConfigValue(const ['nat', 'secondaryServer']) as String?,
+      secondaryPort:
+          (stunConfigValue(const ['nat', 'secondaryPort']) as num?)?.toInt(),
     );
   }
 

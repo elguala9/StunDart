@@ -50,12 +50,12 @@ Future<IStunHandler> migrateStunHandlerSocketIpv4({
   String key = 'default',
 }) async {
   final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-  return migrateStunHandlerSocket(socket);
+  return migrateStunHandlerSocket(socket, key: key);
 }
 
 Future<IStunHandler> migrateStunHandlerSocketIpv6({
   String key = 'default',
 }) async {
   final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv6, 0);
-  return migrateStunHandlerSocket(socket);
+  return migrateStunHandlerSocket(socket, key: key);
 }

@@ -303,6 +303,59 @@ void main() {
       },
     );
 
+    test(
+      'a family mismatch on ipv6 leaves a valid ipv4 socket unmigrated too '
+      '(both checks run before either family is touched, regardless of '
+      'which one is invalid)',
+      () async {
+        final key = await registerStunSingletons(
+          'dual-migrate-atomic-validation-reverse',
+        );
+
+        final ipv4PlainBefore = RegistryManager.instance
+            .getInstance<IStunHandler>(key: key, subkey: 'ipv4');
+        final ipv4SocketBefore = RegistryManager.instance
+            .getInstance<RawDatagramSocket>(key: key, subkey: 'ipv4');
+        final ipv6PlainBefore = RegistryManager.instance
+            .getInstance<IStunHandler>(key: key, subkey: 'ipv6');
+        final ipv6SocketBefore = RegistryManager.instance
+            .getInstance<RawDatagramSocket>(key: key, subkey: 'ipv6');
+
+        final validIpv4Socket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv4,
+          0,
+        );
+        final invalidIpv6Socket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv4, // wrong family on purpose
+          0,
+        );
+
+        expect(
+          () => migrateDualStunHandlerSockets(
+            ipv4Socket: validIpv4Socket,
+            ipv6Socket: invalidIpv6Socket,
+            key: key,
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
+
+        // Neither family may have moved: the valid ipv4 socket must NOT
+        // have been consumed just because ipv6 failed validation second.
+        expectRegistryConsistent(
+          key,
+          expectedIpv4Handler: ipv4PlainBefore,
+          expectedIpv4Socket: ipv4SocketBefore,
+          expectedIpv6Handler: ipv6PlainBefore,
+          expectedIpv6Socket: ipv6SocketBefore,
+        );
+
+        validIpv4Socket.close();
+        invalidIpv6Socket.close();
+        ipv4PlainBefore.close();
+        ipv6PlainBefore.close();
+      },
+    );
+
     test('throws when nothing is registered under the given key', () async {
       final newSocket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv6,

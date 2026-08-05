@@ -74,14 +74,17 @@ void main() {
       expect(probe.defaultNatTimeout, const Duration(seconds: 5));
     });
 
-    test('stunConfigValue() reads by dot notation from static contexts', () {
+    test('stunConfigValue() reads by path from static contexts', () {
       initStunConfig({
         'nat': {'secondaryServer': 'nat2.example.org'},
       });
 
-      expect(stunConfigValue('nat.secondaryServer'), 'nat2.example.org');
-      expect(stunConfigValue('nat.secondaryPort'), 19302);
-      expect(stunConfigValue('nope.missing'), isNull);
+      expect(
+        stunConfigValue(const ['nat', 'secondaryServer']),
+        'nat2.example.org',
+      );
+      expect(stunConfigValue(const ['nat', 'secondaryPort']), 19302);
+      expect(stunConfigValue(const ['nope', 'missing']), isNull);
     });
 
     test('defaultStunIpVersion() mirrors the instance getter statically', () {
@@ -258,7 +261,7 @@ void main() {
       for (final host in [
         probe.defaultStunAddress,
         probe.defaultNatPrimaryServer,
-        '${stunConfigValue('nat.secondaryServer')}',
+        '${stunConfigValue(const ['nat', 'secondaryServer'])}',
       ]) {
         expect(
           host,
@@ -288,7 +291,7 @@ void main() {
         initStunConfig(entry.value);
 
         expect(
-          stunConfigValue('nat.secondaryServer'),
+          stunConfigValue(const ['nat', 'secondaryServer']),
           isNot(_ConfigProbe().defaultNatPrimaryServer),
           reason: 'RFC 5780 Test 3 needs a different IP (${entry.key})',
         );

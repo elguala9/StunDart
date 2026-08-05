@@ -32,7 +32,9 @@ const Map<String, dynamic> defaultStunConfig = {
 /// replaces whatever was loaded before; use [ensureStunConfig] to seed the
 /// sector only if it's still empty.
 void initStunConfig([Map<String, dynamic>? overrides]) {
-  _access.loadFromMap(_merge(defaultStunConfig, unwrapStunConfig(overrides)));
+  _access.loadFromMap(
+    deepMergeMaps(defaultStunConfig, unwrapStunConfig(overrides)),
+  );
 }
 
 /// The STUN section of [map]: `map[stunConfigKey]` when present, or [map]
@@ -44,7 +46,7 @@ Map<String, dynamic>? unwrapStunConfig(Map<String, dynamic>? map) =>
 Map<String, dynamic> mergeStunConfig(
   Map<String, dynamic> base, [
   Map<String, dynamic>? overrides,
-]) => _merge(base, overrides);
+]) => deepMergeMaps(base, overrides);
 
 /// Seeds [defaultStunConfig] into [stunConfigSector], but only if it isn't
 /// already loaded.
@@ -52,11 +54,11 @@ void ensureStunConfig() {
   _access.loadFromMap(defaultStunConfig, force: false);
 }
 
-/// Reads a configured value by dot-notation [key] (e.g. `'server.address'`).
+/// Reads a configured value at [path] (e.g. `['server', 'address']`).
 ///
 /// Escape hatch for static contexts that cannot mix in [StunConfigExtension];
 /// prefer its typed getters on an instance.
-dynamic stunConfigValue(String key) => _access.configValue(key);
+dynamic stunConfigValue(List<String> path) => _access.configValue(path);
 
 /// [StunConfigExtension.defaultIpVersion] for static contexts, e.g. picking a
 /// socket family before any handler instance exists to bind it to.
@@ -103,8 +105,8 @@ mixin StunConfigExtension on ConfigExtension {
   Duration get defaultNatTimeout =>
       _durationOf(const ['nat', 'timeoutSeconds']);
 
-  /// Configured value for dot-notation [key].
-  dynamic configValue(String key) => _get<dynamic>(key.split('.'));
+  /// Configured value at [path].
+  dynamic configValue(List<String> path) => _get<dynamic>(path);
 
   /// Reads [path], falling back to its [defaultStunConfig] entry when the
   /// loaded configuration doesn't define it (e.g. a partial config loaded
@@ -113,48 +115,10 @@ mixin StunConfigExtension on ConfigExtension {
     ensureStunConfig();
     return containsKeys([path])
         ? get<T>(path)
-        : _lookup(defaultStunConfig, path) as T;
+        : lookupPath(defaultStunConfig, path) as T;
   }
 
   Duration _durationOf(List<String> path) => Duration(
     microseconds: (_get<num>(path) * Duration.microsecondsPerSecond).round(),
   );
-}
-
-/// Walks [map] following [path].
-dynamic _lookup(Map<String, dynamic> map, List<String> path) {
-  dynamic current = map;
-  for (final part in path) {
-    if (current is! Map<String, dynamic>) return null;
-    current = current[part];
-  }
-  return current;
-}
-
-/// Deep-merges [overrides] onto a mutable copy of [base].
-///
-/// The copy matters: the stored map is mutated in place by
-/// `ConfigManagerSingleton.set`, and [defaultStunConfig] is `const`.
-Map<String, dynamic> _merge(
-  Map<String, dynamic> base,
-  Map<String, dynamic>? overrides,
-) {
-  final merged = <String, dynamic>{};
-  for (final entry in base.entries) {
-    final value = entry.value;
-    merged[entry.key] = value is Map<String, dynamic>
-        ? _merge(value, null)
-        : value;
-  }
-  if (overrides == null) return merged;
-
-  for (final entry in overrides.entries) {
-    final existing = merged[entry.key];
-    final value = entry.value;
-    merged[entry.key] =
-        existing is Map<String, dynamic> && value is Map<String, dynamic>
-        ? _merge(existing, value)
-        : value;
-  }
-  return merged;
 }
