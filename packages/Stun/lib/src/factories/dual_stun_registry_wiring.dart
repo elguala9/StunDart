@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
 
-import '../../main_injection.dart';
+import '../main_injection.dart';
 
 /// Binds a real IPv4 and a real IPv6 socket and registers each
 /// `RawDatagramSocket` under the matching `'ipv4'`/`'ipv6'` subkey.

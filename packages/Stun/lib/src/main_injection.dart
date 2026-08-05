@@ -2,14 +2,14 @@
 
 import 'package:singleton_manager/singleton_manager.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
 
-import 'src/implementations/dual/dual_stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'src/implementations/dual/dual_stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'src/implementations/single/stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'src/implementations/single/stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'src/interfaces/dual/i_dual_stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'src/interfaces/dual/i_dual_stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'src/interfaces/single/i_stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
-import 'src/interfaces/single/i_stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'implementations/dual/dual_stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'implementations/dual/dual_stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'implementations/single/stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'implementations/single/stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'interfaces/dual/i_dual_stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'interfaces/dual/i_dual_stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'interfaces/single/i_stun_handler.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
+import 'interfaces/single/i_stun_handler_migratable.dart'; // GENERATED CODE - DO NOT MODIFY BY HAND
 
 /// Connects every `@dependencyInjectable` class discovered under the scanned
 /// input directory to `RegistryManager.instance`, using each generated

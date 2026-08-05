@@ -29,14 +29,14 @@ dependencies:
   callback_handler: ^0.0.3
   config_manager: ^0.4.2
   meta: ^1.9.0
-  singleton_manager: ^2.2.1
+  singleton_manager: ^2.2.2
 
 dev_dependencies:
   build_runner: ^2.13.0
   index_generator: ^4.1.0
   lints: ^6.0.0
   test: ^1.31.0
-  singleton_manager_generator: ^2.3.0
+  singleton_manager_generator: ^2.3.2
 
 index_generator:
   exclude:
@@ -46,11 +46,4 @@ index_generator:
     - directory_path: lib
       file_name: stun
       include:
-        - "src/config/**.dart"
-        - "src/interfaces/**.dart"
-        - "src/implementations/handlers/**.dart"
-        - "src/implementations/nat/**.dart"
-        - "src/implementations/singleton/dual_stun_handler_base.dart"
-        - "src/implementations/singleton/dual_stun_handler_singleton.dart"
-        - "src/di/stun_di.dart"
-        - "src/types/**.dart"
+        - "src/**.dart"
