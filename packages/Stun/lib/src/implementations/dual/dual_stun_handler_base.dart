@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:meta/meta.dart';
 import '../../interfaces/dual/i_dual_stun_handler.dart';
 import '../../interfaces/single/i_stun_handler.dart';
-import '../../interfaces/i_stun_handler_base.dart';
+import '../../interfaces/single/i_stun_handler_base.dart';
 import '../../mixins/destroyable_handler_mixin.dart';
 import '../../mixins/dual/handler_selector_mixin.dart';
 import '../../mixins/dual/dual_stun_handler_mixin.dart';

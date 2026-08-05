@@ -82,43 +82,37 @@ mixin StunConfigExtension on ConfigExtension {
   @override
   set configSector(String value) => _sector = value;
 
-  String get defaultStunAddress => _get<String>(const ['server', 'address']);
+  String get defaultStunAddress =>
+      getOrDefault(const ['server', 'address'], defaultStunConfig);
 
-  int get defaultStunPort => _get<int>(const ['server', 'port']);
+  int get defaultStunPort =>
+      getOrDefault(const ['server', 'port'], defaultStunConfig);
 
-  int get defaultLocalPort => _get<int>(const ['server', 'localPort']);
+  int get defaultLocalPort =>
+      getOrDefault(const ['server', 'localPort'], defaultStunConfig);
 
   InternetAddressType get defaultIpVersion =>
-      switch (_get<String>(const ['ipVersion'])) {
+      switch (getOrDefault<String>(const ['ipVersion'], defaultStunConfig)) {
         'IPv6' => InternetAddressType.IPv6,
         'any' => InternetAddressType.any,
         _ => InternetAddressType.IPv4,
       };
 
-  Duration get defaultTimeout => _durationOf(const ['timeoutSeconds']);
+  Duration get defaultTimeout =>
+      getDurationSeconds(const ['timeoutSeconds'], defaultStunConfig);
 
   String get defaultNatPrimaryServer =>
-      _get<String>(const ['nat', 'primaryServer']);
+      getOrDefault(const ['nat', 'primaryServer'], defaultStunConfig);
 
-  int get defaultNatPrimaryPort => _get<int>(const ['nat', 'primaryPort']);
+  int get defaultNatPrimaryPort =>
+      getOrDefault(const ['nat', 'primaryPort'], defaultStunConfig);
 
   Duration get defaultNatTimeout =>
-      _durationOf(const ['nat', 'timeoutSeconds']);
+      getDurationSeconds(const ['nat', 'timeoutSeconds'], defaultStunConfig);
 
-  /// Configured value at [path].
-  dynamic configValue(List<String> path) => _get<dynamic>(path);
-
-  /// Reads [path], falling back to its [defaultStunConfig] entry when the
-  /// loaded configuration doesn't define it (e.g. a partial config loaded
-  /// directly via [ConfigExtension.loadFromString]/[loadFromMap]).
-  T _get<T>(List<String> path) {
-    ensureStunConfig();
-    return containsKeys([path])
-        ? get<T>(path)
-        : lookupPath(defaultStunConfig, path) as T;
-  }
-
-  Duration _durationOf(List<String> path) => Duration(
-    microseconds: (_get<num>(path) * Duration.microsecondsPerSecond).round(),
-  );
+  /// Configured value at [path], falling back to its [defaultStunConfig]
+  /// entry when the loaded configuration doesn't define it; see
+  /// [ConfigExtension.getOrDefault].
+  dynamic configValue(List<String> path) =>
+      getOrDefault<dynamic>(path, defaultStunConfig);
 }

@@ -39,9 +39,9 @@ class StunHandler
 
   factory StunHandler.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
     final socket = RegistryManager.instance.getInstance<RawDatagramSocket>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
-    final address = RegistryManager.instance.getInstanceNullable<String>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
-    final port = RegistryManager.instance.getInstanceNullable<int>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
-    final timeout = RegistryManager.instance.getInstanceNullable<Duration>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final address = RegistryManager.instance.tryGetInstance<String>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final port = RegistryManager.instance.tryGetInstance<int>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final timeout = RegistryManager.instance.tryGetInstance<Duration>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
 
     return StunHandler( // GENERATED CODE - DO NOT MODIFY BY HAND
       socket, // GENERATED CODE - DO NOT MODIFY BY HAND

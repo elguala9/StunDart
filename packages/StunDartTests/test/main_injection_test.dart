@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:singleton_manager/singleton_manager.dart';
-import 'package:stun/main_injection.dart';
 import 'package:stun/stun.dart';
 import 'package:test/test.dart';
 
@@ -89,18 +88,19 @@ void main() {
     );
 
     test(
-      'resolving IDualStunHandler without wiring the socket first throws RegistryNotFoundError',
+      'resolving IDualStunHandler without wiring either socket first yields a handler with '
+      'neither slot set, which throws StateError once actually used',
       () {
         final key = uniqueKey('dual-unwired');
         injector.registerAllSingletonsStun(key: key);
 
-        expect(
-          () =>
-              RegistryManager.instance.getInstance<IDualStunHandler>(
-                key: key,
-              ),
-          throwsA(isA<RegistryNotFoundError>()),
+        final dual = RegistryManager.instance.getInstance<IDualStunHandler>(
+          key: key,
         );
+
+        expect(dual.ipv4Handler, isNull);
+        expect(dual.ipv6Handler, isNull);
+        expect(() => dual.getSocket(), throwsA(isA<StateError>()));
       },
     );
 

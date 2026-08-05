@@ -22,8 +22,8 @@ class DualStunHandler
 
   // ignore: avoid_unused_constructor_parameters, // GENERATED CODE - DO NOT MODIFY BY HAND
   factory DualStunHandler.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
-    final ipv4Handler = RegistryManager.instance.getInstanceNullable<IStunHandler>(key: key, subkey: 'ipv4'); // GENERATED CODE - DO NOT MODIFY BY HAND
-    final ipv6Handler = RegistryManager.instance.getInstanceNullable<IStunHandler>(key: key, subkey: 'ipv6'); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final ipv4Handler = RegistryManager.instance.tryGetInstance<IStunHandler>(key: key, subkey: 'ipv4'); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final ipv6Handler = RegistryManager.instance.tryGetInstance<IStunHandler>(key: key, subkey: 'ipv6'); // GENERATED CODE - DO NOT MODIFY BY HAND
 
     return DualStunHandler( // GENERATED CODE - DO NOT MODIFY BY HAND
       ipv4Handler: ipv4Handler, // GENERATED CODE - DO NOT MODIFY BY HAND
