@@ -205,7 +205,10 @@ void main() {
         'server': {'address': 'stun.acme.internal'},
       });
 
-      expect(stunConfigNamed('acme'), isNotNull);
+      expect(
+        stunConfigNamed('acme'),
+        {'server': {'address': 'stun.acme.internal'}},
+      );
       expect(stunConfigNamed('nope'), isNull);
       expect(stunConfigNamed(null), isNull);
 
@@ -224,7 +227,10 @@ void main() {
       useStunConfig('acme');
       expect(_ConfigProbe().defaultStunAddress, 'stun.acme2.internal');
 
-      expect(unregisterStunConfig('acme'), isNotNull);
+      expect(
+        unregisterStunConfig('acme'),
+        {'server': {'address': 'stun.acme2.internal'}},
+      );
       expect(unregisterStunConfig('acme'), isNull);
       expect(stunConfigNames, isNot(contains('acme')));
     });

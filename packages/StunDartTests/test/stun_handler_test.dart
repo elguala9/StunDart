@@ -361,7 +361,6 @@ void main() {
         try {
           // Verify socket was created
           final socket = handler.getSocket();
-          expect(socket, isNotNull);
           expect(socket.port, greaterThan(0));
 
           // Verify handler can make STUN requests
@@ -415,7 +414,6 @@ void main() {
 
           // Verify we have a valid socket
           final socket = handler.getSocket();
-          expect(socket, isNotNull);
           expect(socket.port, greaterThan(0));
 
           // The error handling and socket recreation are tested implicitly
@@ -456,7 +454,6 @@ void main() {
       try {
         // Socket should exist after create()
         final socket = handler.getSocket();
-        expect(socket, isNotNull);
         expect(socket.port, greaterThan(0));
       } finally {
         handler.close();
@@ -475,7 +472,6 @@ void main() {
         try {
           // Verify socket was created
           final socket = handler.getSocket();
-          expect(socket, isNotNull);
           expect(socket.port, greaterThan(0));
           expect(socket.address.type, equals(InternetAddressType.IPv4));
 
@@ -528,7 +524,6 @@ void main() {
       try {
         // Verify socket was created
         final socket = handler.getSocket();
-        expect(socket, isNotNull);
         expect(socket.port, greaterThan(0));
 
         // Perform STUN request with custom server
@@ -549,7 +544,6 @@ void main() {
         try {
           // Verify socket was created
           final socket = handler.getSocket();
-          expect(socket, isNotNull);
           expect(socket.port, greaterThan(0));
         } finally {
           handler.close();
@@ -744,7 +738,6 @@ void main() {
           // (Cache was reset when socket was recreated)
           // Verify socket was recreated by checking it's a valid socket
           final newSocket = handler.getSocket();
-          expect(newSocket, isNotNull);
           expect(newSocket.port, greaterThan(0));
 
           // Verify we can still make requests with the new socket

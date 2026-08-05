@@ -235,7 +235,7 @@ void main() {
 
       // Should use the new handler
       final socket = singleton.ipv4Handler!.getSocket();
-      expect(socket, isNotNull);
+      expect(socket.address.type, InternetAddressType.IPv4);
     });
 
     test('setStunServer with type: null sets both handlers', () async {
@@ -245,8 +245,18 @@ void main() {
         port: StunServers.defaultPort,
       );
 
-      // Should not throw
       singleton.setStunServer(StunServers.googleStun1, 19302, type: null);
+
+      final ipv4Handler = singleton.ipv4Handler as StunHandler;
+      expect(ipv4Handler.requestHandler.stunAddress, StunServers.googleStun1);
+      expect(ipv4Handler.requestHandler.stunPort, 19302);
+
+      final ipv6Handler = singleton.ipv6Handler;
+      if (ipv6Handler != null) {
+        final ipv6RequestHandler = (ipv6Handler as StunHandler).requestHandler;
+        expect(ipv6RequestHandler.stunAddress, StunServers.googleStun1);
+        expect(ipv6RequestHandler.stunPort, 19302);
+      }
     });
 
     test('setStunServer with type: InternetAddressType.IPv4 sets only IPv4', () async {
@@ -256,8 +266,20 @@ void main() {
         port: StunServers.defaultPort,
       );
 
-      // Should not throw
+      final originalIpv6RequestHandler =
+          (singleton.ipv6Handler as StunHandler?)?.requestHandler;
+
       singleton.setStunServer(StunServers.googleStun1, 19302, type: InternetAddressType.IPv4);
+
+      final ipv4Handler = singleton.ipv4Handler as StunHandler;
+      expect(ipv4Handler.requestHandler.stunAddress, StunServers.googleStun1);
+      expect(ipv4Handler.requestHandler.stunPort, 19302);
+
+      final ipv6RequestHandler = (singleton.ipv6Handler as StunHandler?)?.requestHandler;
+      if (originalIpv6RequestHandler != null && ipv6RequestHandler != null) {
+        expect(ipv6RequestHandler.stunAddress, originalIpv6RequestHandler.stunAddress);
+        expect(ipv6RequestHandler.stunPort, originalIpv6RequestHandler.stunPort);
+      }
     });
 
     test(
@@ -269,8 +291,21 @@ void main() {
           port: StunServers.defaultPort,
         );
 
-        // Should not throw even if IPv6 not available
+        final ipv4Handler = singleton.ipv4Handler as StunHandler;
+        final originalIpv4Address = ipv4Handler.requestHandler.stunAddress;
+        final originalIpv4Port = ipv4Handler.requestHandler.stunPort;
+
         singleton.setStunServer(StunServers.googleStun1, 19302, type: InternetAddressType.IPv6);
+
+        expect(ipv4Handler.requestHandler.stunAddress, originalIpv4Address);
+        expect(ipv4Handler.requestHandler.stunPort, originalIpv4Port);
+
+        final ipv6Handler = singleton.ipv6Handler;
+        if (ipv6Handler != null) {
+          final ipv6RequestHandler = (ipv6Handler as StunHandler).requestHandler;
+          expect(ipv6RequestHandler.stunAddress, StunServers.googleStun1);
+          expect(ipv6RequestHandler.stunPort, 19302);
+        }
       },
     );
 
@@ -301,7 +336,7 @@ void main() {
 
       // IPv4 should still work
       final ipv4Socket = singleton.getSocket(type: InternetAddressType.IPv4);
-      expect(ipv4Socket, isNotNull);
+      expect(ipv4Socket.address.type, InternetAddressType.IPv4);
 
       // IPv6 should not be accessible
       final ipv6Handler = singleton.ipv6Handler;
@@ -335,7 +370,6 @@ void main() {
       );
 
       final socket = singleton.getSocket(type: InternetAddressType.IPv4);
-      expect(socket, isNotNull);
       expect(socket.address.type, equals(InternetAddressType.IPv4));
     });
 
@@ -346,20 +380,20 @@ void main() {
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
         );
-
-        if (singleton.ipv6Handler != null) {
-          final socket = singleton.getSocket(type: InternetAddressType.IPv6);
-          expect(socket, isNotNull);
-          expect(socket.address.type, equals(InternetAddressType.IPv6));
-        } else {
-          // Should throw if IPv6 not available
-          expect(
-            () => singleton.getSocket(type: InternetAddressType.IPv6),
-            throwsA(isA<StateError>()),
-          );
-        }
       } catch (e) {
         print('IPv6 not available on this system: $e');
+        return;
+      }
+
+      if (singleton.ipv6Handler != null) {
+        final socket = singleton.getSocket(type: InternetAddressType.IPv6);
+        expect(socket.address.type, equals(InternetAddressType.IPv6));
+      } else {
+        // Should throw if IPv6 not available
+        expect(
+          () => singleton.getSocket(type: InternetAddressType.IPv6),
+          throwsA(isA<StateError>()),
+        );
       }
     });
 
@@ -381,18 +415,19 @@ void main() {
           address: StunServers.googleStun,
           port: StunServers.defaultPort,
         );
-
-        if (singleton.ipv6Handler != null) {
-          final reachable = await singleton.pingStunServer(type: InternetAddressType.IPv6);
-          expect(reachable, isTrue);
-        } else {
-          expect(
-            () => singleton.pingStunServer(type: InternetAddressType.IPv6),
-            throwsA(isA<StateError>()),
-          );
-        }
       } catch (e) {
         print('IPv6 not available on this system: $e');
+        return;
+      }
+
+      if (singleton.ipv6Handler != null) {
+        final reachable = await singleton.pingStunServer(type: InternetAddressType.IPv6);
+        expect(reachable, isTrue);
+      } else {
+        expect(
+          () => singleton.pingStunServer(type: InternetAddressType.IPv6),
+          throwsA(isA<StateError>()),
+        );
       }
     });
 

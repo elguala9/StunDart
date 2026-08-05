@@ -36,6 +36,8 @@ void main() {
         expect(dual, isA<DualStunHandlerMigratable>());
         expect(dual.ipv4Handler, isNotNull);
         expect(dual.ipv6Handler, isNotNull);
+        expect(dual.ipv4Handler!.getIpVersion().toString(), contains('IPv4'));
+        expect(dual.ipv6Handler!.getIpVersion().toString(), contains('IPv6'));
 
         dual.close();
       },

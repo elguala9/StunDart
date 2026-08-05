@@ -15,7 +15,8 @@ void main() {
         socket: socket,
       );
 
-      expect(detector, isNotNull);
+      expect(detector.primaryServer, StunServers.googleStun);
+      expect(detector.primaryPort, StunServers.defaultPort);
       socket.close();
     });
 
@@ -29,7 +30,7 @@ void main() {
         timeout: const Duration(seconds: 10),
       );
 
-      expect(detector, isNotNull);
+      expect(detector.timeout, const Duration(seconds: 10));
       socket.close();
     });
 
@@ -46,7 +47,7 @@ void main() {
         socket: socket,
       );
 
-      expect(detector, isNotNull);
+      expect(detector.socket, same(socket));
       socket.close();
     });
 
@@ -54,12 +55,11 @@ void main() {
         () async {
       final detector = await NATDetector.withDefaults();
 
-      expect(detector, isNotNull);
       expect(detector.primaryServer, StunServers.googleStun);
       expect(detector.primaryPort, StunServers.defaultPort);
       expect(detector.secondaryServer, StunServers.googleStun1);
       expect(detector.secondaryPort, StunServers.defaultPort);
-      expect(detector.socket, isNotNull);
+      expect(detector.socket.port, greaterThan(0));
       detector.socket.close();
     });
 
@@ -70,7 +70,7 @@ void main() {
 
         try {
           final result = await detector.detectNATType();
-          expect(result.natType, isNotNull);
+          expect(NATType.values, contains(result.natType));
           print('Detected NAT type: ${result.natType.displayName}');
         } finally {
           detector.socket.close();
@@ -97,7 +97,7 @@ void main() {
           final result = await detector.detectNATType();
 
           // Should get some result
-          expect(result.natType, isNotNull);
+          expect(NATType.values, contains(result.natType));
 
           // Should have detection time
           expect(result.detectionTime.inMilliseconds, greaterThan(0));
@@ -172,9 +172,6 @@ void main() {
 
         try {
           final result = await detector.detectNATType();
-
-          expect(result.filteringBehavior, isNotNull);
-          expect(result.mappingBehavior, isNotNull);
 
           // Should be one of the defined behaviors
           expect(
@@ -296,7 +293,8 @@ void main() {
         secondaryPort: StunServers.defaultPort,
       );
 
-      expect(detector, isNotNull);
+      expect(detector.secondaryServer, StunServers.googleStun1);
+      expect(detector.secondaryPort, StunServers.defaultPort);
       socket.close();
     });
 
@@ -461,9 +459,6 @@ void main() {
 
         try {
           final result = await detector.detectNATType();
-
-          expect(result.rfc5780Supported, isNotNull);
-          expect(result.rfc5780Supported, isA<bool>());
 
           print('RFC 5780 Supported: ${result.rfc5780Supported}');
 
@@ -648,7 +643,7 @@ void main() {
 
         try {
           final result = await detector.detectNATType();
-          expect(result, isNotNull);
+          expect(NATType.values, contains(result.natType));
         } finally {
           socket.close();
         }
@@ -673,13 +668,9 @@ void main() {
         try {
           final result = await detector.detectNATType();
 
-          // Check all required fields exist
-          expect(result.natType, isNotNull);
-          expect(result.filteringBehavior, isNotNull);
-          expect(result.mappingBehavior, isNotNull);
-          expect(result.rfc5780Supported, isNotNull);
-          expect(result.detectionTime, isNotNull);
-          expect(result.diagnostics, isNotNull);
+          // Check all required fields carry meaningful values
+          expect(result.detectionTime, greaterThan(Duration.zero));
+          expect(result.diagnostics, isNotEmpty);
 
           // Enums should have valid values
           expect(NATType.values, contains(result.natType));
