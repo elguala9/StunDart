@@ -97,7 +97,8 @@ void main() {
     );
 
     test(
-      'replaces the plain ipv4 IStunHandler with a new one bound to the socket',
+      'replaces the plain ipv4 IStunHandler with a new one bound to the '
+      'socket, carrying over the migratable handler\'s STUN server config',
       () async {
         final key = await registerStunSingletons('socket-migrate-ipv4');
 
@@ -109,6 +110,10 @@ void main() {
             .getInstance<IStunHandler>(key: key, subkey: 'ipv6');
         final ipv6SocketBefore = RegistryManager.instance
             .getInstance<RawDatagramSocket>(key: key, subkey: 'ipv6');
+        migratableBefore.setStunServer(
+          '192.0.2.1', // reserved (RFC 5737), never responds
+          3478,
+        );
 
         final newSocket = await RawDatagramSocket.bind(
           InternetAddress.anyIPv4,
@@ -132,10 +137,18 @@ void main() {
           expectedIpv6Socket: ipv6SocketBefore,
         );
 
+        // Config carried over from the migratable via migrateTo: the
+        // unreachable server set above should still be in effect.
+        await expectLater(
+          migratedPlain.performStunRequest(),
+          throwsA(isA<TimeoutException>()),
+        );
+
         migratedPlain.close();
         migratableBefore.close();
         ipv6PlainBefore.close();
       },
+      timeout: const Timeout(Duration(seconds: 10)),
     );
 
     test('throws when the ipv6 socket family has nothing registered', () async {
@@ -464,6 +477,127 @@ void main() {
         migrated.close();
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    test(
+      'targets the "default" key when key is omitted',
+      () async {
+        await injector.registerAllSingletonsStunAsync(key: 'default');
+
+        addTearDown(
+          () => RegistryManager.instance
+              .getInstance<IDualStunHandlerMigratable>(key: 'default')
+              .close(),
+        );
+
+        final ipv4PlainBefore = RegistryManager.instance
+            .getInstance<IStunHandler>(key: 'default', subkey: 'ipv4');
+
+        final newSocket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv6,
+          0,
+        );
+
+        final migrated = migrateStunHandlerSocket(newSocket);
+
+        expect(identical(migrated.getSocket(), newSocket), isTrue);
+        expectRegistryConsistent(
+          'default',
+          expectedIpv6Handler: migrated,
+          expectedIpv6Socket: newSocket,
+          expectedIpv4Handler: ipv4PlainBefore,
+        );
+
+        migrated.close();
+        ipv4PlainBefore.close();
+      },
+    );
+  });
+
+  group('migrateStunHandlerSocketIpv4', () {
+    test(
+      'binds a fresh ipv4 socket and migrates it under the given key',
+      () async {
+        final key = await registerStunSingletons(
+          'socket-migrate-helper-ipv4',
+        );
+
+        final ipv6PlainBefore = RegistryManager.instance
+            .getInstance<IStunHandler>(key: key, subkey: 'ipv6');
+        final ipv6SocketBefore = RegistryManager.instance
+            .getInstance<RawDatagramSocket>(key: key, subkey: 'ipv6');
+
+        final migrated = await migrateStunHandlerSocketIpv4(key: key);
+
+        expect(migrated.getIpVersion(), InternetAddressType.IPv4);
+
+        // The key must actually be honored, not silently defaulted.
+        expectRegistryConsistent(
+          key,
+          expectedIpv4Handler: migrated,
+          expectedIpv4Socket: migrated.getSocket(),
+          expectedIpv6Handler: ipv6PlainBefore,
+          expectedIpv6Socket: ipv6SocketBefore,
+        );
+
+        migrated.close();
+        ipv6PlainBefore.close();
+      },
+    );
+
+    test(
+      'throws when nothing is registered under the given key',
+      () async {
+        expect(
+          () => migrateStunHandlerSocketIpv4(
+            key: 'ipv4-helper-never-registered',
+          ),
+          throwsA(isA<RegistryNotFoundError>()),
+        );
+      },
+    );
+  });
+
+  group('migrateStunHandlerSocketIpv6', () {
+    test(
+      'binds a fresh ipv6 socket and migrates it under the given key',
+      () async {
+        final key = await registerStunSingletons(
+          'socket-migrate-helper-ipv6',
+        );
+
+        final ipv4PlainBefore = RegistryManager.instance
+            .getInstance<IStunHandler>(key: key, subkey: 'ipv4');
+        final ipv4SocketBefore = RegistryManager.instance
+            .getInstance<RawDatagramSocket>(key: key, subkey: 'ipv4');
+
+        final migrated = await migrateStunHandlerSocketIpv6(key: key);
+
+        expect(migrated.getIpVersion(), InternetAddressType.IPv6);
+
+        expectRegistryConsistent(
+          key,
+          expectedIpv6Handler: migrated,
+          expectedIpv6Socket: migrated.getSocket(),
+          expectedIpv4Handler: ipv4PlainBefore,
+          expectedIpv4Socket: ipv4SocketBefore,
+        );
+
+        migrated.close();
+        ipv4PlainBefore.close();
+      },
+    );
+
+    test(
+      'throws when nothing is registered under the given key',
+      () async {
+        expect(
+          () => migrateStunHandlerSocketIpv6(
+            key: 'ipv6-helper-never-registered',
+          ),
+          throwsA(isA<RegistryNotFoundError>()),
+        );
+      },
     );
   });
 }
