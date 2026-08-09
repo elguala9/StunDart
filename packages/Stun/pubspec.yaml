@@ -1,6 +1,6 @@
 name: stun
 description: Complete STUN (RFC 5389/5780) implementation for NAT traversal, public IP discovery, and NAT type detection. Supports IPv4/IPv6 dual-stack, P2P applications, and WebRTC.
-version: 1.6.1
+version: 1.7.0
 repository: https://github.com/elguala9/StunDart
 homepage: https://github.com/elguala9/StunDart
 documentation: https://pub.dev/documentation/stun/latest/

@@ -5,11 +5,24 @@ All notable changes to the StunDart project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.7.0] - 2026-08-09
 
 ### Added
 - **Optional secondary server for NAT detection**: `NATDetector` now accepts `secondaryServer`/`secondaryPort`. When the primary STUN server does not advertise an alternate address (OTHER-ADDRESS/CHANGED-ADDRESS), Test 3 falls back to the secondary server, enabling symmetric NAT detection against servers without RFC 5780/3489 support (e.g. Google STUN). Test 3 fails explicitly if the secondary server resolves to the same endpoint as the primary.
 - **`NATDetector.withDefaults()`**: zero-argument async factory that binds its own IPv4 socket and uses the constant defaults from `defaultNatDetectorConfig` (Google STUN primary + secondary, 5s timeout). The caller closes the socket via `detector.socket.close()`.
+- **Socket migration helpers**: `migrateStunHandlerSocket()`/`migrateStunHandlerSocketIpv4()`/`migrateStunHandlerSocketIpv6()` (single) and their dual-stack counterparts in `src/migration/dual_stun_handler_socket_migration.dart`. They rebind the plain `StunHandler`/`RawDatagramSocket` registered under a (key, subkey) onto a fresh socket while leaving the registered `IStunHandlerMigratable`/`IDualStunHandlerMigratable` in place as the stable source of truth for the STUN server config.
+- `stunHandlerSubkeyFor()`: resolves the registry subkey (`'ipv4'`/`'ipv6'`) straight from a socket's `InternetAddressType`.
+
+### Changed
+- **`config_manager` bumped to `^0.4.2`**: `StunConfigExtension`/`initStunConfig`/`mergeStunConfig` now delegate deep-merge and default-fallback lookups to `ConfigExtension.getOrDefault`/`deepMergeMaps`/`lookupPath`/`getDurationSeconds` instead of package-local reimplementations.
+- **`stunConfigValue()`/`configValue()` now take a `List<String> path`** instead of a dot-notation `String` key (e.g. `stunConfigValue(['nat', 'secondaryServer'])` instead of `stunConfigValue('nat.secondaryServer')`).
+- `singleton_manager` bumped to `^2.2.2`, `singleton_manager_generator` bumped to `^2.3.2`.
+- **Public barrel (`stun.dart`) significantly expanded**: now exports the internal mixins, `main_injection.dart`, and previously-internal implementation/interface files (`stun_constants.dart`, `dual_stun_registry_wiring.dart`, `dual_stun_handler_profile.dart`, `stun_message.dart`, `stun_request_handler.dart`, `stun_socket_manager.dart`, `i_stun_handler_base.dart`, `nat_detector_mixin.dart`, etc.). `index_generator` now scans `src/**.dart` unconditionally instead of an explicit allowlist of subdirectories.
+- `main_injection.dart` moved from `lib/` to `lib/src/main_injection.dart`; the `melos run registry` script's `--registry-output` updated accordingly.
+- `melos run barrels` now runs `dart run index_generator` (workspace-local) instead of `dart pub global run index_generator`.
+
+### Tests
+- 239 tests passing ✅ (migration helpers, config fallback/merge behavior, registry wiring)
 
 ## [1.6.1] - 2026-07-15
 
