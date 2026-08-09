@@ -13,14 +13,14 @@ void main() {
 
   group('StunConfigExtension', () {
     test('falls back to the built-in defaults when nothing is loaded', () {
-      ConfigManagerSingleton().clear(sector: stunConfigSector);
+      ConfigManagerSingleton().clear([], sector: stunConfigSector);
       final probe = _ConfigProbe();
 
       expect(probe.configSector, stunConfigSector);
       expect(probe.defaultStunAddress, 'stun.l.google.com');
       expect(probe.defaultStunPort, 19302);
       expect(probe.defaultLocalPort, 49152);
-      expect(probe.defaultIpVersion, InternetAddressType.IPv4);
+      expect(probe.defaultIpVersion, InternetAddressType.IPv6);
       expect(probe.defaultTimeout, const Duration(seconds: 5));
       expect(probe.defaultNatPrimaryServer, 'stun.l.google.com');
       expect(probe.defaultNatPrimaryPort, 19302);
@@ -46,7 +46,7 @@ void main() {
       initStunConfig({
         'server': {'address': 'stun.example.org'},
       });
-      _ConfigProbe().set('server.port', 1);
+      _ConfigProbe().set(['server', 'port'], 1);
 
       expect(
         (defaultStunConfig['server'] as Map)['address'],
@@ -56,15 +56,14 @@ void main() {
     });
 
     test('reads the ipVersion and Duration coercions from JSON', () {
-      ConfigManagerSingleton().loadFromString('''
+      final probe = _ConfigProbe();
+      probe.loadFromString('''
       {
         "server": { "address": "stun.json.test", "port": 1234 },
         "ipVersion": "IPv6",
         "timeoutSeconds": 1.5
       }
-      ''', sector: stunConfigSector);
-
-      final probe = _ConfigProbe();
+      ''');
 
       expect(probe.defaultStunAddress, 'stun.json.test');
       expect(probe.defaultStunPort, 1234);
@@ -75,14 +74,79 @@ void main() {
       expect(probe.defaultNatTimeout, const Duration(seconds: 5));
     });
 
-    test('stunConfigValue() reads by dot notation from static contexts', () {
+    test('stunConfigValue() reads by path from static contexts', () {
       initStunConfig({
         'nat': {'secondaryServer': 'nat2.example.org'},
       });
 
-      expect(stunConfigValue('nat.secondaryServer'), 'nat2.example.org');
-      expect(stunConfigValue('nat.secondaryPort'), 19302);
-      expect(stunConfigValue('nope.missing'), isNull);
+      expect(
+        stunConfigValue(const ['nat', 'secondaryServer']),
+        'nat2.example.org',
+      );
+      expect(stunConfigValue(const ['nat', 'secondaryPort']), 19302);
+      expect(stunConfigValue(const ['nope', 'missing']), isNull);
+    });
+
+    test('defaultStunIpVersion() mirrors the instance getter statically', () {
+      initStunConfig({'ipVersion': 'any'});
+
+      expect(defaultStunIpVersion(), InternetAddressType.any);
+    });
+
+    test('ensureStunConfig() seeds the defaults only when empty', () {
+      ConfigManagerSingleton().clear([], sector: stunConfigSector);
+      ensureStunConfig();
+      expect(_ConfigProbe().defaultStunAddress, 'stun.l.google.com');
+
+      _ConfigProbe().set(['server', 'address'], 'stun.seeded.test');
+      ensureStunConfig();
+      expect(_ConfigProbe().defaultStunAddress, 'stun.seeded.test');
+    });
+  });
+
+  group('unwrapStunConfig()', () {
+    test('returns the map itself when it has no stunConfigKey wrapper', () {
+      final config = {'server': {'address': 'stun.direct.test'}};
+
+      expect(unwrapStunConfig(config), same(config));
+    });
+
+    test('unwraps the section nested under stunConfigKey', () {
+      final inner = {'server': {'address': 'stun.nested.test'}};
+
+      expect(unwrapStunConfig({stunConfigKey: inner}), same(inner));
+    });
+
+    test('passes through null', () {
+      expect(unwrapStunConfig(null), isNull);
+    });
+  });
+
+  group('mergeStunConfig()', () {
+    test('deep-merges overrides onto base without mutating either', () {
+      final base = {
+        'server': {'address': 'stun.base.test', 'port': 1},
+        'ipVersion': 'IPv6',
+      };
+      final overrides = {'server': {'port': 2}};
+
+      final merged = mergeStunConfig(base, overrides);
+
+      expect(merged, {
+        'server': {'address': 'stun.base.test', 'port': 2},
+        'ipVersion': 'IPv6',
+      });
+      expect(base['server'], {'address': 'stun.base.test', 'port': 1});
+      expect(overrides['server'], {'port': 2});
+    });
+
+    test('returns an equivalent copy when overrides is null', () {
+      final base = {'server': {'address': 'stun.base.test'}};
+
+      final merged = mergeStunConfig(base);
+
+      expect(merged, base);
+      expect(merged, isNot(same(base)));
     });
   });
 
@@ -92,7 +156,7 @@ void main() {
     test('a package user can register and select their own', () {
       registerStunConfig('acme', {
         'server': {'address': 'stun.acme.internal', 'port': 3478},
-        'timeoutSeconds': 2,
+        'timeoutSeconds': 2.0,
       });
 
       expect(stunConfigNames, contains('acme'));
@@ -116,7 +180,7 @@ void main() {
     });
 
     test('overrides are merged on top of the selected configuration', () {
-      useStunConfig('china', overrides: {'timeoutSeconds': 12});
+      useStunConfig('china', overrides: {'timeoutSeconds': 12.0});
 
       final probe = _ConfigProbe();
       expect(probe.defaultStunAddress, 'stun.miwifi.com');
@@ -141,7 +205,10 @@ void main() {
         'server': {'address': 'stun.acme.internal'},
       });
 
-      expect(stunConfigNamed('acme'), isNotNull);
+      expect(
+        stunConfigNamed('acme'),
+        {'server': {'address': 'stun.acme.internal'}},
+      );
       expect(stunConfigNamed('nope'), isNull);
       expect(stunConfigNamed(null), isNull);
 
@@ -160,7 +227,10 @@ void main() {
       useStunConfig('acme');
       expect(_ConfigProbe().defaultStunAddress, 'stun.acme2.internal');
 
-      expect(unregisterStunConfig('acme'), isNotNull);
+      expect(
+        unregisterStunConfig('acme'),
+        {'server': {'address': 'stun.acme2.internal'}},
+      );
       expect(unregisterStunConfig('acme'), isNull);
       expect(stunConfigNames, isNot(contains('acme')));
     });
@@ -185,7 +255,7 @@ void main() {
 
   group('presets', () {
     test('none of them is applied unless requested', () {
-      ConfigManagerSingleton().clear(sector: stunConfigSector);
+      ConfigManagerSingleton().clear([], sector: stunConfigSector);
 
       expect(_ConfigProbe().defaultStunAddress, 'stun.l.google.com');
     });
@@ -197,7 +267,7 @@ void main() {
       for (final host in [
         probe.defaultStunAddress,
         probe.defaultNatPrimaryServer,
-        '${stunConfigValue('nat.secondaryServer')}',
+        '${stunConfigValue(const ['nat', 'secondaryServer'])}',
       ]) {
         expect(
           host,
@@ -218,7 +288,7 @@ void main() {
         expect(probe.defaultNatPrimaryPort, inInclusiveRange(1, 65535));
         // Keys no preset overrides still come from the defaults.
         expect(probe.defaultLocalPort, 49152, reason: entry.key);
-        expect(probe.defaultIpVersion, InternetAddressType.IPv4);
+        expect(probe.defaultIpVersion, InternetAddressType.IPv6);
       }
     });
 
@@ -227,7 +297,7 @@ void main() {
         initStunConfig(entry.value);
 
         expect(
-          stunConfigValue('nat.secondaryServer'),
+          stunConfigValue(const ['nat', 'secondaryServer']),
           isNot(_ConfigProbe().defaultNatPrimaryServer),
           reason: 'RFC 5780 Test 3 needs a different IP (${entry.key})',
         );
@@ -240,7 +310,7 @@ void main() {
       initStunConfig({
         'server': {'address': 'stun.profile.test', 'port': 4321},
         'ipVersion': 'IPv6',
-        'timeoutSeconds': 9,
+        'timeoutSeconds': 9.0,
       });
 
       final profile = StunHandlerProfile();
@@ -279,7 +349,7 @@ void main() {
         'nat': {
           'primaryServer': 'nat1.example.org',
           'secondaryServer': 'nat2.example.org',
-          'timeoutSeconds': 7,
+          'timeoutSeconds': 7.0,
         },
       });
 

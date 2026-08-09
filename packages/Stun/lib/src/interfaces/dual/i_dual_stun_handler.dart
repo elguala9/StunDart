@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import '../single/i_stun_handler.dart';
-import '../i_stun_handler_base.dart';
+import '../single/i_stun_handler_base.dart';
 
 /// Interface for managing dual IPv4 and IPv6 STUN handlers
 /// Handles parallel request execution and state management

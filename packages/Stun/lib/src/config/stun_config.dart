@@ -5,208 +5,114 @@ import 'package:config_manager/config_manager.dart';
 /// The `config_manager` sector owned by this package.
 const String stunConfigSector = 'stun';
 
-/// Built-in STUN defaults.
-///
-/// This map is the single source of both the default values and the
-/// configuration keys: it is loaded into the [stunConfigSector] sector by
-/// [initStunConfig], and any key missing from a user-supplied configuration
-/// falls back to the value declared here.
+/// Key a larger JSON document can nest the STUN section under, so a whole
+/// multi-domain config blob can be handed to [initStunConfig] as-is instead
+/// of extracting the STUN part first.
+const String stunConfigKey = 'stunConfig';
+
+/// Built-in STUN defaults, also used as the fallback for missing keys and as
+/// the source of valid configuration keys.
 const Map<String, dynamic> defaultStunConfig = {
   'server': {'address': 'stun.l.google.com', 'port': 19302, 'localPort': 49152},
-  'ipVersion': 'IPv4',
-  'timeoutSeconds': 5,
+  'ipVersion': 'IPv6',
+  'timeoutSeconds': 5.0,
   'nat': {
     'primaryServer': 'stun.l.google.com',
     'primaryPort': 19302,
     'secondaryServer': 'stun1.l.google.com',
     'secondaryPort': 19302,
-    'timeoutSeconds': 5,
+    'timeoutSeconds': 5.0,
   },
 };
 
-/// Loads [defaultStunConfig] into the [stunConfigSector] sector, with
-/// [overrides] merged on top (deep merge, so partial sub-maps are allowed).
-///
-/// Call once at startup to change the package-wide defaults:
-///
-/// ```dart
-/// initStunConfig({
-///   'server': {'address': 'stun.cloudflare.com', 'port': 3478},
-///   'timeoutSeconds': 3,
-/// });
-/// ```
-///
-/// Calling it is optional: the defaults are seeded lazily on first read.
+/// Loads [defaultStunConfig] into [stunConfigSector], with [overrides]
+/// deep-merged on top. [overrides] can be the STUN fields directly, or a
+/// bigger document nesting them under [stunConfigKey] — only that section is
+/// used, so foreign JSON can be merged in and handed over as-is. Always
+/// replaces whatever was loaded before; use [ensureStunConfig] to seed the
+/// sector only if it's still empty.
 void initStunConfig([Map<String, dynamic>? overrides]) {
-  ConfigManagerSingleton().loadFromMap(
-    _merge(defaultStunConfig, overrides),
-    sector: stunConfigSector,
+  _access.loadFromMap(
+    deepMergeMaps(defaultStunConfig, unwrapStunConfig(overrides)),
   );
 }
 
+/// The STUN section of [map]: `map[stunConfigKey]` when present, or [map]
+/// itself otherwise.
+Map<String, dynamic>? unwrapStunConfig(Map<String, dynamic>? map) =>
+    (map?[stunConfigKey] as Map<String, dynamic>?) ?? map;
+
 /// Deep-merges [overrides] onto [base], returning a new mutable map.
-///
-/// Useful to combine two configurations before handing the result to
-/// [initStunConfig], which only takes a single map.
 Map<String, dynamic> mergeStunConfig(
   Map<String, dynamic> base, [
   Map<String, dynamic>? overrides,
-]) => _merge(base, overrides);
+]) => deepMergeMaps(base, overrides);
 
-/// Seeds the defaults unless the [stunConfigSector] sector is already loaded.
+/// Seeds [defaultStunConfig] into [stunConfigSector], but only if it isn't
+/// already loaded.
 void ensureStunConfig() {
-  if (ConfigManagerSingleton().config(sector: stunConfigSector) == null) {
-    initStunConfig();
-  }
+  _access.loadFromMap(defaultStunConfig, force: false);
 }
 
-/// Reads a configured value by dot-notation [key], falling back to the
-/// corresponding entry of [defaultStunConfig].
+/// Reads a configured value at [path] (e.g. `['server', 'address']`).
 ///
-/// Prefer the typed getters of [StunConfigExtension]; this is the escape
-/// hatch for static contexts, which cannot mix the extension in.
-dynamic stunConfigValue(String key) {
-  ensureStunConfig();
-  return ConfigManagerSingleton().get(key, sector: stunConfigSector) ??
-      _lookup(defaultStunConfig, key);
-}
+/// Escape hatch for static contexts that cannot mix in [StunConfigExtension];
+/// prefer its typed getters on an instance.
+dynamic stunConfigValue(List<String> path) => _access.configValue(path);
 
-/// [StunConfigExtension.defaultIpVersion], usable from a static context that
-/// cannot mix the extension in (e.g. picking a socket family before any
-/// handler instance exists to bind it to).
-InternetAddressType defaultStunIpVersion() =>
-    _asIpVersion(stunConfigValue('ipVersion'), 'ipVersion');
+/// [StunConfigExtension.defaultIpVersion] for static contexts, e.g. picking a
+/// socket family before any handler instance exists to bind it to.
+InternetAddressType defaultStunIpVersion() => _access.defaultIpVersion;
 
-/// Configuration access for the STUN components.
-///
-/// Mixed into every class that needs a default value, on top of
-/// [ConfigExtension]: it pins the sector to [stunConfigSector], seeds the
-/// built-in defaults on first read and exposes the values already coerced to
-/// their Dart types.
-///
-/// ```dart
-/// class Foo with ConfigExtension, StunConfigExtension {
-///   Foo({String? address}) {
-///     _address = address ?? defaultStunAddress;
-///   }
-/// }
-/// ```
+/// Backs the static-context helpers above with a real [ConfigExtension]
+/// instance, instead of talking to [ConfigManagerSingleton] directly.
+final _access = _StunConfigAccess();
+
+class _StunConfigAccess with ConfigExtension, StunConfigExtension {}
+
+/// Configuration access for the STUN components: pins the sector to
+/// [stunConfigSector] and exposes the defaults already coerced to their Dart
+/// types. Mix in on top of [ConfigExtension].
 mixin StunConfigExtension on ConfigExtension {
   String _sector = stunConfigSector;
 
-  /// Pinned to [stunConfigSector]; still settable for tests or for hosts that
-  /// keep several STUN configurations side by side.
   @override
   String get configSector => _sector;
 
   @override
   set configSector(String value) => _sector = value;
 
-  /// Default STUN server hostname.
-  String get defaultStunAddress => _string('server.address');
+  String get defaultStunAddress =>
+      getOrDefault(const ['server', 'address'], defaultStunConfig);
 
-  /// Default STUN server port.
-  int get defaultStunPort => _int('server.port');
+  int get defaultStunPort =>
+      getOrDefault(const ['server', 'port'], defaultStunConfig);
 
-  /// Default local port used when binding a socket.
-  int get defaultLocalPort => _int('server.localPort');
+  int get defaultLocalPort =>
+      getOrDefault(const ['server', 'localPort'], defaultStunConfig);
 
-  /// Default IP family used when a handler does not specify one.
-  InternetAddressType get defaultIpVersion => _ipVersion('ipVersion');
+  InternetAddressType get defaultIpVersion =>
+      switch (getOrDefault<String>(const ['ipVersion'], defaultStunConfig)) {
+        'IPv6' => InternetAddressType.IPv6,
+        'any' => InternetAddressType.any,
+        _ => InternetAddressType.IPv4,
+      };
 
-  /// Default per-request timeout.
-  Duration get defaultTimeout => _duration('timeoutSeconds');
+  Duration get defaultTimeout =>
+      getDurationSeconds(const ['timeoutSeconds'], defaultStunConfig);
 
-  /// Default primary server for the NAT detector.
-  String get defaultNatPrimaryServer => _string('nat.primaryServer');
+  String get defaultNatPrimaryServer =>
+      getOrDefault(const ['nat', 'primaryServer'], defaultStunConfig);
 
-  /// Default primary port for the NAT detector.
-  int get defaultNatPrimaryPort => _int('nat.primaryPort');
+  int get defaultNatPrimaryPort =>
+      getOrDefault(const ['nat', 'primaryPort'], defaultStunConfig);
 
-  /// Default per-test timeout for the NAT detector.
-  Duration get defaultNatTimeout => _duration('nat.timeoutSeconds');
+  Duration get defaultNatTimeout =>
+      getDurationSeconds(const ['nat', 'timeoutSeconds'], defaultStunConfig);
 
-  /// Configured value for [key], or its [defaultStunConfig] entry when the
-  /// loaded configuration does not define it.
-  dynamic configValue(String key) {
-    ensureStunConfig();
-    return get(key) ?? _lookup(defaultStunConfig, key);
-  }
-
-  String _string(String key) => _asString(configValue(key), key);
-
-  int _int(String key) => _asInt(configValue(key), key);
-
-  Duration _duration(String key) => _asDuration(configValue(key), key);
-
-  InternetAddressType _ipVersion(String key) =>
-      _asIpVersion(configValue(key), key);
-}
-
-String _asString(dynamic value, String key) {
-  if (value is String && value.isNotEmpty) return value;
-  return _lookup(defaultStunConfig, key) as String;
-}
-
-int _asInt(dynamic value, String key) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  final parsed = value is String ? int.tryParse(value) : null;
-  return parsed ?? _lookup(defaultStunConfig, key) as int;
-}
-
-Duration _asDuration(dynamic value, String key) {
-  final seconds = value is num
-      ? value
-      : num.tryParse('$value') ?? _lookup(defaultStunConfig, key) as num;
-  return Duration(
-    microseconds: (seconds * Duration.microsecondsPerSecond).round(),
-  );
-}
-
-InternetAddressType _asIpVersion(dynamic value, String key) {
-  return switch ('$value'.toLowerCase()) {
-    'ipv4' || 'v4' || '4' => InternetAddressType.IPv4,
-    'ipv6' || 'v6' || '6' => InternetAddressType.IPv6,
-    'any' => InternetAddressType.any,
-    _ => _asIpVersion(_lookup(defaultStunConfig, key), 'ipVersion'),
-  };
-}
-
-/// Walks [map] following the dot-notation [key].
-dynamic _lookup(Map<String, dynamic> map, String key) {
-  dynamic current = map;
-  for (final part in key.split('.')) {
-    if (current is! Map<String, dynamic>) return null;
-    current = current[part];
-  }
-  return current;
-}
-
-/// Deep-merges [overrides] onto a mutable copy of [base].
-///
-/// The copy matters: the stored map is mutated in place by
-/// `ConfigManagerSingleton.set`, and [defaultStunConfig] is `const`.
-Map<String, dynamic> _merge(
-  Map<String, dynamic> base,
-  Map<String, dynamic>? overrides,
-) {
-  final merged = <String, dynamic>{};
-  for (final entry in base.entries) {
-    final value = entry.value;
-    merged[entry.key] = value is Map<String, dynamic>
-        ? _merge(value, null)
-        : value;
-  }
-  if (overrides == null) return merged;
-
-  for (final entry in overrides.entries) {
-    final existing = merged[entry.key];
-    final value = entry.value;
-    merged[entry.key] =
-        existing is Map<String, dynamic> && value is Map<String, dynamic>
-        ? _merge(existing, value)
-        : value;
-  }
-  return merged;
+  /// Configured value at [path], falling back to its [defaultStunConfig]
+  /// entry when the loaded configuration doesn't define it; see
+  /// [ConfigExtension.getOrDefault].
+  dynamic configValue(List<String> path) =>
+      getOrDefault<dynamic>(path, defaultStunConfig);
 }

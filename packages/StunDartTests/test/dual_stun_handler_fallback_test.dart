@@ -52,7 +52,6 @@ class _SuccessHandler implements IStunHandler {
   @override
   void close() => _socket.close();
 
-  @override
   void destroy() => close();
 
   @override
@@ -96,7 +95,6 @@ class _FailingHandler implements IStunHandler {
   @override
   void close() => _socket.close();
 
-  @override
   void destroy() => close();
 
   @override
