@@ -32,6 +32,11 @@
 /// across two independent operators: RFC 5780 Test 3 needs the secondary to
 /// resolve to a different IP than the primary, otherwise symmetric-NAT
 /// detection cannot tell the two apart.
+///
+/// Each built-in preset nests its fields under [stunConfigKey], so the whole
+/// constant can be spread straight into a larger JSON document alongside
+/// other domains' config without key collisions, and handed to
+/// [initStunConfig] as-is.
 library;
 
 import 'dart:collection';
@@ -58,14 +63,16 @@ import 'stun_config.dart';
 /// networks, where these hosts are much slower than the sub-second replies
 /// measured from a wired European connection.
 const Map<String, dynamic> chinaStunConfig = {
-  'server': {'address': 'stun.miwifi.com', 'port': 3478},
-  'timeoutSeconds': 8,
-  'nat': {
-    'primaryServer': 'stun.miwifi.com',
-    'primaryPort': 3478,
-    'secondaryServer': 'stun.chat.bilibili.com',
-    'secondaryPort': 3478,
-    'timeoutSeconds': 8,
+  stunConfigKey: {
+    'server': {'address': 'stun.miwifi.com', 'port': 3478},
+    'timeoutSeconds': 8.0,
+    'nat': {
+      'primaryServer': 'stun.miwifi.com',
+      'primaryPort': 3478,
+      'secondaryServer': 'stun.chat.bilibili.com',
+      'secondaryPort': 3478,
+      'timeoutSeconds': 8.0,
+    },
   },
 };
 
@@ -74,12 +81,14 @@ const Map<String, dynamic> chinaStunConfig = {
 /// Useful where Google is reachable but you would rather not depend on it for
 /// the main request path.
 const Map<String, dynamic> cloudflareStunConfig = {
-  'server': {'address': 'stun.cloudflare.com', 'port': 3478},
-  'nat': {
-    'primaryServer': 'stun.cloudflare.com',
-    'primaryPort': 3478,
-    'secondaryServer': 'stun.l.google.com',
-    'secondaryPort': 19302,
+  stunConfigKey: {
+    'server': {'address': 'stun.cloudflare.com', 'port': 3478},
+    'nat': {
+      'primaryServer': 'stun.cloudflare.com',
+      'primaryPort': 3478,
+      'secondaryServer': 'stun.l.google.com',
+      'secondaryPort': 19302,
+    },
   },
 };
 
@@ -87,12 +96,14 @@ const Map<String, dynamic> cloudflareStunConfig = {
 /// which also survives firewalls that only allow HTTPS ports) and sipgate as
 /// secondary.
 const Map<String, dynamic> europeStunConfig = {
-  'server': {'address': 'stun.nextcloud.com', 'port': 443},
-  'nat': {
-    'primaryServer': 'stun.nextcloud.com',
-    'primaryPort': 443,
-    'secondaryServer': 'stun.sipgate.net',
-    'secondaryPort': 3478,
+  stunConfigKey: {
+    'server': {'address': 'stun.nextcloud.com', 'port': 443},
+    'nat': {
+      'primaryServer': 'stun.nextcloud.com',
+      'primaryPort': 443,
+      'secondaryServer': 'stun.sipgate.net',
+      'secondaryPort': 3478,
+    },
   },
 };
 
@@ -188,5 +199,5 @@ void useStunConfig(String name, {Map<String, dynamic>? overrides}) {
       'unknown STUN configuration; available: ${stunConfigNames.join(', ')}',
     );
   }
-  initStunConfig(mergeStunConfig(preset, overrides));
+  initStunConfig(mergeStunConfig(unwrapStunConfig(preset)!, overrides));
 }

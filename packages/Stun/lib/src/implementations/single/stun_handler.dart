@@ -39,9 +39,15 @@ class StunHandler
 
   factory StunHandler.dependencyInjectionFactory({String key = 'default', String subkey = 'default'}) { // GENERATED CODE - DO NOT MODIFY BY HAND
     final socket = RegistryManager.instance.getInstance<RawDatagramSocket>(key: key, subkey: subkey); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final address = RegistryManager.instance.tryGetInstance<String>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final port = RegistryManager.instance.tryGetInstance<int>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
+    final timeout = RegistryManager.instance.tryGetInstance<Duration>(key: key); // GENERATED CODE - DO NOT MODIFY BY HAND
 
     return StunHandler( // GENERATED CODE - DO NOT MODIFY BY HAND
       socket, // GENERATED CODE - DO NOT MODIFY BY HAND
+      address: address, // GENERATED CODE - DO NOT MODIFY BY HAND
+      port: port, // GENERATED CODE - DO NOT MODIFY BY HAND
+      timeout: timeout, // GENERATED CODE - DO NOT MODIFY BY HAND
     ); // GENERATED CODE - DO NOT MODIFY BY HAND
   } // GENERATED CODE - DO NOT MODIFY BY HAND
 
@@ -51,13 +57,6 @@ class StunHandler
   final void Function(String)? _onLog;
   late final StunSocketManager _socketMgr;
 
-  late final StunRequestHandler _requestHandler = StunRequestHandler(
-    stunAddress: _stunAddress,
-    stunPort: _stunPort,
-    timeout: _timeout,
-    onLog: _onLog,
-  );
-
   @override
   void Function(String)? get onLog => _onLog;
 
@@ -65,7 +64,12 @@ class StunHandler
   StunSocketManager get socketMgr => _socketMgr;
 
   @override
-  StunRequestHandler get requestHandler => _requestHandler;
+  StunRequestHandler get requestHandler => StunRequestHandler(
+        stunAddress: _stunAddress,
+        stunPort: _stunPort,
+        timeout: _timeout,
+        onLog: _onLog,
+      );
 
   @override
   void setStunServer(String address, int port) {

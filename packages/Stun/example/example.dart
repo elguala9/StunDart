@@ -1,6 +1,5 @@
 ﻿import 'dart:io';
 import 'package:singleton_manager/singleton_manager.dart';
-import 'package:stun/main_injection.dart';
 import 'package:stun/src/factories/dual_stun_registry_wiring.dart';
 import 'package:stun/stun.dart';
 
@@ -80,20 +79,20 @@ Future<void> _exampleWithExternalSocket() async {
 /// `RegistryManager` from `singleton_manager`
 Future<void> _exampleWithDI() async {
   try {
-    const injector = MainInjectionStun();
+    const injector = DualStunInjector();
     const key = 'example';
 
-    // RawDatagramSocket isn't `@dependencyInjectable` itself, so it has to be
-    // wired manually before the generated factories can build IStunHandler
-    // (ipv4/ipv6) — connectDualStunHandlerSockets binds the real sockets and
-    // registers one per subkey. DI-resolved handlers use the STUN config
-    // defaults for the server; call setStunServer afterwards for a custom one.
-    await connectDualStunHandlerSockets(key: key);
-
+    // RawDatagramSocket isn't `@dependencyInjectable` itself, so DualStunInjector
+    // wires it in via connectDualStunHandlerSockets (called from its
+    // beforeRegisterAllSingletonsStunAsync override) before the generated
+    // factories build IStunHandler (ipv4/ipv6). DI-resolved handlers use the
+    // STUN config defaults for the server; call setStunServer afterwards for
+    // a custom one.
+    //
     // Connects every @dependencyInjectable class (DualStunHandler,
     // DualStunHandlerMigratable, StunHandler, StunHandlerMigratable) to
     // RegistryManager.instance under `key`.
-    injector.registerAllSingletonsStun(key: key);
+    await injector.registerAllSingletonsStunAsync(key: key);
 
     print('✅ DI container initialized\n');
 
